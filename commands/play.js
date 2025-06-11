@@ -1,3 +1,4 @@
+import { SlashCommandBuilder, ChannelType } from "discord.js";
 import {
   joinVoiceChannel,
   createAudioPlayer,
@@ -6,25 +7,32 @@ import {
   NoSubscriberBehavior,
 } from "@discordjs/voice";
 import config from "../core/config.js";
+
 const { STREAM_URL } = config;
 
 export default {
-  name: "play",
-  description: "Lance le stream dans un Stage Channel",
-  async execute(message) {
-    try {
-      const channel = message.member.voice.channel;
-      if (!channel) {
-        return message.reply(
-          "❌ Tu dois être dans un salon vocal ou Stage Channel pour utiliser cette commande."
-        );
-      }
-      if (channel.type !== 13) {
-        return message.reply(
-          "❌ Cette commande ne fonctionne que dans un Stage Channel."
-        );
-      }
+  data: new SlashCommandBuilder()
+    .setName("play")
+    .setDescription("▶️ Lance le stream dans un Stage Channel")
+    .setDMPermission(false),
+  async execute(interaction) {
+    const channel = interaction.member.voice.channel;
 
+    if (!channel) {
+      return interaction.reply({
+        content: "❌ Tu dois être dans un salon vocal ou Stage Channel.",
+        ephemeral: true,
+      });
+    }
+
+    if (channel.type !== ChannelType.GuildStageVoice) {
+      return interaction.reply({
+        content: "❌ Cette commande ne fonctionne que dans un Stage Channel.",
+        ephemeral: true,
+      });
+    }
+
+    try {
       const connection = joinVoiceChannel({
         channelId: channel.id,
         guildId: channel.guild.id,
@@ -44,25 +52,23 @@ export default {
       connection.subscribe(player);
 
       player.once(AudioPlayerStatus.Playing, () => {
-        message.channel.send("▶️ Stream lancé dans le stage channel.");
+        interaction.followUp("▶️ Stream lancé dans le stage channel.");
       });
 
       player.on("error", (error) => {
         console.error("❌ Erreur du player:", error);
-        message.channel.send(
-          "❌ Une erreur est survenue lors de la lecture du stream."
-        );
+        interaction.followUp("❌ Erreur pendant la lecture du stream.");
       });
 
-      message.client.audio = { connection, player };
+      interaction.client.audio = { connection, player };
+
+      await interaction.reply("🔄 Connexion au stage channel...");
     } catch (error) {
-      console.error(
-        "❌ Erreur lors de l'exécution de la commande play:",
-        error
-      );
-      message.reply(
-        "❌ Une erreur est survenue lors de la tentative de lecture du stream."
-      );
+      console.error("❌ Erreur exécution /play :", error);
+      await interaction.reply({
+        content: "❌ Une erreur est survenue pendant la tentative de lecture.",
+        ephemeral: true,
+      });
     }
   },
 };
