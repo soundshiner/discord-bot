@@ -1,0 +1,30 @@
+{
+  "name": "soundshine-bot",
+  "version": "1.0.0",
+  "description": "soundSHINE Bot for Discord",
+  "homepage": "https://github.com/n3m01726/soundshine-bot#readme",
+  "bugs": {
+    "url": "https://github.com/n3m01726/soundshine-bot/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/n3m01726/soundshine-bot.git"
+  },
+  "dependencies": {
+    "@discordjs/opus": "^0.10.0",
+    "@discordjs/voice": "^0.18.0",
+    "axios": "^1.9.0",
+    "chalk": "^4.1.2",
+    "discord.js": "^14.0.0",
+    "dotenv": "^16.0.0",
+    "express": "^5.1.0",
+    "winston": "^3.3.3"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "tests"
+  }
+}
