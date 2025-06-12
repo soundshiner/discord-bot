@@ -1,12 +1,21 @@
-// routes/health.js
-import { Router } from "express";
+import { Router } from "express"; // 👈 Il manquait cette ligne
 
-const router = Router();
+export default (client, logger) => {
+  const router = Router();
 
-router.get("/", (req, res) => {
-  res
-    .status(200)
-    .json({ status: "OK", message: "Le serveur est opérationnel." });
-});
+  logger.custom("ROUTE", "✅ Route /v1/health chargée", "green");
 
-export default router;
+  router.get("/", (req, res) => {
+    res.json({
+      status: "ok",
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      bot: {
+        username: client?.user?.tag || null,
+        readyAt: client?.readyAt || null,
+      },
+    });
+  });
+
+  return router;
+};

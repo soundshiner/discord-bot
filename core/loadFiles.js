@@ -8,27 +8,32 @@ import logger from "../utils/logger.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export const loadFiles = async (folderName, type, client) => {
+export const loadFiles = async (
+  folderName,
+  type,
+  client,
+  app = null,
+  loggerInstance = logger
+) => {
   const basePath = path.join(__dirname, "..", folderName);
 
   if (!fs.existsSync(basePath)) {
-    logger.warn(`Dossier ${folderName} introuvable.`);
+    loggerInstance.warn(`Dossier ${folderName} introuvable.`);
     return;
   }
 
-  const files = fs.readdirSync(basePath).filter((file) => {
-    if (folderName === "utils" && type === "task") return false;
-    return file.endsWith(".js");
-  });
+  const files = fs.readdirSync(basePath).filter((file) => file.endsWith(".js"));
 
-  if (files.length > 0) {
-    logger.section(
+  if (files.length > 0 && type !== "util") {
+    loggerInstance.section(
       type === "command"
         ? "commandes"
         : type === "event"
         ? "événements"
         : type === "task"
         ? "tâches"
+        : type === "route"
+        ? "routes"
         : "utilitaires"
     );
   }
@@ -38,6 +43,7 @@ export const loadFiles = async (folderName, type, client) => {
 
   for (const file of files) {
     const filePath = path.join(basePath, file);
+
     try {
       const fileModule = await import(pathToFileURL(filePath).href);
 
@@ -51,12 +57,12 @@ export const loadFiles = async (folderName, type, client) => {
               fileModule.default.data.name,
               fileModule.default
             );
-            logger.success(
+            loggerInstance.success(
               `Commande chargée : ${fileModule.default.data.name}`
             );
             loadedFiles.push(fileModule.default.data.name);
           } else {
-            logger.warn(`Commande invalide dans ${file}`);
+            loggerInstance.warn(`Commande invalide dans ${file}`);
             failedFiles.push(file);
           }
           break;
@@ -73,10 +79,12 @@ export const loadFiles = async (folderName, type, client) => {
             } else {
               client.on(fileModule.default.name, handler);
             }
-            logger.success(`Événement chargé : ${fileModule.default.name}`);
+            loggerInstance.success(
+              `Événement chargé : ${fileModule.default.name}`
+            );
             loadedFiles.push(fileModule.default.name);
           } else {
-            logger.warn(`Événement invalide dans ${file}`);
+            loggerInstance.warn(`Événement invalide dans ${file}`);
             failedFiles.push(file);
           }
           break;
@@ -94,32 +102,56 @@ export const loadFiles = async (folderName, type, client) => {
             } else {
               fileModule.default.execute(client);
             }
-            logger.success(`Tâche chargée : ${fileModule.default.name}`);
+            loggerInstance.success(
+              `Tâche chargée : ${fileModule.default.name}`
+            );
             loadedFiles.push(fileModule.default.name);
           } else {
-            logger.warn(`Tâche invalide dans ${file}`);
+            loggerInstance.warn(`Tâche invalide dans ${file}`);
             failedFiles.push(file);
           }
           break;
 
         case "util":
-          logger.custom("UTIL", `Fichier chargé : ${file}`, "gray");
+          loggerInstance.custom("UTIL", `Fichier chargé : ${file}`, "gray");
           loadedFiles.push(file);
           break;
 
+        case "route":
+          if (!app) {
+            throw new Error(
+              "L'application Express doit être fournie pour charger des routes."
+            );
+          }
+          const routeBase = file.replace(".js", "");
+          if (typeof fileModule.default === "function") {
+            app.use(
+              `/v1/${routeBase}`,
+              fileModule.default(client, loggerInstance)
+            );
+            loggerInstance.success(`Route chargée : /v1/${routeBase}`);
+            loadedFiles.push(routeBase);
+          } else {
+            loggerInstance.warn(`Route invalide dans ${file}`);
+            failedFiles.push(file);
+          }
+          break;
+
         default:
-          logger.warn(`Type non reconnu pour ${file} : ${type}`);
+          loggerInstance.warn(`Type non reconnu pour ${file} : ${type}`);
           failedFiles.push(file);
           break;
       }
     } catch (err) {
-      logger.error(`Erreur lors du chargement de ${file} : ${err.message}`);
+      loggerInstance.error(
+        `Erreur lors du chargement de ${file} : ${err.message}`
+      );
       failedFiles.push(file);
     }
   }
 
   if (loadedFiles.length > 0 || failedFiles.length > 0) {
-    logger.custom(
+    loggerInstance.custom(
       "RÉSUMÉ",
       `${type} - Chargés: ${loadedFiles.length}, Échecs: ${failedFiles.length}`,
       loadedFiles.length > 0 ? "green" : "red"

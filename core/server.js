@@ -3,6 +3,7 @@
 // ========================================
 import express from "express";
 import config from "./config.js";
+import { loadFiles } from "./loadFiles.js"; // 👈 Import du chargeur centralisé
 
 export default class WebServer {
   constructor(client, logger) {
@@ -11,7 +12,7 @@ export default class WebServer {
     this.logger = logger;
 
     this.setupMiddleware();
-    this.setupRoutes();
+    this.setupRoutes(); // ⬅ On prépare les routes ici
   }
 
   setupMiddleware() {
@@ -25,31 +26,24 @@ export default class WebServer {
     });
   }
 
-  setupRoutes() {
+  async setupRoutes() {
     try {
-      import("../routes/playlistWebhook.js").then(
-        ({ default: sendPlaylist }) => {
-          this.app.use("/v1/playlist", sendPlaylist(this.client, this.logger));
-        }
-      );
-
-      import("../routes/health.js").then(({ default: healthRoute }) => {
-        this.app.use("/v1/health/", healthRoute);
-      });
-
-      import("../routes/stageWebhook.js").then(({ default: stageWebhook }) => {
-        this.app.use("/v1/stage/", stageWebhook(this.client, this.logger));
-      });
+      // 💡 Chargement dynamique de toutes les routes dans /routes/
+      await loadFiles("routes", "route", this.client, this.app, this.logger);
     } catch (error) {
-      throw new Error("Échec de l'initialisation des routes");
+      this.logger.error(
+        `Erreur lors du chargement des routes : ${error.message}`
+      );
     }
 
+    // 🛑 Route 404 (doit venir après toutes les autres)
     this.app.use((req, res) => {
       res
         .status(404)
         .json({ error: "Route non trouvée", path: req.originalUrl });
     });
 
+    // 🚨 Gestion des erreurs internes
     this.app.use((err, req, res, next) => {
       this.logger.error(`Erreur serveur : ${err.message}`);
       res.status(500).json({ error: "Erreur interne du serveur" });
