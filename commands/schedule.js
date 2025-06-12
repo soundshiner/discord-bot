@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import {
+  SlashCommandBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
@@ -9,14 +10,15 @@ import {
 } from "discord.js";
 import logger from "../utils/logger.js";
 
-// Gestion du __dirname en ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default {
-  name: "schedule",
-  description: "Displays the current schedule of programs",
-  async execute(message) {
+  data: new SlashCommandBuilder()
+    .setName("schedule")
+    .setDescription("📅 Affiche l'horaire des programmes")
+    .setDMPermission(false),
+  async execute(interaction) {
     try {
       const schedulePath = path.join(__dirname, "..", "schedule.txt");
       const scheduleContent = fs.readFileSync(schedulePath, "utf-8");
@@ -30,10 +32,8 @@ export default {
 
       const embed = new EmbedBuilder()
         .setColor(0x3498db)
-        .setTitle("Choose a language")
-        .setDescription(
-          "Click on one of the buttons below to see the schedule."
-        );
+        .setTitle("📅 Choose a language")
+        .setDescription("Clique sur un des boutons pour afficher l'horaire.");
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -46,16 +46,20 @@ export default {
           .setStyle(ButtonStyle.Secondary)
       );
 
-      await message.reply({ embeds: [embed], components: [row] });
+      await interaction.reply({
+        embeds: [embed],
+        components: [row],
+        ephemeral: false,
+      });
 
-      const collector = message.channel.createMessageComponentCollector({
-        filter: (interaction) => interaction.user.id === message.author.id,
+      const collector = interaction.channel.createMessageComponentCollector({
+        filter: (i) => i.user.id === interaction.user.id,
         time: 15_000,
       });
 
-      collector.on("collect", async (interaction) => {
-        if (interaction.customId === "schedule_fr") {
-          await interaction.update({
+      collector.on("collect", async (i) => {
+        if (i.customId === "schedule_fr") {
+          await i.update({
             embeds: [
               new EmbedBuilder()
                 .setColor(0xf1c40f)
@@ -64,8 +68,8 @@ export default {
             ],
             components: [],
           });
-        } else if (interaction.customId === "schedule_en") {
-          await interaction.update({
+        } else if (i.customId === "schedule_en") {
+          await i.update({
             embeds: [
               new EmbedBuilder()
                 .setColor(0x2ecc71)
@@ -77,8 +81,8 @@ export default {
         }
       });
     } catch (error) {
-      logger.error("Error reading schedule: ", error);
-      message.reply("Unable to fetch the schedule.");
+      logger.error("Erreur lecture horaire : ", error);
+      await interaction.reply("❌ Impossible de lire l'horaire.");
     }
   },
 };

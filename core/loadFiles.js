@@ -44,12 +44,17 @@ export const loadFiles = async (folderName, type, client) => {
       switch (type) {
         case "command":
           if (
-            fileModule.default?.name &&
+            fileModule.default?.data?.name &&
             typeof fileModule.default?.execute === "function"
           ) {
-            client.commands.set(fileModule.default.name, fileModule.default);
-            logger.success(`Commande chargée : ${fileModule.default.name}`);
-            loadedFiles.push(fileModule.default.name);
+            client.commands.set(
+              fileModule.default.data.name,
+              fileModule.default
+            );
+            logger.success(
+              `Commande chargée : ${fileModule.default.data.name}`
+            );
+            loadedFiles.push(fileModule.default.data.name);
           } else {
             logger.warn(`Commande invalide dans ${file}`);
             failedFiles.push(file);

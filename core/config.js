@@ -69,7 +69,8 @@ const config = {
   VOICE_CHANNEL_ID: getEnvVar("VOICE_CHANNEL_ID"),
   ANNOUNCEMENTS_CHANNEL_ID: getEnvVar("PLAYLIST_CHANNEL_ID"),
   BOT_ROLE_NAME: getEnvVar("BOT_ROLE_NAME", false, "soundSHINE"),
-
+  DEV_GUILD_ID: process.env.DEV_GUILD_ID,
+  CLIENT_ID: process.env.CLIENT_ID,
   isDev: env === "dev",
   isProd: env === "prod",
 };

@@ -22,7 +22,9 @@ class SoundShineBot {
       await this.initializeWebServer(this.client, logger);
       await this.connectBot();
 
-      logger.success("✨ soundSHINE Bot démarré avec succès !");
+      logger.success(
+        `✨ soundSHINE Bot démarré avec le username ${this.client.user.tag}`
+      );
     } catch (error) {
       logger.error(
         `Erreur critique lors de l'initialisation : ${error.message}`
@@ -70,7 +72,6 @@ class SoundShineBot {
 
   async connectBot() {
     await this.client.login(config.BOT_TOKEN);
-    logger.success("Bot Discord connecté avec succès");
   }
 
   async shutdown() {

@@ -1,22 +1,28 @@
+import { SlashCommandBuilder } from "discord.js";
 import axios from "axios";
 import config from "../core/config.js";
-const { JSON_URL } = config;
 import logger from "../utils/logger.js";
 
+const { JSON_URL } = config;
+
 export default {
-  name: "nowplaying",
-  description: "Displays the currently playing song",
-  async execute(message) {
+  data: new SlashCommandBuilder()
+    .setName("nowplaying")
+    .setDescription("🎵 Affiche la chanson en cours de lecture")
+    .setDMPermission(false),
+  async execute(interaction) {
     try {
       const response = await axios.get(JSON_URL);
       const data = response.data;
       const currentSong =
-        data?.icestats?.source?.title || "No song information available";
+        data?.icestats?.source?.title || "Aucune chanson en cours.";
 
-      message.reply(`🎶 Now playing: **${currentSong}**`);
+      await interaction.reply(`🎶 Now playing: **${currentSong}**`);
     } catch (error) {
-      logger.error(`Error fetching current song: ${error.message}`);
-      message.reply("Unable to fetch current song.");
+      logger.error(`Erreur récupération chanson en cours : ${error.message}`);
+      await interaction.reply(
+        "❌ Impossible de récupérer la chanson actuelle."
+      );
     }
   },
 };

@@ -1,12 +1,16 @@
+import { SlashCommandBuilder } from "discord.js";
 import axios from "axios";
 import config from "../core/config.js";
-const { UNSPLASH_ACCESS_KEY } = config;
 import logger from "../utils/logger.js";
 
+const { UNSPLASH_ACCESS_KEY } = config;
+
 export default {
-  name: "getwall",
-  description: "Fetches a random photo from Unsplash",
-  async execute(message) {
+  data: new SlashCommandBuilder()
+    .setName("getwallpaper")
+    .setDescription("📷 Récupère une photo aléatoire depuis Unsplash")
+    .setDMPermission(false),
+  async execute(interaction) {
     try {
       const response = await axios.get(
         `https://api.unsplash.com/photos/random?client_id=${UNSPLASH_ACCESS_KEY}&count=1`
@@ -18,13 +22,13 @@ export default {
       const photoUrl = photoData?.urls?.regular;
 
       if (photoUrl) {
-        message.reply(photoUrl);
+        return interaction.reply(photoUrl);
       } else {
-        message.reply("Couldn't fetch a photo, try again later.");
+        return interaction.reply("Aucune image trouvée, réessaie plus tard.");
       }
     } catch (error) {
-      logger.error("Error fetching photo from Unsplash: ", error);
-      message.reply("Unable to fetch a random photo.");
+      logger.error("Erreur Unsplash: ", error);
+      return interaction.reply("Impossible de récupérer une image.");
     }
   },
 };
