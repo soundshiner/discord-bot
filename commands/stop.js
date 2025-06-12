@@ -5,12 +5,12 @@ import logger from "../utils/logger.js";
 
 const { ADMIN_ROLE_ID } = config;
 
-export const data = new SlashCommandBuilder()
+const data = new SlashCommandBuilder()
   .setName("stop")
   .setDescription("Arrête le stream et déconnecte le bot du salon vocal")
   .setDefaultMemberPermissions(0); // Perms custom
 
-export async function execute(interaction) {
+async function execute(interaction) {
   if (!interaction.member.roles.cache.has(ADMIN_ROLE_ID)) {
     return interaction.reply({
       content: "❌ Cette commande est réservée aux administrateurs.",
@@ -33,3 +33,5 @@ export async function execute(interaction) {
     return interaction.reply("❌ Erreur lors de l'arrêt du stream.");
   }
 }
+
+export default { data, execute };

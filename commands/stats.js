@@ -10,12 +10,12 @@ import logger from "../utils/logger.js";
 
 const { ADMIN_ROLE_ID, JSON_URL, ICECAST_HISTORY_URL } = config;
 
-export const data = new SlashCommandBuilder()
+const data = new SlashCommandBuilder()
   .setName("stats")
   .setDescription("Affiche les statistiques du stream")
   .setDefaultMemberPermissions(0); // Pas de perms par défaut
 
-export async function execute(interaction) {
+async function execute(interaction) {
   if (!interaction.member.roles.cache.has(ADMIN_ROLE_ID)) {
     return interaction.reply({
       content: "❌ Cette commande est réservée aux administrateurs.",
@@ -92,3 +92,5 @@ export async function execute(interaction) {
     await interaction.reply("❌ Impossible de récupérer les stats du stream.");
   }
 }
+
+export default { data, execute };

@@ -15,6 +15,7 @@ export default {
     .setName("play")
     .setDescription("▶️ Lance le stream dans un Stage Channel")
     .setDMPermission(false),
+
   async execute(interaction) {
     const channel = interaction.member.voice.channel;
 
@@ -33,6 +34,9 @@ export default {
     }
 
     try {
+      // ✅ Répond immédiatement pour éviter le timeout
+      await interaction.deferReply();
+
       const connection = joinVoiceChannel({
         channelId: channel.id,
         guildId: channel.guild.id,
@@ -51,24 +55,39 @@ export default {
       player.play(resource);
       connection.subscribe(player);
 
-      player.once(AudioPlayerStatus.Playing, () => {
-        interaction.followUp("▶️ Stream lancé dans le stage channel.");
-      });
-
-      player.on("error", (error) => {
-        console.error("❌ Erreur du player:", error);
-        interaction.followUp("❌ Erreur pendant la lecture du stream.");
-      });
-
       interaction.client.audio = { connection, player };
 
-      await interaction.reply("🔄 Connexion au stage channel...");
+      // 🔁 Sécurité si le stream prend trop de temps
+      const timeout = setTimeout(() => {
+        interaction.editReply(
+          "⚠️ Aucun son détecté après 5s. Lecture échouée ?"
+        );
+      }, 5000);
+
+      player.once(AudioPlayerStatus.Playing, async () => {
+        clearTimeout(timeout);
+        await interaction.editReply("▶️ Stream lancé dans le stage channel.");
+      });
+
+      player.on("error", async (error) => {
+        clearTimeout(timeout);
+        console.error("❌ Erreur du player:", error);
+        await interaction.editReply("❌ Erreur pendant la lecture du stream.");
+      });
     } catch (error) {
       console.error("❌ Erreur exécution /play :", error);
-      await interaction.reply({
-        content: "❌ Une erreur est survenue pendant la tentative de lecture.",
-        ephemeral: true,
-      });
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({
+          content:
+            "❌ Une erreur est survenue pendant la tentative de lecture.",
+        });
+      } else {
+        await interaction.reply({
+          content:
+            "❌ Une erreur est survenue pendant la tentative de lecture.",
+          ephemeral: true,
+        });
+      }
     }
   },
 };
