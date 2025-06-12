@@ -63,7 +63,7 @@ const config = {
   ADMIN_ROLE_ID: getEnvVar("ADMIN_ROLE_ID"),
 
   WEBHOOK_API_TOKEN: getEnvVar("WEBHOOK_API_TOKEN"),
-  WEBPORT: Number(getEnvVar("WEBPORT", false, 3000)),
+  API_PORT: Number(getEnvVar("API_PORT", false, 3000)),
 
   PREFIX: getEnvVar("PREFIX", false, "!s"),
   VOICE_CHANNEL_ID: getEnvVar("VOICE_CHANNEL_ID"),
