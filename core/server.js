@@ -32,11 +32,9 @@ export default class WebServer {
           this.app.use("/v1", sendPlaylist(this.client, this.logger));
         }
       );
-
       import("../routes/health.js").then(({ default: healthRoute }) => {
-        this.app.use("/health", healthRoute);
+        this.app.use("/v1/health", healthRoute(this.client, this.logger));
       });
-
       import("../routes/stageWebhook.js").then(({ default: stageWebhook }) => {
         this.app.use("/v1", stageWebhook(this.client, this.logger));
       });
