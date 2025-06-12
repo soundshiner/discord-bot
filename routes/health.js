@@ -8,6 +8,7 @@ router.get("/", (req, res) => {
     status: "ok",
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
+    message: "🟢 soundSHINE API is up and running!",
   });
 });
 
