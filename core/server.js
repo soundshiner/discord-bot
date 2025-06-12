@@ -29,14 +29,15 @@ export default class WebServer {
     try {
       import("../routes/playlistWebhook.js").then(
         ({ default: sendPlaylist }) => {
-          this.app.use("/v1", sendPlaylist(this.client, this.logger));
+          this.app.use("/v1/playlist/", sendPlaylist(this.client, this.logger));
         }
       );
       import("../routes/health.js").then(({ default: healthRoute }) => {
-        this.app.use("/v1/health", healthRoute(this.client, this.logger));
+        this.app.use("/v1/health/", healthRoute(this.client, this.logger));
       });
+
       import("../routes/stageWebhook.js").then(({ default: stageWebhook }) => {
-        this.app.use("/v1", stageWebhook(this.client, this.logger));
+        this.app.use("/v1/stage/", stageWebhook(this.client, this.logger));
       });
     } catch (error) {
       throw new Error("Échec de l'initialisation des routes");
