@@ -57,7 +57,7 @@ export default class WebServer {
   }
 
   start() {
-    const port = config.WEBPORT;
+    const port = config.API_PORT;
     return new Promise((resolve, reject) => {
       const server = this.app.listen(port, (err) => {
         if (err) {
