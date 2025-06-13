@@ -16,7 +16,7 @@ async function updateStatus(client) {
     }
 
     await client.user.setActivity({
-      name: `📀 • ${currentSong}`,
+      name: `📀 ${currentSong}`,
       type: ActivityType.Custom,
       url: "https://soundshineradio.com",
     });
