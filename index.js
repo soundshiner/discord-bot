@@ -4,13 +4,11 @@
 import { Client, GatewayIntentBits, Collection } from "discord.js";
 import config from "./core/config.js";
 import { loadFiles } from "./core/loadFiles.js";
-import WebServer from "./core/server.js";
 import logger from "./utils/logger.js";
 
 class SoundShineBot {
   constructor() {
     this.client = null;
-    this.server = null;
   }
 
   async initialize() {
@@ -19,7 +17,6 @@ class SoundShineBot {
       logger.custom("ENV", `Environnement : ${config.NODE_ENV}`, "blue");
 
       await this.initializeDiscordClient();
-      await this.initializeWebServer(this.client, logger);
       await this.connectBot();
 
       logger.success(
@@ -63,11 +60,6 @@ class SoundShineBot {
         );
       }
     });
-  }
-
-  async initializeWebServer(client, logger) {
-    this.server = new WebServer(client, logger);
-    await this.server.start();
   }
 
   async connectBot() {
