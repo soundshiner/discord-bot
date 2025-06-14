@@ -1,48 +1,49 @@
-// routes/playlistWebhook.js
-import { Router } from "express";
+import express from "express";
 import config from "../core/config.js";
 
 const { VOICE_CHANNEL_ID, API_TOKEN, PLAYLIST_CHANNEL_ID } = config;
 
 export default (client, logger) => {
-  const router = Router();
+  const router = express.Router();
 
   router.post("/", async (req, res) => {
-    const { token, playlist, topic } = req.body;
+    const { token, playlist, topic } = req.query;
 
-    // Vérification
+    // Vérification du token
     if (!token || token !== API_TOKEN) {
       return res.status(403).json({ error: "Token invalide." });
     }
 
+    // Vérification des paramètres requis
     if (!playlist || !topic) {
       return res.status(400).json({ error: "Playlist et topic sont requis." });
     }
 
     try {
       // 1. Envoi de l'embed de playlist
-      const playlistChannel = await client.channels.fetch(PLAYLIST_CHANNEL_ID);
-      if (!playlistChannel) {
-        logger.error("Salon introuvable.");
-        return res.status(404).json({ error: "Salon introuvable." });
-      }
-      if (!playlistChannel.isTextBased()) {
-        logger.error("Le salon n'est pas textuel.");
-        return res.status(500).json({ error: "Le salon n'est pas textuel." });
+      const playlistChannel = client.channels.cache.get(PLAYLIST_CHANNEL_ID);
+      if (!playlistChannel?.isTextBased()) {
+        return res
+          .status(500)
+          .json({ error: "Canal Discord invalide pour la playlist." });
       }
 
       const embed = {
         title: "Nouvelle Playlist en cours",
         description: `**${playlist}** est maintenant en rotation sur soundSHINE!`,
         color: 0xaff6e4,
-        footer: { text: "soundSHINE Radio" },
-        thumbnail: { url: "https://soundshineradio.com/avatar.jpg" },
+        footer: {
+          text: "soundSHINE Radio",
+        },
+        thumbnail: {
+          url: "https://soundshineradio.com/avatar.jpg",
+        },
       };
 
       await playlistChannel.send({ embeds: [embed] });
       logger.success(`Embed playlist envoyé : ${playlist}`);
 
-      // 2. Mise à jour ou création du stage
+      // 2. Mise à jour du stage channel
       const stageChannel = await client.channels.fetch(VOICE_CHANNEL_ID);
       if (!stageChannel || stageChannel.type !== 13) {
         return res.status(400).json({ error: "Canal Stage invalide." });
@@ -70,7 +71,7 @@ export default (client, logger) => {
 
       return res.status(200).json({
         status: "OK",
-        message: "Playlist et stage mis à jours avec succès!",
+        message: "Playlist et stage mis à jour avec succès.",
         playlist,
         topic,
       });
