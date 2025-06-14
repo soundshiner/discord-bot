@@ -3,6 +3,8 @@
 // ========================================
 
 import express from "express";
+
+import health from "../routes/health.js";
 import playlistWebhook from "../routes/playlistWebhook.js";
 
 export default class WebServer {
@@ -29,11 +31,9 @@ export default class WebServer {
 
   setupRoutes() {
     // Route health
-    import("./../routes/health.js").then((module) => {
-      this.app.use("/v1/health", module.default(this.client, this.logger));
-    });
+    this.app.use("/v1/health", health(this.client, this.logger));
 
-    // Route webhook combinée
+    // Route playlist webhook
     this.app.use(
       "/v1/send-playlist",
       playlistWebhook(this.client, this.logger)
@@ -60,7 +60,6 @@ export default class WebServer {
           this.logger.error(`Erreur lors du démarrage : ${err.message}`);
           reject(err);
         } else {
-          this.logger.success(`Serveur web démarré sur le port ${port}`);
           resolve(server);
         }
       });
