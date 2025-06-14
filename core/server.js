@@ -3,6 +3,7 @@
 // ========================================
 
 import express from "express";
+import playlistWebhook from "../routes/playlistWebhook.js";
 
 export default class WebServer {
   constructor(client, logger) {
@@ -32,10 +33,11 @@ export default class WebServer {
       this.app.use("/v1/health", module.default(this.client, this.logger));
     });
 
-    // Route playlist
-    import("./../routes/playlist.js").then((module) => {
-      this.app.use("/v1/playlist", module.default(this.client, this.logger));
-    });
+    // Route webhook combinée
+    this.app.use(
+      "/v1/send-playlist",
+      playlistWebhook(this.client, this.logger)
+    );
 
     // 404 fallback
     this.app.use((req, res) => {
