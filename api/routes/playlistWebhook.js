@@ -1,10 +1,10 @@
-import { Router } from "express";
+import express from "express";
 import config from "../../core/config.js";
 
 const { VOICE_CHANNEL_ID, API_TOKEN, PLAYLIST_CHANNEL_ID } = config;
 
 export default (client, logger) => {
-  const router = Router();
+  const router = express.Router();
 
   router.post("/", async (req, res) => {
     logger.info("POST /v1/send-playlist");
