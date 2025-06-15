@@ -7,7 +7,7 @@ import config from "./core/config.js";
 import { loadFiles } from "./core/loadFiles.js";
 import logger from "./utils/logger.js";
 
-import WebServer from "./core/server.js";
+import WebServer from "./api/server.js";
 
 class SoundShineBot {
   constructor() {
