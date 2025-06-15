@@ -4,8 +4,8 @@
 
 import express from "express";
 
-import health from "../routes/health.js";
-import playlistWebhook from "../routes/playlistWebhook.js";
+import health from "./routes/health.js";
+import playlistWebhook from "./routes/playlistWebhook.js";
 
 export default class WebServer {
   constructor(client, logger) {

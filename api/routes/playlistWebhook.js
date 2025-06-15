@@ -1,13 +1,15 @@
-import express from "express";
-import config from "../core/config.js";
+import { Router } from "express";
+import config from "../../core/config.js";
 
 const { VOICE_CHANNEL_ID, API_TOKEN, PLAYLIST_CHANNEL_ID } = config;
 
 export default (client, logger) => {
-  const router = express.Router();
+  const router = Router();
 
   router.post("/", async (req, res) => {
-    const { token, playlist, topic } = req.query;
+    logger.info("POST /v1/send-playlist");
+
+    const { token, playlist, topic } = req.body;
 
     // Vérification du token
     if (!token || token !== API_TOKEN) {
@@ -82,6 +84,8 @@ export default (client, logger) => {
         .json({ error: "Erreur serveur lors du traitement." });
     }
   });
+
   logger.custom("ROUTE", "✅ Route /v1/send-playlist chargée");
+
   return router;
 };
