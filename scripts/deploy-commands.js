@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 
 const args = process.argv.slice(2);
 const isDev = args.includes("--dev");
+
 const isGlobal = args.includes("--global");
 
 if (!isDev && !isGlobal) {
@@ -17,7 +18,9 @@ if (!isDev && !isGlobal) {
 }
 
 const commands = [];
+
 const commandsPath = path.join(__dirname, "..", "commands");
+
 const commandFiles = readdirSync(commandsPath).filter((file) =>
   file.endsWith(".js")
 );
@@ -28,6 +31,10 @@ for (const file of commandFiles) {
   const command = (await import(fileURL)).default;
 
   if ("data" in command && "execute" in command) {
+    // Renomme si DEV
+    if (isDev) {
+      command.data.setName(`dev-${command.data.name}`);
+    }
     commands.push(command.data.toJSON());
   } else {
     console.warn(
