@@ -73,6 +73,8 @@ const config = {
   CLIENT_ID: process.env.CLIENT_ID,
   isDev: env === "dev",
   isProd: env === "prod",
+  roleId: "1292528573881651372",
+  channelId: "1383977293579419769",
 };
 
 export default config;
