@@ -5,8 +5,7 @@
 import express from "express";
 
 import health from "./routes/health.js";
-import playlistWebhook from "./routes/playlistWebhook.js";
-
+import playlist_update from "./routes/playlist-update.js";
 export default class WebServer {
   constructor(client, logger) {
     this.app = express();
@@ -36,7 +35,7 @@ export default class WebServer {
     // Route playlist webhook
     this.app.use(
       "/v1/send-playlist",
-      playlistWebhook(this.client, this.logger)
+      playlist_update(this.client, this.logger)
     );
 
     // 404 fallback
