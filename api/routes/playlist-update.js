@@ -40,10 +40,11 @@ export default (client, logger) => {
 
       const embed = {
         title: "Nouvelle Playlist en cours",
-        description: `**${playlist}** est maintenant en rotation sur soundSHINE!`,
+        description: `**${playlist}** est maintenant en rotation sur soundSHINE! Vous pouvez l'écouter en direct sur le canal <#1383684854255849613>.`,
         color: 0xaff6e4,
         footer: {
-          text: "soundSHINE Radio",
+          text: "soundSHINE Radio | https://soundshineradio.com",
+          icon_url: "https://soundshineradio.com/favicon.ico",
         },
         thumbnail: {
           url: "https://soundshineradio.com/avatar.jpg",
