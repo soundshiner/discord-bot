@@ -50,7 +50,9 @@ export default {
         },
       });
 
-      const resource = createAudioResource(STREAM_URL, { inlineVolume: true });
+      const resource = createAudioResource(STREAM_URL || LOCAL_STREAM_URL, {
+        inlineVolume: true,
+      });
 
       player.play(resource);
       connection.subscribe(player);

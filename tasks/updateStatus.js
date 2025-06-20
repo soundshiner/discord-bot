@@ -7,7 +7,9 @@ import logger from "../utils/logger.js";
 
 async function updateStatus(client) {
   try {
-    const { data } = await axios.get(JSON_URL, { timeout: 10000 });
+    const { data } = await axios.get(JSON_URL || LOCAL_JSON_URL, {
+      timeout: 10000,
+    });
 
     let currentSong = "Stream offline or no song information available";
 
