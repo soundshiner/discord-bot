@@ -43,7 +43,7 @@ export default (client, logger) => {
         description: `**${playlist}** est maintenant en rotation sur soundSHINE! Vous pouvez l'écouter en direct sur le canal <#1383684854255849613>.`,
         color: 0xaff6e4,
         footer: {
-          text: "soundSHINE Radio | https://soundshineradio.com",
+          text: "https://soundshineradio.com",
           icon_url: "https://soundshineradio.com/avatar.jpg",
         },
       };
