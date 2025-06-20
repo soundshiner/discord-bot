@@ -2,9 +2,10 @@
 import Database from "better-sqlite3";
 const db = new Database("suggestions.sqlite");
 
-// Create table if not exists
+// Crée la table des suggestions si elle n'existe pas
 db.prepare(
-  `CREATE TABLE IF NOT EXISTS suggestions (
+  `
+  CREATE TABLE IF NOT EXISTS suggestions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     userId TEXT NOT NULL,
     username TEXT NOT NULL,
@@ -13,7 +14,20 @@ db.prepare(
     lien TEXT,
     genre TEXT,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-)`
+  )
+`
+).run();
+
+// Crée la table pour le DJ actif si elle n'existe pas
+db.prepare(
+  `
+  CREATE TABLE IF NOT EXISTS dj_status (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId TEXT NOT NULL,
+    username TEXT NOT NULL,
+    activatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`
 ).run();
 
 export { db };
