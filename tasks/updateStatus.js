@@ -7,7 +7,7 @@ import logger from "../utils/logger.js";
 
 async function updateStatus(client) {
   try {
-    const { data } = await axios.get(LOCAL_JSON_URL, {
+    const { data } = await axios.get(JSON_URL, {
       timeout: 10000,
     });
 
