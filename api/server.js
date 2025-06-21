@@ -9,7 +9,6 @@ import rateLimit from 'express-rate-limit';
 import healthRoutes from './routes/health.js';
 import metricsRoutes from './routes/metrics.js';
 import playlistRoutes from './routes/playlist-update.js';
-import { logger } from '../utils/logger.js';
 import errorHandler from '../utils/errorHandler.js';
 
 class WebServer {
@@ -132,7 +131,7 @@ class WebServer {
   setupErrorHandling() {
     try {
       // Gestionnaire d'erreurs global
-      this.app.use((error, req, res, next) => {
+      this.app.use((error, req, res) => {
         errorHandler.handleAPIError(error, req, res);
 
         this.logger.error(`Erreur API: ${error.message}`, {

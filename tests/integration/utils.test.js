@@ -274,13 +274,6 @@ describe('Utils Integration Tests', () => {
 
   describe('Database', () => {
     it('should initialize database connection', async () => {
-      // Mock database initialization
-      const mockDb = {
-        prepare: vi.fn(),
-        exec: vi.fn(),
-        close: vi.fn()
-      };
-
       // Test database initialization
       expect(database).toBeDefined();
     });

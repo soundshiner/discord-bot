@@ -52,7 +52,7 @@ describe('handlePlaylistSelect', () => {
     };
   });
 
-  it("met à jour l'interface de playlist et log le succès", async () => {
+  it('met à jour l\'interface de playlist et log le succès', async () => {
     await handlePlaylistSelect(mockInteraction);
 
     // Vérifier que les logs sont appelés

@@ -15,7 +15,7 @@ export function config() {
   cachedConfig = {
     token: process.env.DISCORD_TOKEN || '',
     clientId: process.env.CLIENT_ID || '',
-    apiPort: parseInt(process.env.API_PORT) || 3000
+    apiPort: parseInt(process.env.API_PORT, 10) || 3000
   };
 
   return cachedConfig;

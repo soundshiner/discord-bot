@@ -61,7 +61,7 @@ describe('Discord Commands Integration', () => {
 
   describe('Ping Command', () => {
     it('should execute ping command successfully', async () => {
-      const result = await pingCommand.execute(mockInteraction);
+      await pingCommand.execute(mockInteraction);
 
       expect(mockInteraction.reply).toHaveBeenCalledWith({
         content: 'Ping...',
@@ -77,7 +77,7 @@ describe('Discord Commands Integration', () => {
       // Mock a failure
       mockInteraction.reply.mockRejectedValueOnce(new Error('Network error'));
 
-      const result = await pingCommand.execute(mockInteraction);
+      await pingCommand.execute(mockInteraction);
 
       expect(mockInteraction.reply).toHaveBeenCalledWith({
         content: '❌ Erreur lors de la vérification de la latence.',

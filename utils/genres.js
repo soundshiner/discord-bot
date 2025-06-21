@@ -9,6 +9,6 @@ export const genres = [
   'Alternative',
   'Lofi',
   'Chill Beats',
-  "80's",
-  "Dance 90's"
+  '80\'s',
+  'Dance 90\'s'
 ];

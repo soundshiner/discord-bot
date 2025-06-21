@@ -1,6 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import interactionCreateEvent from '../../events/interactionCreate.js';
-import messageCreateEvent from '../../events/messageCreate.js';
 
 // Mock Discord.js
 const mockClient = {
@@ -91,6 +89,24 @@ describe('Discord Events Integration Tests', () => {
 
       expect(guildCreateEvent.execute).toHaveBeenCalledWith(mockGuild, mockClient);
     });
+
+    it('should handle missing guild information', async () => {
+      const guildCreateEvent = {
+        execute: vi.fn().mockImplementation(guild => {
+          if (!guild || !guild.id) {
+            throw new Error('Invalid guild data');
+          }
+        })
+      };
+
+      const invalidGuild = { name: 'Invalid Guild' };
+
+      try {
+        await guildCreateEvent.execute(invalidGuild, mockClient);
+      } catch (error) {
+        expect(error.message).toBe('Invalid guild data');
+      }
+    });
   });
 
   describe('Message Create Event', () => {
@@ -152,7 +168,7 @@ describe('Discord Events Integration Tests', () => {
 
     it('should handle command interactions', async () => {
       const interactionCreateEvent = {
-        execute: vi.fn().mockImplementation((interaction, client) => {
+        execute: vi.fn().mockImplementation(interaction => {
           if (interaction.isCommand()) {
             console.log(`Command executed: ${interaction.commandName}`);
           }
@@ -197,7 +213,7 @@ describe('Discord Events Integration Tests', () => {
 
     it('should handle user leaving voice channel', async () => {
       const voiceStateUpdateEvent = {
-        execute: vi.fn().mockImplementation((oldState, newState, client) => {
+        execute: vi.fn().mockImplementation((oldState, newState) => {
           if (oldState.channelId && !newState.channelId) {
             console.log(`User ${newState.member.id} left voice channel`);
           }
@@ -233,24 +249,6 @@ describe('Discord Events Integration Tests', () => {
       }
 
       expect(errorEvent.execute).toHaveBeenCalledWith(mockClient);
-    });
-
-    it('should handle missing guild information', async () => {
-      const guildCreateEvent = {
-        execute: vi.fn().mockImplementation((guild, client) => {
-          if (!guild || !guild.id) {
-            throw new Error('Invalid guild data');
-          }
-        })
-      };
-
-      const invalidGuild = { name: 'Invalid Guild' };
-
-      try {
-        await guildCreateEvent.execute(invalidGuild, mockClient);
-      } catch (error) {
-        expect(error.message).toBe('Invalid guild data');
-      }
     });
   });
 });

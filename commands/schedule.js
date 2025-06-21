@@ -17,7 +17,7 @@ const __dirname = path.dirname(__filename);
 export default {
   data: new SlashCommandBuilder()
     .setName('schedule')
-    .setDescription("📅 Affiche l'horaire des programmes")
+    .setDescription('📅 Affiche l\'horaire des programmes')
     .setDMPermission(false),
   async execute(interaction) {
     try {
@@ -34,7 +34,7 @@ export default {
       const embed = new EmbedBuilder()
         .setColor(0x3498db)
         .setTitle('📅 Choose a language')
-        .setDescription("Clique sur un des boutons pour afficher l'horaire.");
+        .setDescription('Clique sur un des boutons pour afficher l\'horaire.');
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('schedule_fr').setLabel('Français').setStyle(ButtonStyle.Primary),
@@ -78,7 +78,7 @@ export default {
     } catch (error) {
       logger.error('Erreur lecture horaire : ', error);
       return await interaction.reply({
-        content: "❌ Impossible de lire l'horaire.",
+        content: '❌ Impossible de lire l\'horaire.',
         flags: MessageFlags.Ephemeral
       });
     }

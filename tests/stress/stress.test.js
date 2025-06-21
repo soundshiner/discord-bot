@@ -128,7 +128,7 @@ describe('Stress Tests', () => {
         const tempData = new Array(dataSize).fill(`iteration-${i}`);
 
         // Simuler un travail avec les données
-        const processed = tempData.map(item => item.toUpperCase());
+        tempData.map(item => item.toUpperCase());
 
         // Attendre un peu pour permettre au GC de fonctionner
         if (i % 10 === 0) {
@@ -252,33 +252,37 @@ describe('Stress Tests', () => {
       const operationPromises = [];
       for (let i = 0; i < operationCount; i++) {
         operationPromises.push(
-          new Promise(async resolve => {
+          new Promise(resolve => {
             let attempts = 0;
             const maxAttempts = 3;
 
-            while (attempts < maxAttempts) {
-              try {
-                // Simuler une opération qui peut échouer
-                if (Math.random() < 0.3 && attempts < maxAttempts - 1) {
-                  throw new Error('temporary_failure');
-                }
+            const attemptOperation = async () => {
+              while (attempts < maxAttempts) {
+                try {
+                  // Simuler une opération qui peut échouer
+                  if (Math.random() < 0.3 && attempts < maxAttempts - 1) {
+                    throw new Error('temporary_failure');
+                  }
 
-                recoveryCount++;
-                resolve({ success: true, attempts: attempts + 1 });
-                return;
-              } catch (error) {
-                attempts++;
-                failureCount++;
-
-                if (attempts >= maxAttempts) {
-                  resolve({ success: false, error: 'max_attempts_exceeded' });
+                  recoveryCount++;
+                  resolve({ success: true, attempts: attempts + 1 });
                   return;
-                }
+                } catch (error) {
+                  attempts++;
+                  failureCount++;
 
-                // Attendre avant de réessayer
-                await new Promise(resolve => setTimeout(resolve, 10));
+                  if (attempts >= maxAttempts) {
+                    resolve({ success: false, error: 'max_attempts_exceeded' });
+                    return;
+                  }
+
+                  // Attendre avant de réessayer
+                  await new Promise(resolve => setTimeout(resolve, 10));
+                }
               }
-            }
+            };
+
+            attemptOperation();
           })
         );
       }

@@ -38,7 +38,6 @@ describe('API Integration Tests', () => {
   let mockLogger;
   let mockChannel;
   let mockStageChannel;
-  let mockStageInstance;
 
   beforeEach(() => {
     // Create Express app for testing
@@ -99,12 +98,6 @@ describe('API Integration Tests', () => {
       type: 13, // Stage channel type
       createStageInstance: vi.fn().mockResolvedValue({ id: 'stage-instance-id' }),
       stageInstance: null
-    };
-
-    // Mock stage instance
-    mockStageInstance = {
-      id: 'stage-instance-id',
-      edit: vi.fn().mockResolvedValue({ id: 'stage-instance-id' })
     };
 
     // Setup channel cache

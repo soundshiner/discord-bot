@@ -35,11 +35,9 @@ describe('Performance Tests', () => {
     });
 
     it('should handle garbage collection properly', () => {
-      const initialMemory = process.memoryUsage();
-
       // Créer et détruire des objets pour tester le GC
       for (let i = 0; i < 100; i++) {
-        const tempData = new Array(1000).fill('temp');
+        new Array(1000).fill('temp');
         // Les objets temporaires devraient être collectés
       }
 

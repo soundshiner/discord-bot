@@ -29,9 +29,7 @@ vi.mock('node:url', () => ({
 }));
 
 // Now import modules
-import path from 'node:path';
 import fs from 'node:fs';
-import { pathToFileURL, fileURLToPath } from 'node:url';
 
 const mockLogger = {
   warn: vi.fn(),
@@ -45,8 +43,6 @@ const mockClient = {
   on: vi.fn(),
   once: vi.fn()
 };
-
-const mockApp = { use: vi.fn() };
 
 // Helper pour mocker import dynamique
 const importMock = vi.fn();

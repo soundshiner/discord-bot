@@ -24,7 +24,7 @@ export default {
 
       if (!voiceChannel) {
         return await interaction.reply({
-          content: "❌ Tu dois d'abord rejoindre un salon vocal ou Stage channel !",
+          content: '❌ Tu dois d\'abord rejoindre un salon vocal ou Stage channel !',
           flags: MessageFlags.Ephemeral
         });
       }
