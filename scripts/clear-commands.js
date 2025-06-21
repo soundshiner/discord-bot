@@ -1,10 +1,11 @@
 // clear-commands.js
-import { REST, Routes } from "discord.js";
-import config from "../core/config.js";
+import { REST, Routes } from 'discord.js';
+import config from '../core/config.js';
+import { logger } from '../utils/logger.js';
 
-const rest = new REST({ version: "10" }).setToken(config.BOT_TOKEN);
+const rest = new REST({ version: '10' }).setToken(config.BOT_TOKEN);
 
-const isDev = process.argv.slice(2).includes("--dev");
+const isDev = process.argv.slice(2).includes('--dev');
 
 const route = isDev
   ? Routes.applicationGuildCommands(config.CLIENT_ID, config.DEV_GUILD_ID)
@@ -12,7 +13,7 @@ const route = isDev
 
 async function clearCommands() {
   try {
-    console.log(`🏹 Suppression des commandes ${isDev ? "DEV" : "GLOBAL"}...`);
+    logger.info(`🏹 Suppression des commandes ${isDev ? 'DEV' : 'GLOBAL'}...`);
 
     // Récupère toutes les commandes
     const commands = await rest.get(route);
@@ -20,26 +21,23 @@ async function clearCommands() {
     for (const cmd of commands) {
       // garde l'Entry Point Command
       if (cmd.id === config.ENTRY_POINT_COMMAND_ID) {
-        console.log(`⚡ Commande d'entrée non-supprimée : ${cmd.name}.`);
+        logger.info(`⚡ Commande d'entrée non-supprimée : ${cmd.name}.`);
         continue;
       }
 
-      console.log(`❌ Suppression de ${cmd.name} (${cmd.id})...`);
+      logger.info(`❌ Suppression de ${cmd.name} (${cmd.id})...`);
 
       await rest.delete(
         isDev
-          ? Routes.applicationGuildCommand(
-              config.CLIENT_ID,
-              config.DEV_GUILD_ID,
-              cmd.id
-            )
+          ? Routes.applicationGuildCommand(config.CLIENT_ID, config.DEV_GUILD_ID, cmd.id)
           : Routes.applicationCommand(config.CLIENT_ID, cmd.id)
       );
     }
 
-    console.log("✅ Commandes toutes supprimées.");
+    logger.info('✅ Commandes toutes supprimées.');
   } catch (error) {
-    console.error("❌ Erreur pendant la suppression :", error);
+    logger.error('❌ Erreur pendant la suppression :', error);
+    process.exit(1);
   }
 }
 

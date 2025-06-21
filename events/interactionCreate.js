@@ -1,49 +1,57 @@
-import handlePlaylistSelect from "../handlers/handlePlaylistSelect.js"; // on importe ton handler
+import { MessageFlags } from 'discord.js';
+import handlePlaylistSelect from '../handlers/handlePlaylistSelect.js'; // on importe ton handler
+import { logger } from '../utils/logger.js';
+import errorHandler from '../utils/errorHandler.js';
 
 export default {
-  name: "interactionCreate",
+  name: 'interactionCreate',
   async execute(interaction) {
-    if (interaction.isCommand()) {
-      const command = interaction.client.commands.get(interaction.commandName);
-      if (!command) return;
-
-      try {
-        await command.execute(interaction);
-      } catch (error) {
-        console.error(`❌ Erreur commande ${interaction.commandName}:`, error);
-        if (interaction.replied || interaction.deferred) {
-          await interaction.editReply({
-            content:
-              "❌ Une erreur est survenue pendant l’exécution de la commande.",
-          });
-        } else {
-          await interaction.reply({
-            content:
-              "❌ Une erreur est survenue pendant l’exécution de la commande.",
-            ephemeral: true,
-          });
+    try {
+      if (interaction.isCommand()) {
+        const command = interaction.client.commands.get(interaction.commandName);
+        if (!command) {
+          return;
         }
-      }
-    } else if (interaction.isStringSelectMenu()) {
-      if (interaction.customId === "select_playlist") {
+
         try {
-          await handlePlaylistSelect(interaction);
+          await command.execute(interaction);
         } catch (error) {
-          console.error("Erreur dans handlePlaylistSelect:", error);
+          errorHandler.handleCommandError(error, interaction);
+          logger.error(`❌ Erreur commande ${interaction.commandName}:`, error);
           if (interaction.replied || interaction.deferred) {
             await interaction.editReply({
-              content:
-                "❌ Une erreur est survenue lors du lancement de la playlist.",
+              content: "❌ Une erreur est survenue pendant l'exécution de la commande."
             });
           } else {
             await interaction.reply({
-              content:
-                "❌ Une erreur est survenue lors du lancement de la playlist.",
-              ephemeral: true,
+              content: "❌ Une erreur est survenue pendant l'exécution de la commande.",
+              flags: MessageFlags.Ephemeral
             });
           }
         }
+      } else if (interaction.isStringSelectMenu()) {
+        if (interaction.customId === 'select_playlist') {
+          try {
+            await handlePlaylistSelect(interaction);
+          } catch (error) {
+            errorHandler.handleInteractionError(error, interaction);
+            logger.error('Erreur dans handlePlaylistSelect:', error);
+            if (interaction.replied || interaction.deferred) {
+              await interaction.editReply({
+                content: '❌ Une erreur est survenue lors du lancement de la playlist.'
+              });
+            } else {
+              await interaction.reply({
+                content: '❌ Une erreur est survenue lors du lancement de la playlist.',
+                flags: MessageFlags.Ephemeral
+              });
+            }
+          }
+        }
       }
+    } catch (error) {
+      errorHandler.handleCriticalError(error, 'INTERACTION_CREATE');
+      logger.error('Erreur générale dans interactionCreate:', error);
     }
-  },
+  }
 };

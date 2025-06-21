@@ -1,74 +1,200 @@
 // ========================================
-// core/server.js (ESM - Node 20+)
+// api/server.js (ESM - Node 20+) - Version optimisée
 // ========================================
 
-import express from "express";
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import healthRoutes from './routes/health.js';
+import metricsRoutes from './routes/metrics.js';
+import playlistRoutes from './routes/playlist-update.js';
+import { logger } from '../utils/logger.js';
+import errorHandler from '../utils/errorHandler.js';
 
-import health from "./routes/health.js";
-import playlist_update from "./routes/playlist-update.js";
-export default class WebServer {
+class WebServer {
   constructor(client, logger) {
-    this.app = express();
     this.client = client;
     this.logger = logger;
-
+    this.app = express();
+    this.server = null;
     this.setupMiddleware();
-    this.setupRoutes();
+    this.setupErrorHandling();
   }
 
   setupMiddleware() {
-    this.app.use(express.json({ limit: "10mb" }));
+    try {
+      // Sécurité
+      this.app.use(
+        helmet({
+          contentSecurityPolicy: false,
+          crossOriginEmbedderPolicy: false
+        })
+      );
 
-    this.app.use((req, res, next) => {
-      this.logger.custom("HTTP", `${req.method} ${req.path}`, "cyan");
+      // CORS
+      this.app.use(
+        cors({
+          origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+          credentials: true
+        })
+      );
 
-      res.header("X-Powered-By", "soundSHINE Bot");
+      // Rate limiting
+      const limiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 100, // limite chaque IP à 100 requêtes par fenêtre
+        message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.',
+        standardHeaders: true,
+        legacyHeaders: false
+      });
+      this.app.use(limiter);
 
-      next();
-    });
+      // Parsing
+      this.app.use(express.json({ limit: '10mb' }));
+      this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+      // Logging des requêtes
+      this.app.use((req, res, next) => {
+        const start = Date.now();
+        res.on('finish', () => {
+          const duration = Date.now() - start;
+          const status = res.statusCode;
+          const method = req.method;
+          const url = req.url;
+          const ip = req.ip || req.connection.remoteAddress;
+
+          if (status >= 400) {
+            this.logger.warn(`${method} ${url} - ${status} - ${duration}ms - ${ip}`);
+          } else {
+            this.logger.info(`${method} ${url} - ${status} - ${duration}ms - ${ip}`);
+          }
+        });
+        next();
+      });
+    } catch (error) {
+      errorHandler.handleCriticalError(error, 'MIDDLEWARE_SETUP');
+      throw error;
+    }
   }
 
   setupRoutes() {
-    // Route health
-    this.app.use("/v1/health", health(this.client, this.logger));
+    try {
+      // Route racine
+      this.app.get('/', (req, res) => {
+        res.json({
+          name: 'soundSHINE Bot API',
+          version: '1.0.0',
+          status: 'online',
+          timestamp: new Date().toISOString()
+        });
+      });
 
-    // Route playlist webhook
-    this.app.use(
-      "/v1/send-playlist",
-      playlist_update(this.client, this.logger)
-    );
+      // Routes API - Ajoutées une par une pour debug
+      try {
+        this.app.use('/v1/health', healthRoutes(this.client, this.logger));
+        this.logger.info('Route /v1/health chargée');
+      } catch (error) {
+        this.logger.error('❌ Erreur route /health:', error);
+        throw error;
+      }
 
-    // 404 fallback
-    this.app.use((req, res) => {
-      res
-        .status(404)
-        .json({ error: "Route non trouvée", path: req.originalUrl });
-    });
+      try {
+        this.app.use('/v1/metrics', metricsRoutes(this.client, this.logger));
+        this.logger.info('Route /v1/metrics chargée');
+      } catch (error) {
+        this.logger.error('❌ Erreur route /v1/metrics:', error);
+        throw error;
+      }
 
-    // Erreur serveur
-    this.app.use((err, req, res, next) => {
-      this.logger.error(`Erreur serveur : ${err.message}`);
-      res.status(500).json({ error: "Erreur interne du serveur" });
-    });
+      try {
+        this.app.use('/v1/send-playlist', playlistRoutes(this.client, this.logger));
+        this.logger.info('Route /v1/send-playlist chargée');
+      } catch (error) {
+        this.logger.error('❌ Erreur route /v1/send-playlist:', error);
+        throw error;
+      }
+
+      // Route 404 - Utiliser une approche différente pour éviter l'erreur path-to-regexp
+      this.app.use((req, res) => {
+        res.status(404).json({
+          error: 'Route non trouvée',
+          path: req.originalUrl,
+          method: req.method
+        });
+      });
+    } catch (error) {
+      errorHandler.handleCriticalError(error, 'ROUTES_SETUP');
+      throw error;
+    }
+  }
+
+  setupErrorHandling() {
+    try {
+      // Gestionnaire d'erreurs global
+      this.app.use((error, req, res, next) => {
+        errorHandler.handleAPIError(error, req, res);
+
+        this.logger.error(`Erreur API: ${error.message}`, {
+          url: req.url,
+          method: req.method,
+          ip: req.ip,
+          userAgent: req.get('User-Agent')
+        });
+
+        res.status(error.status || 500).json({
+          error: process.env.NODE_ENV === 'production' ? 'Erreur interne du serveur' : error.message,
+          timestamp: new Date().toISOString()
+        });
+      });
+    } catch (error) {
+      errorHandler.handleCriticalError(error, 'ERROR_HANDLING_SETUP');
+      throw error;
+    }
   }
 
   start(port) {
-    return new Promise((resolve, reject) => {
-      const server = this.app.listen(port, (err) => {
-        if (err) {
-          this.logger.error(`Erreur lors du démarrage : ${err.message}`);
-          reject(err);
-        } else {
-          resolve(server);
-        }
+    try {
+      // Initialiser les routes après que le serveur soit prêt
+      this.setupRoutes();
+
+      this.server = this.app.listen(port, () => {
+        this.logger.success(`🚀 Serveur Express démarré sur le port ${port}`);
       });
 
-      process.on("SIGTERM", () => {
-        this.logger.info("Signal SIGTERM reçu, arrêt du serveur.");
-        server.close(() => {
-          this.logger.success("Serveur arrêté proprement.");
-        });
+      // Gestion des erreurs du serveur
+      this.server.on('error', error => {
+        errorHandler.handleCriticalError(error, 'SERVER_ERROR');
+        this.logger.error(`Erreur du serveur Express: ${error.message}`);
       });
-    });
+
+      return this.server;
+    } catch (error) {
+      errorHandler.handleCriticalError(error, 'SERVER_START');
+      throw error;
+    }
+  }
+
+  async stop() {
+    try {
+      if (this.server) {
+        return new Promise((resolve, reject) => {
+          this.server.close(error => {
+            if (error) {
+              errorHandler.handleCriticalError(error, 'SERVER_STOP');
+              reject(error);
+            } else {
+              this.logger.success('Serveur Express arrêté proprement');
+              resolve();
+            }
+          });
+        });
+      }
+    } catch (error) {
+      errorHandler.handleCriticalError(error, 'SERVER_STOP');
+      throw error;
+    }
   }
 }
+
+export default WebServer;

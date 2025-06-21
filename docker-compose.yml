@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  # Service principal du bot
+  soundshine-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: soundshine-bot
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - API_PORT=3000
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/app/logs
+      - ./suggestions.sqlite:/app/suggestions.sqlite
+    networks:
+      - soundshine-network
+    depends_on:
+      - redis
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis pour le cache (optionnel)
+  redis:
+    image: redis:7-alpine
+    container_name: soundshine-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    networks:
+      - soundshine-network
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Service de développement (avec hot reload)
+  soundshine-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: soundshine-bot-dev
+    restart: unless-stopped
+    ports:
+      - '3001:3000'
+    environment:
+      - NODE_ENV=development
+      - API_PORT=3000
+    env_file:
+      - .env.dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./logs:/app/logs
+      - ./suggestions.sqlite:/app/suggestions.sqlite
+    networks:
+      - soundshine-network
+    depends_on:
+      - redis
+    command: npm run dev
+
+  # Nginx reverse proxy (optionnel)
+  nginx:
+    image: nginx:alpine
+    container_name: soundshine-nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    networks:
+      - soundshine-network
+    depends_on:
+      - soundshine-bot
+    profiles:
+      - production
+
+volumes:
+  redis-data:
+    driver: local
+
+networks:
+  soundshine-network:
+    driver: bridge
