@@ -6,6 +6,14 @@ on:
   pull_request:
     branches: [main]
 
+# Permissions pour éviter les erreurs d'accès aux ressources
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+  actions: read
+  pull-requests: read
+
 env:
   NODE_VERSION: '18'
   REGISTRY: ghcr.io
@@ -49,6 +57,9 @@ jobs:
   # Sécurité - Scan du code source
   security-code:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
       - name: Checkout code
@@ -73,6 +84,9 @@ jobs:
     needs: [test, security-code]
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout code
@@ -115,6 +129,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
       - name: Run Trivy vulnerability scanner on Docker image
