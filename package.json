@@ -26,6 +26,7 @@
     "winston": "^3.3.3"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
     "eslint": "^8.56.0",
     "nodemon": "^3.0.2",
@@ -44,9 +45,14 @@
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "test:integration": "vitest tests/integration/",
+    "test:performance": "vitest tests/performance/",
+    "test:stress": "vitest tests/stress/",
+    "test:all": "node scripts/run-tests.js",
     "lint": "eslint . --ignore-pattern 'scripts/**/*'",
     "lint:fix": "eslint . --fix --ignore-pattern 'scripts/**/*'",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "fix:ephemeral": "node scripts/fix-ephemeral.js",
     "deploy:dev": "node scripts/deploy-commands.js --dev",
     "deploy:prod": "node scripts/deploy-commands.js --global"

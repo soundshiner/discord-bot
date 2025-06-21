@@ -86,7 +86,7 @@ function main() {
   }
 
   console.log('✅ Correction terminée !');
-  console.log('\n📝 N\'oubliez pas de :');
+  console.log("\n📝 N'oubliez pas de :");
   console.log('1. Vérifier que les imports sont corrects');
   console.log('2. Tester les commandes modifiées');
   console.log('3. Lancer npm run lint pour vérifier la syntaxe');

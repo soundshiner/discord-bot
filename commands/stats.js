@@ -57,7 +57,7 @@ async function execute(interaction) {
         } catch (err) {
           logger.error('Erreur historique:', err);
           await i.update({
-            content: '❌ Impossible de récupérer l\'historique.',
+            content: "❌ Impossible de récupérer l'historique.",
             components: []
           });
         }

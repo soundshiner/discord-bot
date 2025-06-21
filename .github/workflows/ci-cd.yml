@@ -33,14 +33,44 @@ jobs:
         run: npm run lint
 
       - name: Run tests
-        run: npm test
+        run: npm run test:coverage
 
       - name: Check code formatting
         run: npm run format:check
 
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/coverage-final.json
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  # Sécurité - Scan du code source
+  security-code:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner on repository
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+
   # Build et test de l'image Docker
   build:
-    needs: test
+    needs: [test, security-code]
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
 
@@ -80,12 +110,31 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # Déploiement en staging
-  deploy-staging:
+  # Sécurité - Scan de l'image Docker
+  security-image:
     needs: build
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Run Trivy vulnerability scanner on Docker image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-image-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-image-results.sarif'
+
+  # Déploiement en staging
+  deploy-staging:
+    needs: [build, security-image]
+    runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/develop'
-    environment: staging
 
     steps:
       - name: Deploy to staging
@@ -95,10 +144,9 @@ jobs:
 
   # Déploiement en production
   deploy-production:
-    needs: build
+    needs: [build, security-image]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    environment: production
 
     steps:
       - name: Deploy to production
@@ -106,30 +154,9 @@ jobs:
           echo "Deploying to production environment..."
           # Ajoutez ici votre logique de déploiement production
 
-  # Sécurité et vulnérabilités
-  security:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
-
   # Notifications
   notify:
-    needs: [test, build, security]
+    needs: [test, build, security-code, security-image]
     runs-on: ubuntu-latest
     if: always()
 

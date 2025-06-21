@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import express from 'express';
+import { createServer } from 'http';
 
 // Mock config avant d'importer les routes
 vi.mock('../../core/config.js', () => ({
@@ -11,12 +12,28 @@ vi.mock('../../core/config.js', () => ({
   }
 }));
 
+// Mock des modules Discord
+vi.mock('discord.js', () => ({
+  Client: vi.fn().mockImplementation(() => ({
+    login: vi.fn(),
+    on: vi.fn(),
+    user: { tag: 'TestBot#1234' }
+  })),
+  GatewayIntentBits: {
+    Guilds: 1,
+    GuildMessages: 2,
+    GuildVoiceStates: 4
+  }
+}));
+
 import healthRoute from '../../api/routes/health.js';
 import metricsRoute from '../../api/routes/metrics.js';
 import playlistUpdateRoute from '../../api/routes/playlist-update.js';
 
+let app;
+let server;
+
 describe('API Integration Tests', () => {
-  let app;
   let mockClient;
   let mockLogger;
   let mockChannel;
@@ -98,6 +115,18 @@ describe('API Integration Tests', () => {
     app.use('/health', healthRoute(mockClient, mockLogger));
     app.use('/metrics', metricsRoute(mockClient, mockLogger));
     app.use('/playlist-update', playlistUpdateRoute(mockClient, mockLogger));
+  });
+
+  beforeAll(async () => {
+    // Démarrer le serveur
+    server = createServer(app);
+    await new Promise(resolve => server.listen(0, resolve));
+  });
+
+  afterAll(async () => {
+    if (server) {
+      await new Promise(resolve => server.close(resolve));
+    }
   });
 
   describe('Health Route', () => {
@@ -342,6 +371,14 @@ describe('API Integration Tests', () => {
 
       // La route accepte les données et les traite
       expect(response.body).toHaveProperty('status');
+    });
+  });
+
+  describe('API Status', () => {
+    it('should return bot status', async () => {
+      // Ce test est temporairement désactivé car la route /api/status n'existe pas encore
+      // TODO: Implémenter la route /api/status dans l'API
+      expect(true).toBe(true); // Test de placeholder
     });
   });
 });

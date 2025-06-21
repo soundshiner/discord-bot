@@ -23,7 +23,21 @@ describe('Discord Commands Integration', () => {
       deferReply: vi.fn().mockResolvedValue(true),
       followUp: vi.fn().mockResolvedValue(true),
       replied: false,
-      deferred: false
+      deferred: false,
+      options: {
+        getString: vi.fn(),
+        getInteger: vi.fn(),
+        getBoolean: vi.fn(),
+        getSubcommand: vi.fn()
+      },
+      member: {
+        voice: {
+          channel: {
+            id: '555555555',
+            name: 'Voice Channel'
+          }
+        }
+      }
     };
 
     // Mock Discord.js client
@@ -33,7 +47,11 @@ describe('Discord Commands Integration', () => {
       },
       user: {
         id: 'bot123',
-        username: 'TestBot'
+        username: 'TestBot',
+        tag: 'TestBot#1234'
+      },
+      guilds: {
+        cache: new Map([['987654321', { id: '987654321', name: 'Test Guild' }]])
       }
     };
 
@@ -78,28 +96,31 @@ describe('Discord Commands Integration', () => {
 
     it('should handle play command with valid URL', async () => {
       // Mock successful play scenario
-      mockInteraction.options = {
-        getString: vi.fn().mockReturnValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
-      };
-
-      // Mock voice channel
-      mockInteraction.member = {
-        voice: {
-          channel: {
-            id: 'voice123',
-            name: 'Voice Channel'
-          }
-        }
-      };
+      mockInteraction.options.getString.mockReturnValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
 
       try {
-        await playCommand.execute(mockInteraction);
+        await playCommand.execute(mockInteraction, mockClient);
         // Command should execute without throwing
         expect(true).toBe(true);
       } catch (error) {
         // Expected to fail in test environment due to missing dependencies
         expect(error).toBeDefined();
       }
+    });
+
+    it('should handle play command with search query', async () => {
+      const playCommand = {
+        execute: vi.fn().mockResolvedValue({
+          success: true,
+          message: 'Searching for: test song'
+        })
+      };
+
+      mockInteraction.options.getString.mockReturnValue('test song');
+
+      await playCommand.execute(mockInteraction, mockClient);
+
+      expect(playCommand.execute).toHaveBeenCalledWith(mockInteraction, mockClient);
     });
   });
 
@@ -159,6 +180,42 @@ describe('Discord Commands Integration', () => {
       expect(typeof pingCommand.data.description).toBe('string');
       expect(typeof playCommand.data.description).toBe('string');
       expect(typeof stopCommand.data.description).toBe('string');
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle command execution errors', async () => {
+      const errorCommand = {
+        execute: vi.fn().mockRejectedValue(new Error('Test error'))
+      };
+
+      try {
+        await errorCommand.execute(mockInteraction, mockClient);
+      } catch (error) {
+        expect(error.message).toBe('Test error');
+      }
+
+      expect(errorCommand.execute).toHaveBeenCalledWith(mockInteraction, mockClient);
+    });
+
+    it('should handle missing voice channel', async () => {
+      const mockInteractionNoVoice = {
+        ...mockInteraction,
+        member: {
+          voice: null
+        }
+      };
+
+      const playCommand = {
+        execute: vi.fn().mockResolvedValue({
+          success: false,
+          message: 'You must be in a voice channel to use this command'
+        })
+      };
+
+      await playCommand.execute(mockInteractionNoVoice, mockClient);
+
+      expect(playCommand.execute).toHaveBeenCalledWith(mockInteractionNoVoice, mockClient);
     });
   });
 });

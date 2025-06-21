@@ -5,6 +5,39 @@ import { genres } from '../../utils/genres.js';
 import { cache } from '../../utils/cache.js';
 import { database } from '../../utils/database.js';
 
+// Mock des modules
+vi.mock('winston', () => ({
+  createLogger: vi.fn(() => ({
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn()
+  })),
+  format: {
+    combine: vi.fn(),
+    timestamp: vi.fn(),
+    errors: vi.fn(),
+    json: vi.fn(),
+    colorize: vi.fn(),
+    simple: vi.fn()
+  },
+  transports: {
+    Console: vi.fn(),
+    File: vi.fn()
+  }
+}));
+
+vi.mock('better-sqlite3', () => ({
+  default: vi.fn(() => ({
+    prepare: vi.fn(() => ({
+      run: vi.fn(),
+      get: vi.fn(),
+      all: vi.fn()
+    })),
+    close: vi.fn()
+  }))
+}));
+
 describe('Utils Integration Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -199,6 +232,44 @@ describe('Utils Integration Tests', () => {
         expect(result).toHaveProperty('data');
       });
     });
+
+    it('should handle cache operations', async () => {
+      const cache = new Map();
+
+      // Test set
+      cache.set('test-key', 'test-value');
+      expect(cache.get('test-key')).toBe('test-value');
+
+      // Test delete
+      cache.delete('test-key');
+      expect(cache.get('test-key')).toBeUndefined();
+
+      // Test clear
+      cache.set('key1', 'value1');
+      cache.set('key2', 'value2');
+      cache.clear();
+      expect(cache.size).toBe(0);
+    });
+
+    it('should handle cache expiration', async () => {
+      const cache = new Map();
+      const expirationTime = 1000; // 1 second
+
+      cache.set('expiring-key', {
+        value: 'test-value',
+        expiresAt: Date.now() + expirationTime
+      });
+
+      // Should exist before expiration
+      expect(cache.get('expiring-key')).toBeDefined();
+
+      // Wait for expiration
+      await new Promise(resolve => setTimeout(resolve, expirationTime + 100));
+
+      // Should be expired
+      const entry = cache.get('expiring-key');
+      expect(entry.expiresAt).toBeLessThan(Date.now());
+    });
   });
 
   describe('Database', () => {
@@ -233,6 +304,53 @@ describe('Utils Integration Tests', () => {
       // Test error handling
       expect(mockError).toBeInstanceOf(Error);
       expect(mockError.message).toBe('Database connection failed');
+    });
+
+    it('should handle database queries', async () => {
+      const mockDb = {
+        prepare: vi.fn(() => ({
+          run: vi.fn().mockReturnValue({ lastInsertRowid: 1 }),
+          get: vi.fn().mockReturnValue({ id: 1, name: 'test' }),
+          all: vi.fn().mockReturnValue([{ id: 1, name: 'test' }])
+        })),
+        close: vi.fn()
+      };
+
+      // Test insert
+      const insertStmt = mockDb.prepare('INSERT INTO test (name) VALUES (?)');
+      const insertResult = insertStmt.run('test-name');
+      expect(insertResult.lastInsertRowid).toBe(1);
+
+      // Test select
+      const selectStmt = mockDb.prepare('SELECT * FROM test WHERE id = ?');
+      const selectResult = selectStmt.get(1);
+      expect(selectResult.name).toBe('test');
+
+      // Test select all
+      const selectAllStmt = mockDb.prepare('SELECT * FROM test');
+      const selectAllResult = selectAllStmt.all();
+      expect(selectAllResult).toHaveLength(1);
+    });
+
+    it('should handle database errors', async () => {
+      const mockDb = {
+        prepare: vi.fn(() => ({
+          run: vi.fn().mockImplementation(() => {
+            throw new Error('Database error');
+          }),
+          get: vi.fn(),
+          all: vi.fn()
+        })),
+        close: vi.fn()
+      };
+
+      const stmt = mockDb.prepare('INSERT INTO test (name) VALUES (?)');
+
+      try {
+        stmt.run('test-name');
+      } catch (error) {
+        expect(error.message).toBe('Database error');
+      }
     });
   });
 
@@ -299,6 +417,172 @@ describe('Utils Integration Tests', () => {
       expect(validateURL(retrieved.url)).toBe(true);
       expect(retrieved.genre).toHaveProperty('name');
       expect(retrieved.genre).toHaveProperty('emoji');
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle async errors', async () => {
+      const asyncFunction = async () => {
+        throw new Error('Async error');
+      };
+
+      try {
+        await asyncFunction();
+      } catch (error) {
+        expect(error.message).toBe('Async error');
+      }
+    });
+
+    it('should handle sync errors', () => {
+      const syncFunction = () => {
+        throw new Error('Sync error');
+      };
+
+      try {
+        syncFunction();
+      } catch (error) {
+        expect(error.message).toBe('Sync error');
+      }
+    });
+
+    it('should handle promise rejections', async () => {
+      const promiseFunction = () => {
+        return Promise.reject(new Error('Promise rejection'));
+      };
+
+      try {
+        await promiseFunction();
+      } catch (error) {
+        expect(error.message).toBe('Promise rejection');
+      }
+    });
+  });
+
+  describe('Validation Utils', () => {
+    it('should validate URLs', () => {
+      const isValidUrl = url => {
+        try {
+          new URL(url);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
+      expect(isValidUrl('https://www.youtube.com/watch?v=test')).toBe(true);
+      expect(isValidUrl('https://www.google.com')).toBe(true);
+      expect(isValidUrl('invalid-url')).toBe(false);
+      expect(isValidUrl('')).toBe(false);
+    });
+
+    it('should validate Discord IDs', () => {
+      const isValidDiscordId = id => {
+        return /^\d{17,19}$/.test(id);
+      };
+
+      expect(isValidDiscordId('123456789012345678')).toBe(true);
+      expect(isValidDiscordId('12345678901234567')).toBe(true);
+      expect(isValidDiscordId('1234567890123456')).toBe(false);
+      expect(isValidDiscordId('invalid-id')).toBe(false);
+      expect(isValidDiscordId('')).toBe(false);
+    });
+
+    it('should validate command names', () => {
+      const isValidCommandName = name => {
+        return /^[a-z-]+$/.test(name) && name.length <= 32;
+      };
+
+      expect(isValidCommandName('play')).toBe(true);
+      expect(isValidCommandName('play-music')).toBe(true);
+      expect(isValidCommandName('Play')).toBe(false);
+      expect(isValidCommandName('play_music')).toBe(false);
+      expect(isValidCommandName('')).toBe(false);
+    });
+  });
+
+  describe('Formatting Utils', () => {
+    it('should format duration', () => {
+      const formatDuration = seconds => {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        if (hours > 0) {
+          return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        return `${minutes}:${secs.toString().padStart(2, '0')}`;
+      };
+
+      expect(formatDuration(65)).toBe('1:05');
+      expect(formatDuration(3661)).toBe('1:01:01');
+      expect(formatDuration(0)).toBe('0:00');
+    });
+
+    it('should format file size', () => {
+      const formatFileSize = bytes => {
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        if (bytes === 0) return '0 Bytes';
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + ' ' + sizes[i];
+      };
+
+      expect(formatFileSize(1024)).toBe('1 KB');
+      expect(formatFileSize(1048576)).toBe('1 MB');
+      expect(formatFileSize(0)).toBe('0 Bytes');
+    });
+
+    it('should truncate text', () => {
+      const truncateText = (text, maxLength) => {
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength - 3) + '...';
+      };
+
+      expect(truncateText('Short text', 20)).toBe('Short text');
+      expect(truncateText('This is a very long text that needs to be truncated', 20)).toBe('This is a very lo...');
+    });
+  });
+
+  describe('Performance Utils', () => {
+    it('should measure execution time', async () => {
+      const measureTime = async fn => {
+        const start = Date.now();
+        await fn();
+        const end = Date.now();
+        return end - start;
+      };
+
+      const testFunction = async () => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      };
+
+      const executionTime = await measureTime(testFunction);
+      expect(executionTime).toBeGreaterThanOrEqual(100);
+    });
+
+    it('should debounce functions', async () => {
+      const debounce = (func, wait) => {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      };
+
+      let callCount = 0;
+      const debouncedFn = debounce(() => {
+        callCount++;
+      }, 100);
+
+      debouncedFn();
+      debouncedFn();
+      debouncedFn();
+
+      await new Promise(resolve => setTimeout(resolve, 150));
+      expect(callCount).toBe(1);
     });
   });
 });

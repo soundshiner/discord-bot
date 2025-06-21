@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import errorHandler from '../utils/errorHandler.js';
-import logger from '../utils/logger.js';
+import ErrorHandler from '../utils/errorHandler.js';
 
-// Mock logger
+// Mock du logger
 vi.mock('../utils/logger.js', () => ({
   default: {
     error: vi.fn(),
@@ -12,7 +11,18 @@ vi.mock('../utils/logger.js', () => ({
 }));
 
 describe('ErrorHandler', () => {
-  beforeEach(() => {
+  let errorHandler;
+  let mockLogger;
+
+  beforeEach(async () => {
+    // Créer une nouvelle instance pour chaque test
+    errorHandler = new ErrorHandler();
+
+    // Importer le logger mocké
+    const loggerModule = await import('../utils/logger.js');
+    mockLogger = loggerModule.default;
+
+    // Reset des mocks
     vi.clearAllMocks();
   });
 
@@ -22,20 +32,21 @@ describe('ErrorHandler', () => {
     expect(errorHandler).toHaveProperty('handleCriticalError');
     expect(errorHandler).toHaveProperty('categorizeError');
     expect(errorHandler).toHaveProperty('getUserFriendlyMessage');
+    expect(errorHandler).toHaveProperty('getHttpStatusCode');
   });
 
   it('should handle command errors', async () => {
     const error = new Error('Test command error');
     const mockInteraction = {
       commandName: 'test',
+      reply: vi.fn().mockResolvedValue(true),
       replied: false,
-      deferred: false,
-      reply: vi.fn()
+      deferred: false
     };
 
     await errorHandler.handleCommandError(error, mockInteraction);
 
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Test command error'));
+    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Test command error'));
     expect(mockInteraction.reply).toHaveBeenCalled();
   });
 
@@ -49,7 +60,7 @@ describe('ErrorHandler', () => {
 
     errorHandler.handleApiError(error, mockReq, mockRes);
 
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Test API error'));
+    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Test API error'));
     expect(mockRes.status).toHaveBeenCalled();
     expect(mockRes.json).toHaveBeenCalled();
   });
@@ -60,14 +71,13 @@ describe('ErrorHandler', () => {
 
     errorHandler.handleCriticalError(error, context);
 
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Test critical error'));
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining(context));
+    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Test critical error'));
+    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining(context));
   });
 
   it('should categorize errors correctly', () => {
     const networkError = new Error('Connection refused');
     networkError.code = 'ECONNREFUSED';
-
     const permissionError = new Error('Insufficient permissions');
 
     expect(errorHandler.categorizeError(networkError)).toBe('NETWORK');
