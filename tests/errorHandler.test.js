@@ -1,29 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import ErrorHandler from '../utils/errorHandler.js';
+import { ErrorHandler } from '../utils/errorHandler.js';
 
-// Mock du logger
-vi.mock('../utils/logger.js', () => ({
-  default: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn()
-  }
-}));
+const mockLogger = {
+  error: vi.fn(),
+  warn: vi.fn(),
+  info: vi.fn()
+};
+
+let errorHandler;
 
 describe('ErrorHandler', () => {
-  let errorHandler;
-  let mockLogger;
-
-  beforeEach(async () => {
-    // Créer une nouvelle instance pour chaque test
-    errorHandler = new ErrorHandler();
-
-    // Importer le logger mocké
-    const loggerModule = await import('../utils/logger.js');
-    mockLogger = loggerModule.default;
-
-    // Reset des mocks
+  beforeEach(() => {
     vi.clearAllMocks();
+    errorHandler = new ErrorHandler(mockLogger);
   });
 
   it('should have all required methods', () => {

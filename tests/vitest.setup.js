@@ -115,15 +115,15 @@ vi.mock('path', () => ({
 }));
 
 // Mock utils/errorHandler
-vi.mock('../utils/errorHandler.js', () => ({
-  default: {
-    handleInteractionError: vi.fn(),
-    handleMessageError: vi.fn(),
-    handleGeneralError: vi.fn(),
-    handleCommandError: vi.fn(),
-    handleCriticalError: vi.fn()
-  }
-}));
+// vi.mock('../utils/errorHandler.js', () => ({
+//   default: {
+//     handleInteractionError: vi.fn(),
+//     handleMessageError: vi.fn(),
+//     handleGeneralError: vi.fn(),
+//     handleCommandError: vi.fn(),
+//     handleCriticalError: vi.fn()
+//   }
+// }));
 
 // Mock handlers/handlePlaylistSelect
 // vi.mock('../handlers/handlePlaylistSelect.js', () => ({

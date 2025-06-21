@@ -35,7 +35,8 @@ const mockLogger = {
   warn: vi.fn(),
   error: vi.fn(),
   custom: vi.fn(),
-  section: vi.fn()
+  section: vi.fn(),
+  debug: vi.fn()
 };
 
 const mockClient = {

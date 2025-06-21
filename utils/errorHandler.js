@@ -6,7 +6,8 @@ import { MessageFlags } from 'discord.js';
 import logger from './logger.js';
 
 class ErrorHandler {
-  constructor() {
+  constructor(loggerInstance = logger) {
+    this.logger = loggerInstance;
     this.errorCounts = new Map();
     this.maxErrorsPerMinute = 10;
   }
@@ -19,7 +20,7 @@ class ErrorHandler {
     const errorType = this.categorizeError(error);
 
     // Log l'erreur
-    logger.error(`[${errorId}] Erreur commande ${interaction?.commandName || 'unknown'}: ${error.message}`);
+    this.logger.error(`[${errorId}] Erreur commande ${interaction?.commandName || 'unknown'}: ${error.message}`);
 
     // Compteur d'erreurs par minute
     this.incrementErrorCount(errorType);
@@ -51,7 +52,7 @@ class ErrorHandler {
     const errorId = this.generateErrorId();
     const errorType = this.categorizeError(error);
 
-    logger.error(`[${errorId}] Erreur API ${req.method} ${req.path}: ${error.message}`);
+    this.logger.error(`[${errorId}] Erreur API ${req.method} ${req.path}: ${error.message}`);
 
     // Réponse HTTP appropriée
     const statusCode = this.getHttpStatusCode(errorType);
@@ -70,8 +71,8 @@ class ErrorHandler {
   handleCriticalError(error, context = 'unknown') {
     const errorId = this.generateErrorId();
 
-    logger.error(`[${errorId}] ERREUR CRITIQUE [${context}]: ${error.message}`);
-    logger.error(`Stack trace: ${error.stack}`);
+    this.logger.error(`[${errorId}] ERREUR CRITIQUE [${context}]: ${error.message}`);
+    this.logger.error(`Stack trace: ${error.stack}`);
 
     // Notification immédiate
     this.sendCriticalAlert(error, errorId, context);
@@ -104,11 +105,11 @@ class ErrorHandler {
     const messages = {
       NETWORK: 'Problème de connexion. Réessayez dans quelques instants.',
       PERMISSION: 'Permissions insuffisantes pour cette action.',
-      AUTH: 'Erreur d\'authentification. Contactez un administrateur.',
+      AUTH: "Erreur d'authentification. Contactez un administrateur.",
       RATE_LIMIT: 'Trop de requêtes. Attendez un moment avant de réessayer.',
       VOICE: 'Erreur audio. Vérifiez votre connexion vocale.',
       DATABASE: 'Erreur de base de données. Réessayez plus tard.',
-      UNKNOWN: 'Une erreur inattendue s\'est produite. Réessayez plus tard.'
+      UNKNOWN: "Une erreur inattendue s'est produite. Réessayez plus tard."
     };
 
     return messages[errorType] || messages.UNKNOWN;
@@ -185,7 +186,7 @@ class ErrorHandler {
    * Envoie une alerte
    */
   sendAlert(errorType, errorId) {
-    logger.warn(`🚨 ALERTE: Trop d'erreurs ${errorType} détectées. Error ID: ${errorId}`);
+    this.logger.warn(`🚨 ALERTE: Trop d'erreurs ${errorType} détectées. Error ID: ${errorId}`);
     // Ici vous pourriez envoyer une notification Discord, email, etc.
   }
 
@@ -193,7 +194,7 @@ class ErrorHandler {
    * Envoie une alerte critique
    */
   sendCriticalAlert(error, errorId, context) {
-    logger.error(`🚨 ALERTE CRITIQUE [${context}]: ${errorId}`);
+    this.logger.error(`🚨 ALERTE CRITIQUE [${context}]: ${errorId}`);
     // Notification immédiate aux administrateurs
   }
 
@@ -213,4 +214,6 @@ class ErrorHandler {
   }
 }
 
-export default new ErrorHandler();
+const errorHandler = new ErrorHandler();
+export default errorHandler;
+export { ErrorHandler };
