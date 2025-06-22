@@ -18,6 +18,7 @@ class WebServer {
     this.client = client;
     this.logger = logger;
     this.app = express();
+    this.app.set('trust proxy', 1);
     this.server = null;
     this.setupMiddleware();
     this.setupErrorHandling();

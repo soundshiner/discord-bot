@@ -87,14 +87,14 @@ class ErrorHandler {
    * Catégorise les erreurs
    */
   categorizeError(error) {
+    const msg = typeof error.message === 'string' ? error.message : '';
     if (error.code === 'ECONNREFUSED') return 'NETWORK';
     if (error.code === 'ENOTFOUND') return 'NETWORK';
-    if (error.message.includes('permission')) return 'PERMISSION';
-    if (error.message.includes('token')) return 'AUTH';
-    if (error.message.includes('rate limit')) return 'RATE_LIMIT';
-    if (error.message.includes('voice')) return 'VOICE';
-    if (error.message.includes('database')) return 'DATABASE';
-
+    if (msg.includes('permission')) return 'PERMISSION';
+    if (msg.includes('token')) return 'AUTH';
+    if (msg.includes('rate limit')) return 'RATE_LIMIT';
+    if (msg.includes('voice')) return 'VOICE';
+    if (msg.includes('database')) return 'DATABASE';
     return 'UNKNOWN';
   }
 
