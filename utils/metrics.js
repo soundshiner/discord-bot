@@ -8,7 +8,7 @@ import logger from './logger.js';
 class MetricsCollector {
   constructor() {
     this.register = register;
-    
+
     // Métriques Discord
     this.discordPing = new Gauge({
       name: 'discord_ping_ms',
@@ -94,7 +94,7 @@ class MetricsCollector {
 
     // Collecter les métriques par défaut du système
     collectDefaultMetrics({ register: this.register });
-    
+
     logger.info('📊 Système de métriques Prometheus initialisé');
   }
 
@@ -137,7 +137,7 @@ class MetricsCollector {
   updateSystemMetrics() {
     try {
       const memUsage = process.memoryUsage();
-      
+
       this.botMemoryUsage.set({ type: 'heapUsed' }, memUsage.heapUsed);
       this.botMemoryUsage.set({ type: 'heapTotal' }, memUsage.heapTotal);
       this.botMemoryUsage.set({ type: 'external' }, memUsage.external);
@@ -256,4 +256,4 @@ class MetricsCollector {
 // Instance singleton
 const metricsCollector = new MetricsCollector();
 
-export default metricsCollector; 
+export default metricsCollector;

@@ -161,16 +161,14 @@ class WebServer {
   setupErrorHandling() {
     try {
       // Gestionnaire d'erreurs global
-      this.app.use((error, req, res, next) => {
+      this.app.use((error, req, res) => {
         errorHandler.handleApiError(error, req, res);
-
         this.logger.error(`Erreur API: ${error.message}`, {
           url: req.url,
           method: req.method,
           ip: req.ip,
           userAgent: req.get('User-Agent')
         });
-
         res.status(error.status || 500).json({
           error: process.env.NODE_ENV === 'production' ? 'Erreur interne du serveur' : error.message,
           timestamp: new Date().toISOString()

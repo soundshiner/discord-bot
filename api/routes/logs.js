@@ -14,15 +14,15 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const { limit = 100, level, search } = req.query;
-    
+
     let logs;
     if (search) {
       logs = await centralizedLogger.searchLogs(search, {
         level: level || null,
-        limit: parseInt(limit)
+        limit: parseInt(limit, 10)
       });
     } else {
-      logs = await centralizedLogger.getRecentLogs(parseInt(limit), level || null);
+      logs = await centralizedLogger.getRecentLogs(parseInt(limit, 10), level || null);
     }
 
     res.json({
@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
         total: logs.length,
         filters: {
           level: level || 'all',
-          limit: parseInt(limit),
+          limit: parseInt(limit, 10),
           search: search || null
         }
       }
@@ -53,7 +53,7 @@ router.get('/', async (req, res) => {
 router.get('/stats', async (req, res) => {
   try {
     const stats = await centralizedLogger.getLogStats();
-    
+
     res.json({
       success: true,
       data: stats
@@ -74,7 +74,7 @@ router.get('/stats', async (req, res) => {
 router.get('/files', async (req, res) => {
   try {
     const files = await centralizedLogger.getLogFiles();
-    
+
     res.json({
       success: true,
       data: {
@@ -101,28 +101,28 @@ router.get('/files', async (req, res) => {
  */
 router.get('/search', async (req, res) => {
   try {
-    const { 
-      query, 
-      level, 
-      startDate, 
-      endDate, 
-      limit = 100 
+    const {
+      query,
+      level,
+      startDate,
+      endDate,
+      limit = 100
     } = req.query;
-    
+
     if (!query) {
       return res.status(400).json({
         success: false,
         error: 'Paramètre "query" requis pour la recherche'
       });
     }
-    
+
     const logs = await centralizedLogger.searchLogs(query, {
       level: level || null,
       startDate: startDate || null,
       endDate: endDate || null,
-      limit: parseInt(limit)
+      limit: parseInt(limit, 10)
     });
-    
+
     res.json({
       success: true,
       data: {
@@ -133,7 +133,7 @@ router.get('/search', async (req, res) => {
           level: level || 'all',
           startDate: startDate || null,
           endDate: endDate || null,
-          limit: parseInt(limit)
+          limit: parseInt(limit, 10)
         }
       }
     });
@@ -153,14 +153,14 @@ router.get('/search', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { level = 'info', message, meta = {} } = req.body;
-    
+
     if (!message) {
       return res.status(400).json({
         success: false,
         error: 'Paramètre "message" requis'
       });
     }
-    
+
     // Valider le niveau de log
     const validLevels = ['debug', 'info', 'warn', 'error'];
     if (!validLevels.includes(level)) {
@@ -169,10 +169,10 @@ router.post('/', async (req, res) => {
         error: 'Niveau de log invalide. Valeurs autorisées: debug, info, warn, error'
       });
     }
-    
+
     // Écrire le log
     await centralizedLogger[level](message, meta);
-    
+
     res.json({
       success: true,
       message: 'Log écrit avec succès',
@@ -198,17 +198,17 @@ router.post('/', async (req, res) => {
 router.delete('/', async (req, res) => {
   try {
     const { maxAge = 24 * 60 * 60 * 1000 } = req.query; // 24 heures par défaut
-    
+
     // Cette fonctionnalité pourrait être protégée par authentification
     // Pour l'instant, on l'expose directement
-    
-    await centralizedLogger.cleanupOldLogs(parseInt(maxAge));
-    
+
+    await centralizedLogger.cleanupOldLogs(parseInt(maxAge, 10));
+
     res.json({
       success: true,
       message: 'Nettoyage des anciens logs effectué',
       data: {
-        maxAge: parseInt(maxAge)
+        maxAge: parseInt(maxAge, 10)
       }
     });
   } catch (error) {
@@ -220,6 +220,6 @@ router.delete('/', async (req, res) => {
   }
 });
 
-export default function(client, logger) {
+export default function() {
   return router;
-} 
+}

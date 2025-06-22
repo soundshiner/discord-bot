@@ -4,7 +4,6 @@
 
 import { WebhookClient, EmbedBuilder } from 'discord.js';
 import logger from './logger.js';
-import metricsCollector from './metrics.js';
 
 class AlertManager {
   constructor() {
@@ -16,16 +15,16 @@ class AlertManager {
       uptime: 3600, // 1 heure minimum
       apiLatency: 2000 // 2 secondes
     };
-    
+
     this.webhookClient = null;
     this.alertChannelId = process.env.ALERT_CHANNEL_ID;
     this.webhookUrl = process.env.ALERT_WEBHOOK_URL;
-    
+
     if (this.webhookUrl) {
       this.webhookClient = new WebhookClient({ url: this.webhookUrl });
       logger.info('🔔 Système d\'alertes webhook initialisé');
     }
-    
+
     logger.info('🚨 Système d\'alertes initialisé');
   }
 
@@ -54,10 +53,10 @@ class AlertManager {
     };
 
     this.alerts.set(alertId, alert);
-    
+
     // Envoyer la notification
     this.sendNotification(alert);
-    
+
     logger.warn(`🚨 Alerte créée: ${type} - ${severity} - ${message}`);
     return alertId;
   }
@@ -135,13 +134,13 @@ class AlertManager {
       // Vérifier l'utilisation mémoire
       const memUsage = process.memoryUsage();
       const memoryUsagePercent = memUsage.heapUsed / memUsage.heapTotal;
-      
+
       if (memoryUsagePercent > this.thresholds.memory) {
         this.createAlert(
           'high_memory',
           memoryUsagePercent > 0.9 ? 'critical' : 'warning',
           `Utilisation mémoire élevée: ${(memoryUsagePercent * 100).toFixed(1)}%`,
-          { 
+          {
             usage: memoryUsagePercent,
             heapUsed: memUsage.heapUsed,
             heapTotal: memUsage.heapTotal,
@@ -192,7 +191,7 @@ class AlertManager {
       // Cette méthode pourrait être étendue pour analyser les logs récents
       // et détecter des patterns d'erreurs
       const recentErrors = this.getRecentErrors();
-      
+
       if (recentErrors.length > this.thresholds.errors) {
         this.createAlert(
           'high_error_rate',
@@ -223,10 +222,10 @@ class AlertManager {
     if (alert) {
       alert.resolved = true;
       alert.resolvedAt = new Date();
-      
+
       // Envoyer une notification de résolution
       this.sendResolutionNotification(alert);
-      
+
       logger.info(`Alerte résolue: ${alertId}`);
     }
   }
@@ -239,7 +238,7 @@ class AlertManager {
       if (!this.webhookClient) return;
 
       const embed = new EmbedBuilder()
-        .setTitle(`✅ Alerte résolue`)
+        .setTitle('✅ Alerte résolue')
         .setDescription(alert.message)
         .setColor(0x27ae60) // Vert
         .addFields([
@@ -286,7 +285,7 @@ class AlertManager {
     }
 
     toDelete.forEach(id => this.alerts.delete(id));
-    
+
     if (toDelete.length > 0) {
       logger.info(`${toDelete.length} anciennes alertes supprimées`);
     }
@@ -333,4 +332,4 @@ class AlertManager {
 // Instance singleton
 const alertManager = new AlertManager();
 
-export default alertManager; 
+export default alertManager;
