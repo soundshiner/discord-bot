@@ -200,7 +200,6 @@ class SoundShineBot {
       // Arrêter le serveur Express
       if (this.server) {
         await this.server.stop();
-        logger.info('Serveur Express arrêté proprement');
       }
 
       logger.success('soundSHINE Bot arrêté proprement');
