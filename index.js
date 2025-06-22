@@ -194,13 +194,13 @@ class SoundShineBot {
 
       if (this.client) {
         await this.client.destroy();
-        logger.success('Client Discord déconnecté');
+        logger.info('Client Discord déconnecté');
       }
 
       // Arrêter le serveur Express
       if (this.server) {
         await this.server.stop();
-        logger.success('Serveur Express arrêté proprement');
+        logger.info('Serveur Express arrêté proprement');
       }
 
       logger.success('soundSHINE Bot arrêté proprement');
