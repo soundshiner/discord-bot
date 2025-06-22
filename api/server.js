@@ -172,7 +172,8 @@ class WebServer {
       });
     } catch (error) {
       errorHandler.handleCriticalError(error, 'ERROR_HANDLING_SETUP');
-      throw error;
+      // Ne relance pas l'erreur, log seulement
+      return;
     }
   }
 
