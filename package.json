@@ -23,6 +23,7 @@
     "express": "^5.1.0",
     "express-rate-limit": "^7.5.1",
     "helmet": "^8.1.0",
+    "vitest": "^3.2.4",
     "winston": "^3.3.3",
     "zod": "^3.25.67"
   },
@@ -31,7 +32,18 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "tests",
+    "test": "vitest",
+    "test:all": "vitest run",
+    "test:unit": "vitest run tests/*.test.js",
+    "test:integration": "vitest run tests/integration/",
+    "test:performance": "vitest run tests/performance/",
+    "test:stress": "vitest run tests/stress/",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "eslint . --fix",
     "deploy:dev": "node scripts/deploy-commands.js --dev",
     "deploy:prod": "node scripts/deploy-commands.js --global"
   },
@@ -40,3 +52,4 @@
     "nodemon": "^3.1.10"
   }
 }
+
