@@ -1,6 +1,6 @@
 // utils/database.js
-import Database from 'better-sqlite3';
-const db = new Database('suggestions.sqlite');
+import Database from "better-sqlite3";
+const db = new Database("suggestions.sqlite");
 
 // Crée la table des suggestions si elle n'existe pas
 db.prepare(
