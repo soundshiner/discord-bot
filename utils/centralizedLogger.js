@@ -5,7 +5,6 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { createWriteStream } from 'fs';
 import logger from './logger.js';
 
 class CentralizedLogger {
@@ -14,17 +13,17 @@ class CentralizedLogger {
     this.maxFileSize = 10 * 1024 * 1024; // 10MB
     this.maxFiles = 5;
     this.rotationInterval = 24 * 60 * 60 * 1000; // 24 heures
-    
+
     this.currentLogFile = null;
     this.currentFileSize = 0;
     this.lastRotation = Date.now();
-    
+
     this.logBuffer = [];
     this.bufferSize = 100;
     this.flushInterval = 5000; // 5 secondes
-    
+
     this.externalServices = [];
-    
+
     this.init();
   }
 
@@ -35,19 +34,19 @@ class CentralizedLogger {
     try {
       // Créer le répertoire de logs s'il n'existe pas
       await this.ensureLogDirectory();
-      
+
       // Créer le fichier de log initial
       await this.createNewLogFile();
-      
+
       // Démarrer le flush automatique
       this.startAutoFlush();
-      
+
       // Démarrer la rotation automatique
       this.startAutoRotation();
-      
+
       logger.info('📝 Système de logging centralisé initialisé');
     } catch (error) {
-      console.error('Erreur lors de l\'initialisation du logging centralisé:', error);
+      logger.error('Erreur lors de l\'initialisation du logging centralisé:', error);
     }
   }
 
@@ -69,17 +68,17 @@ class CentralizedLogger {
     const timestamp = new Date().toISOString().split('T')[0];
     const filename = `soundshine-${timestamp}-${Date.now()}.log`;
     const filepath = path.join(this.logDir, filename);
-    
+
     this.currentLogFile = filepath;
     this.currentFileSize = 0;
-    
+
     // Créer le fichier s'il n'existe pas
     try {
       await fs.access(filepath);
     } catch {
       await fs.writeFile(filepath, '');
     }
-    
+
     logger.info(`Nouveau fichier de log créé: ${filename}`);
   }
 
@@ -102,7 +101,7 @@ class CentralizedLogger {
         logger.error(`Erreur lors de l'envoi vers ${service.name}:`, error);
       }
     });
-    
+
     await Promise.allSettled(promises);
   }
 
@@ -122,15 +121,15 @@ class CentralizedLogger {
 
     // Ajouter au buffer
     this.logBuffer.push(logEntry);
-    
+
     // Envoyer vers les services externes
     await this.sendToExternalServices(logEntry);
-    
+
     // Vérifier si le buffer doit être vidé
     if (this.logBuffer.length >= this.bufferSize) {
       await this.flushBuffer();
     }
-    
+
     // Vérifier si la rotation est nécessaire
     await this.checkRotation();
   }
@@ -140,15 +139,15 @@ class CentralizedLogger {
    */
   async flushBuffer() {
     if (this.logBuffer.length === 0) return;
-    
+
     try {
-      const logLines = this.logBuffer.map(entry => 
+      const logLines = this.logBuffer.map(entry =>
         JSON.stringify(entry)
       ).join('\n') + '\n';
-      
+
       await fs.appendFile(this.currentLogFile, logLines);
       this.currentFileSize += Buffer.byteLength(logLines, 'utf8');
-      
+
       this.logBuffer = [];
     } catch (error) {
       logger.error('Erreur lors du flush du buffer:', error);
@@ -160,10 +159,10 @@ class CentralizedLogger {
    */
   async checkRotation() {
     const now = Date.now();
-    const shouldRotate = 
+    const shouldRotate =
       this.currentFileSize > this.maxFileSize ||
       (now - this.lastRotation) > this.rotationInterval;
-    
+
     if (shouldRotate) {
       await this.rotateLogs();
     }
@@ -176,15 +175,15 @@ class CentralizedLogger {
     try {
       // Vider le buffer avant la rotation
       await this.flushBuffer();
-      
+
       // Créer un nouveau fichier de log
       await this.createNewLogFile();
-      
+
       // Nettoyer les anciens fichiers
       await this.cleanupOldLogs();
-      
+
       this.lastRotation = Date.now();
-      
+
       logger.info('Rotation des logs effectuée');
     } catch (error) {
       logger.error('Erreur lors de la rotation des logs:', error);
@@ -208,14 +207,14 @@ class CentralizedLogger {
             stats
           };
         });
-      
+
       const logFiles = await Promise.all(logFilesPromises);
       logFiles.sort((a, b) => b.stats.mtime.getTime() - a.stats.mtime.getTime());
-      
+
       // Supprimer les fichiers en excès
       if (logFiles.length > this.maxFiles) {
         const toDelete = logFiles.slice(this.maxFiles);
-        
+
         for (const file of toDelete) {
           await fs.unlink(file.path);
           logger.info(`Ancien fichier de log supprimé: ${file.name}`);
@@ -270,11 +269,11 @@ class CentralizedLogger {
     try {
       const logFiles = await this.getLogFiles();
       const logs = [];
-      
+
       for (const file of logFiles) {
         const content = await fs.readFile(file, 'utf8');
         const lines = content.trim().split('\n').filter(line => line);
-        
+
         for (const line of lines) {
           try {
             const logEntry = JSON.parse(line);
@@ -286,7 +285,7 @@ class CentralizedLogger {
           }
         }
       }
-      
+
       return logs
         .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
         .slice(0, limit);
@@ -323,10 +322,10 @@ class CentralizedLogger {
       endDate = null,
       limit = 100
     } = options;
-    
+
     try {
       const logs = await this.getRecentLogs(1000, level);
-      
+
       return logs
         .filter(log => {
           // Filtre par date
@@ -336,13 +335,13 @@ class CentralizedLogger {
           if (endDate && new Date(log.timestamp) > new Date(endDate)) {
             return false;
           }
-          
+
           // Filtre par contenu
           if (query) {
             const searchText = `${log.message} ${JSON.stringify(log.meta)}`.toLowerCase();
             return searchText.includes(query.toLowerCase());
           }
-          
+
           return true;
         })
         .slice(0, limit);
@@ -365,16 +364,16 @@ class CentralizedLogger {
         errors: logs.filter(log => log.level === 'error').length,
         warnings: logs.filter(log => log.level === 'warn').length
       };
-      
+
       logs.forEach(log => {
         // Par niveau
         stats.byLevel[log.level] = (stats.byLevel[log.level] || 0) + 1;
-        
+
         // Par heure
         const hour = new Date(log.timestamp).getHours();
         stats.byHour[hour] = (stats.byHour[hour] || 0) + 1;
       });
-      
+
       return stats;
     } catch (error) {
       logger.error('Erreur lors du calcul des statistiques des logs:', error);
@@ -386,4 +385,4 @@ class CentralizedLogger {
 // Instance singleton
 const centralizedLogger = new CentralizedLogger();
 
-export default centralizedLogger; 
+export default centralizedLogger;

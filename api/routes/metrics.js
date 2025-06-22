@@ -92,12 +92,12 @@ export default (client, logger) => {
       // Mettre à jour les métriques avant de les récupérer
       metricsCollector.updateDiscordMetrics(client);
       metricsCollector.updateSystemMetrics();
-      
+
       const prometheusMetrics = await metricsCollector.getMetrics();
-      
+
       res.set('Content-Type', 'text/plain');
       res.send(prometheusMetrics);
-      
+
       logger.custom('METRICS', `Métriques Prometheus demandées par ${req.ip}`, 'cyan');
     } catch (error) {
       logger.error('Erreur route metrics Prometheus:', error);
@@ -114,9 +114,9 @@ export default (client, logger) => {
       // Mettre à jour les métriques avant de les récupérer
       metricsCollector.updateDiscordMetrics(client);
       metricsCollector.updateSystemMetrics();
-      
+
       const jsonMetrics = await metricsCollector.getMetricsJson();
-      
+
       res.json({
         success: true,
         data: {
@@ -124,7 +124,7 @@ export default (client, logger) => {
           timestamp: new Date().toISOString()
         }
       });
-      
+
       logger.custom('METRICS', `Métriques JSON structurées demandées par ${req.ip}`, 'cyan');
     } catch (error) {
       logger.error('Erreur route metrics JSON:', error);
@@ -167,7 +167,7 @@ export default (client, logger) => {
         success: true,
         data: summary
       });
-      
+
       logger.custom('METRICS', `Résumé des métriques demandé par ${req.ip}`, 'cyan');
     } catch (error) {
       logger.error('Erreur route metrics summary:', error);

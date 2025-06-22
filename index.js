@@ -97,17 +97,17 @@ class SoundShineBot {
     try {
       // Démarrer la collecte de métriques périodique
       this.startMetricsCollection();
-      
+
       // Démarrer la vérification des alertes
       this.startAlertMonitoring();
-      
+
       // Enregistrer le démarrage dans les logs centralisés
       centralizedLogger.info('Bot soundSHINE démarré', {
         version: '1.0',
         environment: config.NODE_ENV,
         timestamp: new Date().toISOString()
       });
-      
+
       logger.info('📊 Système de monitoring initialisé');
     } catch (error) {
       logger.error('Erreur lors de l\'initialisation du monitoring:', error);
@@ -122,10 +122,10 @@ class SoundShineBot {
       try {
         // Mettre à jour les métriques Discord
         metricsCollector.updateDiscordMetrics(this.client);
-        
+
         // Mettre à jour les métriques système
         metricsCollector.updateSystemMetrics();
-        
+
         // Enregistrer dans les logs centralisés
         await centralizedLogger.info('Métriques mises à jour', {
           guilds: this.client.guilds?.cache?.size || 0,
@@ -147,10 +147,10 @@ class SoundShineBot {
       try {
         // Vérifier les métriques et créer des alertes si nécessaire
         await alertManager.checkMetrics(this.client);
-        
+
         // Vérifier le taux d'erreurs
         alertManager.checkErrorRate();
-        
+
         // Nettoyer les anciennes alertes
         alertManager.cleanupOldAlerts();
       } catch (error) {
