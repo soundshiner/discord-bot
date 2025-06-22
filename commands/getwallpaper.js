@@ -1,30 +1,35 @@
-import axios from "axios";
-import config from "../core/config.js";
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
+import axios from 'axios';
+import config from '../core/config.js';
+import { logger } from '../utils/logger.js';
+
 const { UNSPLASH_ACCESS_KEY } = config;
-import logger from "../utils/logger.js";
 
 export default {
-  name: "getwall",
-  description: "Fetches a random photo from Unsplash",
-  async execute(message) {
+  data: new SlashCommandBuilder()
+    .setName('getwallpaper')
+    .setDescription('📷 Récupère une photo aléatoire depuis Unsplash')
+    .setDMPermission(false),
+  async execute(interaction) {
     try {
       const response = await axios.get(
         `https://api.unsplash.com/photos/random?client_id=${UNSPLASH_ACCESS_KEY}&count=1`
       );
 
-      const photoData = Array.isArray(response.data)
-        ? response.data[0]
-        : response.data;
+      const photoData = Array.isArray(response.data) ? response.data[0] : response.data;
       const photoUrl = photoData?.urls?.regular;
 
       if (photoUrl) {
-        message.reply(photoUrl);
+        return await interaction.reply(photoUrl);
       } else {
-        message.reply("Couldn't fetch a photo, try again later.");
+        return await interaction.reply('Aucune image trouvée, réessaie plus tard.');
       }
     } catch (error) {
-      logger.error("Error fetching photo from Unsplash: ", error);
-      message.reply("Unable to fetch a random photo.");
+      logger.error('Erreur Unsplash: ', error);
+      return await interaction.reply({
+        content: 'Impossible de récupérer une image.',
+        flags: MessageFlags.Ephemeral
+      });
     }
-  },
+  }
 };

@@ -1,68 +1,92 @@
+import { SlashCommandBuilder, ChannelType, MessageFlags } from 'discord.js';
 import {
   joinVoiceChannel,
   createAudioPlayer,
   createAudioResource,
   AudioPlayerStatus,
-  NoSubscriberBehavior,
-} from "@discordjs/voice";
-import config from "../core/config.js";
+  NoSubscriberBehavior
+} from '@discordjs/voice';
+import config from '../core/config.js';
+import logger from '../utils/logger.js';
+
 const { STREAM_URL } = config;
 
 export default {
-  name: "play",
-  description: "Lance le stream dans un Stage Channel",
-  async execute(message) {
+  data: new SlashCommandBuilder()
+    .setName('play')
+    .setDescription('▶️ Lance le stream dans un Stage Channel')
+    .setDMPermission(false),
+
+  async execute(interaction) {
+    const { channel } = interaction.member.voice;
+
+    if (!channel) {
+      return interaction.reply({
+        content: '❌ Tu dois être dans un salon vocal ou Stage Channel.',
+        flags: MessageFlags.Ephemeral
+      });
+    }
+
+    if (channel.type !== ChannelType.GuildStageVoice) {
+      return interaction.reply({
+        content: '❌ Cette commande ne fonctionne que dans un Stage Channel.',
+        flags: MessageFlags.Ephemeral
+      });
+    }
+
     try {
-      const channel = message.member.voice.channel;
-      if (!channel) {
-        return message.reply(
-          "❌ Tu dois être dans un salon vocal ou Stage Channel pour utiliser cette commande."
-        );
-      }
-      if (channel.type !== 13) {
-        return message.reply(
-          "❌ Cette commande ne fonctionne que dans un Stage Channel."
-        );
-      }
+      // ✅ Répond immédiatement pour éviter le timeout
+      await interaction.deferReply();
 
       const connection = joinVoiceChannel({
         channelId: channel.id,
         guildId: channel.guild.id,
         adapterCreator: channel.guild.voiceAdapterCreator,
-        selfDeaf: false,
+        selfDeaf: false
       });
 
       const player = createAudioPlayer({
         behaviors: {
-          noSubscriber: NoSubscriberBehavior.Pause,
-        },
+          noSubscriber: NoSubscriberBehavior.Pause
+        }
       });
 
-      const resource = createAudioResource(STREAM_URL, { inlineVolume: true });
+      const resource = createAudioResource(STREAM_URL, {
+        inlineVolume: true
+      });
 
       player.play(resource);
       connection.subscribe(player);
 
-      player.once(AudioPlayerStatus.Playing, () => {
-        message.channel.send("▶️ Stream lancé dans le stage channel.");
+      interaction.client.audio = { connection, player };
+
+      // 🔁 Sécurité si le stream prend trop de temps
+      const timeout = setTimeout(() => {
+        interaction.editReply('⚠️ Aucun son détecté après 5s. Lecture échouée ?');
+      }, 5000);
+
+      player.once(AudioPlayerStatus.Playing, async () => {
+        clearTimeout(timeout);
+        await interaction.editReply('▶️ Stream lancé dans le stage channel.');
       });
 
-      player.on("error", (error) => {
-        console.error("❌ Erreur du player:", error);
-        message.channel.send(
-          "❌ Une erreur est survenue lors de la lecture du stream."
-        );
+      player.on('error', async error => {
+        clearTimeout(timeout);
+        logger.error('❌ Erreur du player:', error);
+        return await interaction.editReply('❌ Erreur pendant la lecture du stream.');
       });
-
-      message.client.audio = { connection, player };
     } catch (error) {
-      console.error(
-        "❌ Erreur lors de l'exécution de la commande play:",
-        error
-      );
-      message.reply(
-        "❌ Une erreur est survenue lors de la tentative de lecture du stream."
-      );
+      logger.error('❌ Erreur exécution /play :', error);
+      if (interaction.deferred || interaction.replied) {
+        return await interaction.editReply({
+          content: '❌ Une erreur est survenue pendant la tentative de lecture.'
+        });
+      } else {
+        return await interaction.reply({
+          content: '❌ Une erreur est survenue pendant la tentative de lecture.',
+          flags: MessageFlags.Ephemeral
+        });
+      }
     }
-  },
+  }
 };
