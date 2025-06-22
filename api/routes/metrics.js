@@ -4,10 +4,15 @@
 
 import { Router } from 'express';
 import os from 'os';
+import metricsCollector from '../../utils/metrics.js';
 
 export default (client, logger) => {
   const router = Router();
 
+  /**
+   * GET /v1/metrics
+   * Métriques au format JSON (compatible avec l'existant)
+   */
   router.get('/', (req, res) => {
     try {
       const startTime = Date.now();
@@ -65,7 +70,7 @@ export default (client, logger) => {
       };
 
       // Log de l'accès aux métriques
-      logger.custom('METRICS', `Métriques demandées par ${req.ip}`, 'cyan');
+      logger.custom('METRICS', `Métriques JSON demandées par ${req.ip}`, 'cyan');
 
       res.json(metrics);
     } catch (error) {
@@ -74,6 +79,102 @@ export default (client, logger) => {
         status: 'error',
         message: 'Internal server error',
         timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  /**
+   * GET /v1/metrics/prometheus
+   * Métriques au format Prometheus
+   */
+  router.get('/prometheus', async (req, res) => {
+    try {
+      // Mettre à jour les métriques avant de les récupérer
+      metricsCollector.updateDiscordMetrics(client);
+      metricsCollector.updateSystemMetrics();
+      
+      const prometheusMetrics = await metricsCollector.getMetrics();
+      
+      res.set('Content-Type', 'text/plain');
+      res.send(prometheusMetrics);
+      
+      logger.custom('METRICS', `Métriques Prometheus demandées par ${req.ip}`, 'cyan');
+    } catch (error) {
+      logger.error('Erreur route metrics Prometheus:', error);
+      res.status(500).send('# Erreur lors de la récupération des métriques Prometheus\n');
+    }
+  });
+
+  /**
+   * GET /v1/metrics/json
+   * Métriques au format JSON structuré
+   */
+  router.get('/json', async (req, res) => {
+    try {
+      // Mettre à jour les métriques avant de les récupérer
+      metricsCollector.updateDiscordMetrics(client);
+      metricsCollector.updateSystemMetrics();
+      
+      const jsonMetrics = await metricsCollector.getMetricsJson();
+      
+      res.json({
+        success: true,
+        data: {
+          metrics: jsonMetrics,
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+      logger.custom('METRICS', `Métriques JSON structurées demandées par ${req.ip}`, 'cyan');
+    } catch (error) {
+      logger.error('Erreur route metrics JSON:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération des métriques JSON',
+        message: error.message
+      });
+    }
+  });
+
+  /**
+   * GET /v1/metrics/summary
+   * Résumé des métriques principales
+   */
+  router.get('/summary', (req, res) => {
+    try {
+      const summary = {
+        bot: {
+          status: client?.user ? 'online' : 'offline',
+          uptime: process.uptime(),
+          guilds: client?.guilds?.cache?.size || 0,
+          users: client?.users?.cache?.size || 0,
+          ping: client?.ws?.ping || 0
+        },
+        system: {
+          memory: {
+            used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+            total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024)
+          },
+          cpu: {
+            loadAverage: os.loadavg()[0].toFixed(2),
+            cores: os.cpus().length
+          }
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      res.json({
+        success: true,
+        data: summary
+      });
+      
+      logger.custom('METRICS', `Résumé des métriques demandé par ${req.ip}`, 'cyan');
+    } catch (error) {
+      logger.error('Erreur route metrics summary:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération du résumé',
+        message: error.message
       });
     }
   });

@@ -7,6 +7,9 @@ import config from './core/config.js';
 import { loadFiles } from './core/loadFiles.js';
 import logger from './utils/logger.js';
 import errorHandler from './utils/errorHandler.js';
+import metricsCollector from './utils/metrics.js';
+import alertManager from './utils/alerts.js';
+import centralizedLogger from './utils/centralizedLogger.js';
 
 import WebServer from './api/server.js';
 
@@ -14,6 +17,7 @@ class SoundShineBot {
   constructor() {
     this.client = null;
     this.server = null;
+    this.monitoringInterval = null;
   }
 
   async initialize() {
@@ -23,6 +27,9 @@ class SoundShineBot {
 
       await this.initializeDiscordClient();
       await this.connectBot();
+
+      // Initialiser le monitoring
+      this.initializeMonitoring();
 
       logger.success(`✨ soundSHINE Bot démarré avec le username ${this.client.user.tag}`);
       logger.section('API');
@@ -83,12 +90,83 @@ class SoundShineBot {
     }
   }
 
+  /**
+   * Initialiser le système de monitoring
+   */
+  initializeMonitoring() {
+    try {
+      // Démarrer la collecte de métriques périodique
+      this.startMetricsCollection();
+      
+      // Démarrer la vérification des alertes
+      this.startAlertMonitoring();
+      
+      // Enregistrer le démarrage dans les logs centralisés
+      centralizedLogger.info('Bot soundSHINE démarré', {
+        version: '1.0',
+        environment: config.NODE_ENV,
+        timestamp: new Date().toISOString()
+      });
+      
+      logger.info('📊 Système de monitoring initialisé');
+    } catch (error) {
+      logger.error('Erreur lors de l\'initialisation du monitoring:', error);
+    }
+  }
+
+  /**
+   * Démarrer la collecte de métriques
+   */
+  startMetricsCollection() {
+    this.monitoringInterval = setInterval(async () => {
+      try {
+        // Mettre à jour les métriques Discord
+        metricsCollector.updateDiscordMetrics(this.client);
+        
+        // Mettre à jour les métriques système
+        metricsCollector.updateSystemMetrics();
+        
+        // Enregistrer dans les logs centralisés
+        await centralizedLogger.info('Métriques mises à jour', {
+          guilds: this.client.guilds?.cache?.size || 0,
+          users: this.client.users?.cache?.size || 0,
+          ping: this.client.ws?.ping || 0
+        });
+      } catch (error) {
+        logger.error('Erreur lors de la collecte de métriques:', error);
+        alertManager.createAlert('metrics_collection_error', 'error', `Erreur lors de la collecte de métriques: ${error.message}`, { context: 'monitoring' });
+      }
+    }, 30000); // Toutes les 30 secondes
+  }
+
+  /**
+   * Démarrer la surveillance des alertes
+   */
+  startAlertMonitoring() {
+    setInterval(async () => {
+      try {
+        // Vérifier les métriques et créer des alertes si nécessaire
+        await alertManager.checkMetrics(this.client);
+        
+        // Vérifier le taux d'erreurs
+        alertManager.checkErrorRate();
+        
+        // Nettoyer les anciennes alertes
+        alertManager.cleanupOldAlerts();
+      } catch (error) {
+        logger.error('Erreur lors de la surveillance des alertes:', error);
+      }
+    }, 60000); // Toutes les minutes
+  }
+
   startWebServer() {
     try {
       this.server = new WebServer(this.client, logger);
       this.server.start(config.API_PORT);
       logger.info('📊 Métriques disponibles sur /v1/metrics');
       logger.info('🏥 Health check sur /health');
+      logger.info('📝 Logs centralisés disponibles sur /v1/logs');
+      logger.info('🚨 Alertes disponibles sur /v1/alerts');
       logger.sectionStart('Start logging now...');
     } catch (error) {
       errorHandler.handleCriticalError(error, 'WEB_SERVER_START');
@@ -100,6 +178,18 @@ class SoundShineBot {
     logger.info('Arrêt du bot en cours...');
 
     try {
+      // Arrêter le monitoring
+      if (this.monitoringInterval) {
+        clearInterval(this.monitoringInterval);
+        logger.info('Monitoring arrêté');
+      }
+
+      // Enregistrer l'arrêt dans les logs centralisés
+      await centralizedLogger.info('Bot soundSHINE arrêté', {
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+      });
+
       if (this.client) {
         await this.client.destroy();
         logger.success('Client Discord déconnecté');
@@ -128,12 +218,14 @@ process.on('SIGTERM', () => bot.shutdown()); // Arrêter depuis le système
 
 process.on('unhandledRejection', error => {
   errorHandler.handleCriticalError(error, 'UNHANDLED_REJECTION');
+  alertManager.createAlert('unhandled_rejection', 'error', `Promesse rejetée non gérée: ${error.message}`, { context: 'process' });
   logger.error(`Promesse rejetée non gérée : ${error.message}`);
 });
 
 // Exception non-capturée
 process.on('uncaughtException', error => {
   errorHandler.handleCriticalError(error, 'UNCAUGHT_EXCEPTION');
+  alertManager.createAlert('uncaught_exception', 'critical', `Exception non capturée: ${error.message}`, { context: 'process' });
   logger.error(`Exception non capturée : ${error.message}`);
   bot.shutdown();
 });

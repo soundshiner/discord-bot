@@ -9,6 +9,8 @@ import rateLimit from 'express-rate-limit';
 import healthRoutes from './routes/health.js';
 import metricsRoutes from './routes/metrics.js';
 import playlistRoutes from './routes/playlist-update.js';
+import logsRoutes from './routes/logs.js';
+import alertsRoutes from './routes/alerts.js';
 import errorHandler from '../utils/errorHandler.js';
 
 class WebServer {
@@ -53,7 +55,7 @@ class WebServer {
       this.app.use(express.json({ limit: '10mb' }));
       this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-      // Logging des requêtes
+      // Logging des requêtes avec métriques
       this.app.use((req, res, next) => {
         const start = Date.now();
         res.on('finish', () => {
@@ -62,6 +64,11 @@ class WebServer {
           const method = req.method;
           const url = req.url;
           const ip = req.ip || req.connection.remoteAddress;
+
+          // Enregistrer les métriques de requête
+          if (global.metricsCollector) {
+            global.metricsCollector.recordApiRequest(method, url, status, duration);
+          }
 
           if (status >= 400) {
             this.logger.warn(`${method} ${url} - ${status} - ${duration}ms - ${ip}`);
@@ -85,7 +92,14 @@ class WebServer {
           name: 'soundSHINE Bot API',
           version: '1.0.0',
           status: 'online',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          endpoints: {
+            health: '/v1/health',
+            metrics: '/v1/metrics',
+            logs: '/v1/logs',
+            alerts: '/v1/alerts',
+            playlist: '/v1/send-playlist'
+          }
         });
       });
 
@@ -103,6 +117,22 @@ class WebServer {
         this.logger.info('Route /v1/metrics chargée');
       } catch (error) {
         this.logger.error('❌ Erreur route /v1/metrics:', error);
+        throw error;
+      }
+
+      try {
+        this.app.use('/v1/logs', logsRoutes(this.client, this.logger));
+        this.logger.info('Route /v1/logs chargée');
+      } catch (error) {
+        this.logger.error('❌ Erreur route /v1/logs:', error);
+        throw error;
+      }
+
+      try {
+        this.app.use('/v1/alerts', alertsRoutes(this.client, this.logger));
+        this.logger.info('Route /v1/alerts chargée');
+      } catch (error) {
+        this.logger.error('❌ Erreur route /v1/alerts:', error);
         throw error;
       }
 
@@ -131,8 +161,8 @@ class WebServer {
   setupErrorHandling() {
     try {
       // Gestionnaire d'erreurs global
-      this.app.use((error, req, res) => {
-        errorHandler.handleAPIError(error, req, res);
+      this.app.use((error, req, res, next) => {
+        errorHandler.handleApiError(error, req, res);
 
         this.logger.error(`Erreur API: ${error.message}`, {
           url: req.url,
