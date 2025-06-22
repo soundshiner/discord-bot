@@ -3,9 +3,16 @@
 // ========================================
 
 import express from "express";
+import helmet from "helmet";
+import cors from "cors";
+import compression from "compression";
+import rateLimit from "express-rate-limit";
 
 import health from "./routes/health.js";
 import playlist_update from "./routes/playlist-update.js";
+import requireApiToken from "./middleware/requireApiToken.js";
+import validateBody from "./middleware/validateBody.js";
+import { sendPlaylistSchema } from "./schemas/playlistSchemas.js";
 export default class WebServer {
   constructor(client, logger) {
     this.app = express();
@@ -17,6 +24,30 @@ export default class WebServer {
   }
 
   setupMiddleware() {
+    // Security and Performance Middlewares
+    this.app.use(helmet());
+    this.app.use(compression());
+
+    // Configure CORS
+    const corsOptions = {
+      origin: [
+        "http://localhost:3000", // For local development
+        "https://soundshineradio.com",
+        "https://www.soundshineradio.com",
+      ],
+      optionsSuccessStatus: 200,
+    };
+    this.app.use(cors(corsOptions));
+
+    // Rate Limiting
+    const limiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // Limit each IP to 100 requests per windowMs
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+    this.app.use(limiter);
+
     this.app.use(express.json({ limit: "10mb" }));
 
     this.app.use((req, res, next) => {
@@ -35,6 +66,8 @@ export default class WebServer {
     // Route playlist webhook
     this.app.use(
       "/v1/send-playlist",
+      requireApiToken,
+      validateBody(sendPlaylistSchema),
       playlist_update(this.client, this.logger)
     );
 
@@ -72,3 +105,4 @@ export default class WebServer {
     });
   }
 }
+

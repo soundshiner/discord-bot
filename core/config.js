@@ -40,6 +40,7 @@ const requiredVars = [
   "ADMIN_ROLE_ID",
   "VOICE_CHANNEL_ID",
   "PLAYLIST_CHANNEL_ID",
+  "SILENCE_ALERT_CHANNEL_ID",
 ];
 
 const missingVars = requiredVars.filter(
@@ -68,6 +69,7 @@ const config = {
   PREFIX: getEnvVar("PREFIX", false, "!s"),
   VOICE_CHANNEL_ID: getEnvVar("VOICE_CHANNEL_ID"),
   PLAYLIST_CHANNEL_ID: getEnvVar("PLAYLIST_CHANNEL_ID"),
+  SILENCE_ALERT_CHANNEL_ID: getEnvVar("SILENCE_ALERT_CHANNEL_ID"),
   BOT_ROLE_NAME: getEnvVar("BOT_ROLE_NAME", false, "soundSHINE"),
   DEV_GUILD_ID: process.env.DEV_GUILD_ID,
   CLIENT_ID: process.env.CLIENT_ID,
@@ -78,3 +80,4 @@ const config = {
 };
 
 export default config;
+
