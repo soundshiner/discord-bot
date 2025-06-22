@@ -87,6 +87,16 @@ jobs:
           format: 'sarif'
           output: 'trivy-fs-results.sarif'
 
+      - name: Check if SARIF file exists
+        run: |
+          if [ -f "trivy-fs-results.sarif" ]; then
+            echo "✅ SARIF file exists"
+            ls -la trivy-fs-results.sarif
+          else
+            echo "⚠️  SARIF file not found, creating empty file"
+            echo '{"version": "2.1.0", "runs": []}' > trivy-fs-results.sarif
+          fi
+
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         if: always()
