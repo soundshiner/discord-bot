@@ -47,7 +47,7 @@ export default (client, logger) => {
         }
       };
 
-      logger.info("🔄 Étape 2: Tentative d'envoi de l'embed...");
+      logger.info('🔄 Étape 2: Tentative d\'envoi de l\'embed...');
       try {
         await playlistChannel.send({ embeds: [embed] });
         logger.info('✅ Embed playlist envoyé avec succès');
@@ -70,7 +70,7 @@ export default (client, logger) => {
 
         logger.info(`✅ Stage channel trouvé: ${stageChannel.name}`);
 
-        logger.info("🔄 Étape 4: Vérification de l'instance de stage...");
+        logger.info('🔄 Étape 4: Vérification de l\'instance de stage...');
         const { stageInstance } = stageChannel;
 
         if (!stageInstance) {

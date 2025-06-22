@@ -4,7 +4,7 @@ import { logger } from '../utils/logger.js';
 export default {
   data: new SlashCommandBuilder()
     .setName('changestopic')
-    .setDescription("Change le sujet d'un Stage Voice Channel")
+    .setDescription('Change le sujet d\'un Stage Voice Channel')
     .addChannelOption(option =>
       option
         .setName('canal')
@@ -31,7 +31,7 @@ export default {
       if (channel.type !== ChannelType.GuildStageVoice) {
         logger.warn(`Le canal ${channel.id} n'est pas un Stage Channel (type: ${channel.type})`);
         return await interaction.reply({
-          content: "❌ Ce canal n'est pas un Stage Channel.",
+          content: '❌ Ce canal n\'est pas un Stage Channel.',
           flags: MessageFlags.Ephemeral
         });
       }
@@ -40,7 +40,7 @@ export default {
       if (!botMember.permissions.has(PermissionFlagsBits.ManageChannels)) {
         logger.warn(`Permissions insuffisantes pour modifier le Stage Channel ${channel.id}`);
         return await interaction.reply({
-          content: "❌ Je n'ai pas les permissions nécessaires pour modifier ce Stage Channel.",
+          content: '❌ Je n\'ai pas les permissions nécessaires pour modifier ce Stage Channel.',
           flags: MessageFlags.Ephemeral
         });
       }
@@ -54,12 +54,12 @@ export default {
       } else {
         await stageInstance.edit({ topic: newTopic });
         logger.info(`Sujet de l'instance de stage mis à jour pour le canal ${channel.id}`);
-        return await interaction.reply("✅ Le sujet de l'instance de stage a été mis à jour avec succès.");
+        return await interaction.reply('✅ Le sujet de l\'instance de stage a été mis à jour avec succès.');
       }
     } catch (error) {
       logger.error(`Erreur lors de la modification du stage: ${error.message}`);
       return await interaction.reply({
-        content: "❌ Une erreur s'est produite lors de la modification du Stage Channel.",
+        content: '❌ Une erreur s\'est produite lors de la modification du Stage Channel.',
         flags: MessageFlags.Ephemeral
       });
     }
