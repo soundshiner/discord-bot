@@ -28,6 +28,9 @@ class SoundShineBot {
       await this.initializeDiscordClient();
       await this.connectBot();
 
+      // Charger les tâches APRÈS la connexion du bot
+      await loadFiles('tasks', 'task', this.client);
+
       // Initialiser le monitoring
       this.initializeMonitoring();
 
@@ -60,7 +63,6 @@ class SoundShineBot {
       const results = {
         commands: await loadFiles('commands', 'command', this.client),
         events: await loadFiles('events', 'event', this.client),
-        tasks: await loadFiles('tasks', 'task', this.client),
         utils: await loadFiles('utils', 'util', this.client)
       };
 
@@ -193,12 +195,12 @@ class SoundShineBot {
       if (this.client) {
         await this.client.destroy();
         logger.success('Client Discord déconnecté');
+      }
 
-        // Arrêter le serveur Express
-        if (this.server) {
-          await this.server.stop();
-          logger.success('Serveur Express arrêté proprement.');
-        }
+      // Arrêter le serveur Express
+      if (this.server) {
+        await this.server.stop();
+        logger.success('Serveur Express arrêté proprement');
       }
 
       logger.success('soundSHINE Bot arrêté proprement');
