@@ -51,6 +51,8 @@ class ErrorHandler {
   handleApiError(error, req, res) {
     if (typeof res.status !== 'function' || typeof res.json !== 'function') {
       this.logger.error('handleApiError: res is not a valid Express response object');
+      this.logger.error('req.url:', req?.url);
+      this.logger.error('res type:', typeof res, res);
       this.logger.error(new Error().stack);
       return;
     }
