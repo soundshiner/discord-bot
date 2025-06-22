@@ -6,7 +6,10 @@ const { VOICE_CHANNEL_ID, API_TOKEN, PLAYLIST_CHANNEL_ID } = config;
 const playlistSchema = z.object({
   playlist: z.string().min(1, 'Playlist is required'),
   topic: z.string().min(1, 'Topic is required')
-});
+}); // Playlist update route
+// ========================================
+// This route handles the sending of a playlist embed and updating the stage channel topic
+// It validates the request body and checks for the API token in the headers
 
 export default (client, logger) => {
   const router = express.Router();
