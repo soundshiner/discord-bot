@@ -73,8 +73,6 @@ async function runGitActions() {
     'package.json',
     'index.js',
     '.eslintrc.json',
-    '.prettierrc',
-    'Dockerfile',
     '.github/workflows/ci-cd.yml'
   ];
 
@@ -144,17 +142,6 @@ async function runGitActions() {
         allTestsPassed = false;
       }
     }
-  }
-
-  // Étape 9: Vérification Docker (si Docker est disponible)
-  console.log(chalk.blue('\n🐳 Vérification Docker...'));
-  try {
-    execSync('docker --version', { stdio: 'pipe' });
-    if (!runCommand('docker build --dry-run .', 'Vérification Dockerfile')) {
-      console.log(chalk.yellow('⚠️  Docker disponible mais build échoué (normal en mode dry-run)'));
-    }
-  } catch (error) {
-    console.log(chalk.yellow('⚠️  Docker non disponible - étape ignorée'));
   }
 
   // Résultats finaux

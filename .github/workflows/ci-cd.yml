@@ -4,20 +4,17 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 # Permissions pour éviter les erreurs d'accès aux ressources
 permissions:
   contents: read
-  packages: write
   security-events: write
   actions: read
   pull-requests: read
 
 env:
   NODE_VERSION: '18'
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   # Tests et linting
@@ -96,77 +93,9 @@ jobs:
         with:
           sarif_file: 'trivy-fs-results.sarif'
 
-  # Build et test de l'image Docker
-  build:
-    needs: [test, security-code]
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # Sécurité - Scan de l'image Docker
-  security-image:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    permissions:
-      contents: read
-      security-events: write
-
-    steps:
-      - name: Run Trivy vulnerability scanner on Docker image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          format: 'sarif'
-          output: 'trivy-image-results.sarif'
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-image-results.sarif'
-
   # Déploiement en staging
   deploy-staging:
-    needs: [build, security-image]
+    needs: [test, security-code]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/develop'
 
@@ -178,7 +107,7 @@ jobs:
 
   # Déploiement en production
   deploy-production:
-    needs: [build, security-image]
+    needs: [test, security-code]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
 
@@ -190,7 +119,7 @@ jobs:
 
   # Notifications
   notify:
-    needs: [test, build, security-code, security-image]
+    needs: [test, security-code]
     runs-on: ubuntu-latest
     if: always()
 

@@ -1,129 +1,162 @@
-# Scripts de Vérification Locale
+# Scripts Utilitaires - soundSHINE Bot
 
-Ce dossier contient des scripts pour simuler les GitHub Actions localement avant de push.
+## 📁 Structure des Scripts
 
-## Scripts Disponibles
+```
+scripts/
+├── deploy-commands.js      # Déploiement des commandes Discord
+├── fix-ephemeral.js        # Correction des messages éphémères
+├── git-actions.js          # Simulation des GitHub Actions
+├── pre-commit.js           # Vérifications pré-commit
+└── run-tests.js            # Exécution de tous les tests
+```
 
-### 1. `git-actions.js` - Simulation complète des GitHub Actions
+## 🚀 Scripts Disponibles
 
-**Commande :** `npm run git-actions`
+### `deploy-commands.js`
+Déploie les commandes slash du bot Discord.
 
-**Ce que fait le script :**
-
-- ✅ Vérifie les fichiers essentiels
-- 📦 Installe les dépendances si nécessaire
-- 🔍 Exécute le linting (ESLint)
-- 🧪 Lance tous les tests (unitaires, intégration, performance)
-- 📝 Vérifie le formatage (Prettier)
-- 🔧 Vérifie la syntaxe Node.js
-- 🐳 Vérifie Docker (si disponible)
-
-**Utilisation :**
-
+**Usage :**
 ```bash
-# Avant de push, pour vérifier que tout fonctionne
+# Déploiement en développement
+npm run deploy:dev
+
+# Déploiement en production
+npm run deploy:prod
+
+# Ou directement
+node scripts/deploy-commands.js --dev
+node scripts/deploy-commands.js --global
+```
+
+**Fonctionnalités :**
+- ✅ Déploiement automatique des commandes
+- ✅ Gestion des environnements (dev/prod)
+- ✅ Validation des commandes
+- ✅ Logs détaillés
+
+### `fix-ephemeral.js`
+Corrige les problèmes de messages éphémères.
+
+**Usage :**
+```bash
+npm run fix:ephemeral
+```
+
+**Fonctionnalités :**
+- ✅ Détection des messages éphémères
+- ✅ Correction automatique
+- ✅ Validation des corrections
+
+### `git-actions.js`
+Simule les GitHub Actions en local.
+
+**Usage :**
+```bash
 npm run git-actions
 ```
 
-### 2. `pre-commit.js` - Vérifications rapides
+**Fonctionnalités :**
+- ✅ Tests automatisés
+- ✅ Linting et formatage
+- ✅ Vérification de la syntaxe
+- ✅ Validation des fichiers essentiels
 
-**Commande :** `npm run pre-push`
+### `pre-commit.js`
+Vérifications avant commit.
 
-**Ce que fait le script :**
-
-- 🔍 Linting rapide
-- 📝 Vérification formatage
-- 🧪 Tests unitaires (sans couverture)
-
-**Utilisation :**
-
+**Usage :**
 ```bash
-# Vérifications rapides avant commit/push
 npm run pre-push
 ```
 
-## Workflow Recommandé
+**Fonctionnalités :**
+- ✅ Tests rapides
+- ✅ Linting
+- ✅ Formatage
+- ✅ Validation
 
-### Avant chaque commit :
+### `run-tests.js`
+Exécute tous les tests du projet.
 
+**Usage :**
 ```bash
-# 1. Vérifications rapides
-npm run pre-push
-
-# 2. Si tout va bien, commit
-git add .
-git commit -m "feat: your message"
-
-# 3. Vérifications complètes avant push
-npm run git-actions
-
-# 4. Si tout va bien, push
-git push origin main
+npm run test:all
 ```
 
-### Intégration avec Git Hooks (Optionnel)
+**Fonctionnalités :**
+- ✅ Tests unitaires
+- ✅ Tests d'intégration
+- ✅ Tests de performance
+- ✅ Tests de stress
 
-Pour automatiser les vérifications, vous pouvez installer Husky :
+## 🔧 Configuration
 
-```bash
-# Installation de Husky
-npm install --save-dev husky
+### Variables d'Environnement
+Les scripts utilisent les variables d'environnement suivantes :
 
-# Configuration des hooks
-npx husky install
-npx husky add .husky/pre-commit "npm run pre-push"
-npx husky add .husky/pre-push "npm run git-actions"
+```env
+NODE_ENV=development
+DISCORD_TOKEN=your-token
+CLIENT_ID=your-client-id
+API_PORT=3000
 ```
 
-## Variables d'Environnement de Test
+### Fichiers de Configuration
+- `.env` - Variables d'environnement
+- `package.json` - Scripts npm
+- `.eslintrc.json` - Configuration ESLint
 
-Les scripts utilisent automatiquement des variables d'environnement de test :
+## 📊 Métriques
 
-```javascript
-{
-  NODE_ENV: 'test',
-  DISCORD_TOKEN: 'test-token',
-  CLIENT_ID: 'test-client-id',
-  API_PORT: '3000',
-  // ... autres variables de test
-}
-```
+### Performance
+- Temps d'exécution des scripts
+- Utilisation des ressources
+- Logs de performance
 
-## Résolution des Problèmes
+### Qualité
+- Couverture de tests
+- Conformité du code
+- Validation des données
 
-### Erreur "Dépendances non installées"
+## 🛠️ Développement
 
-```bash
-npm install
-```
+### Ajouter un Nouveau Script
+1. Créez le fichier dans `scripts/`
+2. Ajoutez le script dans `package.json`
+3. Documentez l'usage
+4. Ajoutez des tests si nécessaire
 
-### Erreurs de linting
+### Bonnes Pratiques
+- ✅ Gestion d'erreurs robuste
+- ✅ Logs détaillés
+- ✅ Validation des entrées
+- ✅ Documentation claire
 
-```bash
-npm run lint:fix
-```
+## 🚨 Dépannage
 
-### Erreurs de formatage
+### Erreurs Communes
+1. **Token Discord invalide**
+   - Vérifiez la variable `DISCORD_TOKEN`
+   - Assurez-vous que le bot a les bonnes permissions
 
-```bash
-npm run format
-```
+2. **Dépendances manquantes**
+   - Exécutez `npm install`
+   - Vérifiez `package.json`
 
-### Tests qui échouent
+3. **Erreurs de linting**
+   - Exécutez `npm run lint:fix`
+   - Vérifiez la configuration ESLint
 
-```bash
-npm run test
-```
+### Logs
+Les scripts génèrent des logs détaillés :
+- Console colorée
+- Niveaux de log appropriés
+- Informations de débogage
 
-## Avantages
+## 📞 Support
 
-1. **Détection précoce** : Trouvez les problèmes avant qu'ils n'arrivent sur GitHub
-2. **Économie de temps** : Pas besoin d'attendre les GitHub Actions
-3. **Développement plus fluide** : Feedback immédiat
-4. **Qualité de code** : Maintient des standards élevés
-
-## Notes
-
-- Les scripts sont conçus pour être compatibles avec Windows, macOS et Linux
-- Docker est optionnel (le script continue même si Docker n'est pas installé)
-- Les erreurs sont clairement affichées avec des suggestions de correction
+Pour toute question concernant les scripts :
+- Consultez la documentation
+- Vérifiez les logs
+- Contactez l'équipe de développement
