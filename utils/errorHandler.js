@@ -49,27 +49,31 @@ class ErrorHandler {
    * Gère les erreurs API
    */
   handleApiError(error, req, res) {
-    if (typeof res.status !== 'function' || typeof res.json !== 'function') {
+    if (typeof res.status === 'function' && typeof res.json === 'function') {
+      // Cas normal : on répond via Express
+      const errorId = this.generateErrorId();
+      const errorType = this.categorizeError(error);
+      this.logger.error(`[${errorId}] Erreur API ${req?.method} ${req?.path}: ${error.message}`);
+      const statusCode = this.getHttpStatusCode(errorType);
+      const response = {
+        error: this.getUserFriendlyMessage(errorType),
+        errorId,
+        timestamp: new Date().toISOString()
+      };
+      res.status(statusCode).json(response);
+    } else {
+      // Cas anormal : log, mais ne bloque pas, et tente une réponse basique si possible
       this.logger.error('handleApiError: res is not a valid Express response object');
       this.logger.error('req.url:', req?.url);
       this.logger.error('res type:', typeof res, res);
       this.logger.error(new Error().stack);
-      return;
+      // Tente d'envoyer une réponse basique si res.writeHead existe (cas Node pur)
+      if (typeof res?.writeHead === 'function' && typeof res?.end === 'function') {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Internal server error', timestamp: new Date().toISOString() }));
+      }
+      // Sinon, ne fais rien (évite de bloquer)
     }
-    const errorId = this.generateErrorId();
-    const errorType = this.categorizeError(error);
-
-    this.logger.error(`[${errorId}] Erreur API ${req.method} ${req.path}: ${error.message}`);
-
-    // Réponse HTTP appropriée
-    const statusCode = this.getHttpStatusCode(errorType);
-    const response = {
-      error: this.getUserFriendlyMessage(errorType),
-      errorId,
-      timestamp: new Date().toISOString()
-    };
-
-    res.status(statusCode).json(response);
   }
 
   /**
