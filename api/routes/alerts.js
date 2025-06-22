@@ -4,8 +4,26 @@
 
 import express from 'express';
 import alertManager from '../../utils/alerts.js';
+import { z } from 'zod';
+import { getApiErrorMessage } from '../../utils/errorHandler.js';
 
 const router = express.Router();
+
+const alertSchema = z.object({
+  type: z.string().min(1, 'Type is required'),
+  severity: z.enum(['info', 'warning', 'error', 'critical']),
+  message: z.string().min(1, 'Message is required'),
+  data: z.record(z.any()).optional()
+});
+
+const thresholdsSchema = z.record(z.enum(['ping', 'memory', 'errors', 'uptime', 'apiLatency']), z.number().min(0));
+
+function requireApiToken(req, res, next) {
+  if (req.headers['x-api-key'] !== process.env.ADMIN_API_KEY) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  next();
+}
 
 /**
  * GET /v1/alerts
@@ -46,7 +64,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors de la récupération des alertes',
-      message: error.message
+      message: getApiErrorMessage(error)
     });
   }
 });
@@ -67,7 +85,7 @@ router.get('/stats', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors de la récupération des statistiques',
-      message: error.message
+      message: getApiErrorMessage(error)
     });
   }
 });
@@ -96,7 +114,7 @@ router.get('/:type', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors de la récupération des alertes par type',
-      message: error.message
+      message: getApiErrorMessage(error)
     });
   }
 });
@@ -107,24 +125,15 @@ router.get('/:type', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const { type, severity, message, data = {} } = req.body;
-
-    // Validation des paramètres requis
-    if (!type || !severity || !message) {
+    // Validation du body avec zod
+    const parseResult = alertSchema.safeParse(req.body);
+    if (!parseResult.success) {
       return res.status(400).json({
-        success: false,
-        error: 'Paramètres requis: type, severity, message'
+        error: 'Invalid request body',
+        details: parseResult.error.errors
       });
     }
-
-    // Validation de la sévérité
-    const validSeverities = ['info', 'warning', 'error', 'critical'];
-    if (!validSeverities.includes(severity)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Sévérité invalide. Valeurs autorisées: info, warning, error, critical'
-      });
-    }
+    const { type, severity, message, data = {} } = parseResult.data;
 
     // Créer l'alerte
     const alertId = alertManager.createAlert(type, severity, message, data);
@@ -144,7 +153,7 @@ router.post('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors de la création de l\'alerte',
-      message: error.message
+      message: getApiErrorMessage(error)
     });
   }
 });
@@ -171,7 +180,7 @@ router.put('/:alertId/resolve', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors de la résolution de l\'alerte',
-      message: error.message
+      message: getApiErrorMessage(error)
     });
   }
 });
@@ -182,27 +191,15 @@ router.put('/:alertId/resolve', async (req, res) => {
  */
 router.put('/thresholds', async (req, res) => {
   try {
-    const thresholds = req.body;
-
-    // Validation des seuils
-    const validThresholds = ['ping', 'memory', 'errors', 'uptime', 'apiLatency'];
-    const providedThresholds = Object.keys(thresholds);
-
-    for (const threshold of providedThresholds) {
-      if (!validThresholds.includes(threshold)) {
-        return res.status(400).json({
-          success: false,
-          error: `Seuil invalide: ${threshold}. Valeurs autorisées: ${validThresholds.join(', ')}`
-        });
-      }
-
-      if (typeof thresholds[threshold] !== 'number' || thresholds[threshold] < 0) {
-        return res.status(400).json({
-          success: false,
-          error: `Valeur invalide pour ${threshold}: doit être un nombre positif`
-        });
-      }
+    // Validation du body avec zod
+    const parseResult = thresholdsSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({
+        error: 'Invalid thresholds object',
+        details: parseResult.error.errors
+      });
     }
+    const thresholds = parseResult.data;
 
     // Mettre à jour les seuils
     alertManager.setThresholds(thresholds);
@@ -219,7 +216,7 @@ router.put('/thresholds', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors de la mise à jour des seuils',
-      message: error.message
+      message: getApiErrorMessage(error)
     });
   }
 });
@@ -243,7 +240,7 @@ router.get('/thresholds', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors de la récupération des seuils',
-      message: error.message
+      message: getApiErrorMessage(error)
     });
   }
 });
@@ -252,7 +249,7 @@ router.get('/thresholds', async (req, res) => {
  * DELETE /v1/alerts
  * Nettoyer les anciennes alertes
  */
-router.delete('/', async (req, res) => {
+router.delete('/', requireApiToken, async (req, res) => {
   try {
     const { maxAge = 24 * 60 * 60 * 1000 } = req.query; // 24 heures par défaut
 
@@ -273,7 +270,7 @@ router.delete('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors du nettoyage des alertes',
-      message: error.message
+      message: getApiErrorMessage(error)
     });
   }
 });
@@ -306,7 +303,7 @@ router.post('/test', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors du test d\'alerte',
-      message: error.message
+      message: getApiErrorMessage(error)
     });
   }
 });

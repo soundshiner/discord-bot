@@ -36,7 +36,12 @@ class WebServer {
       // CORS
       this.app.use(
         cors({
-          origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+          origin: [
+            'https://soundshineradio.com',
+            'https://www.soundshineradio.com',
+            'https://discord.com',
+            'https://api.soundshineradio.com'
+          ],
           credentials: true
         })
       );

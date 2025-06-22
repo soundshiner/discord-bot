@@ -4,8 +4,23 @@
 
 import express from 'express';
 import centralizedLogger from '../../utils/centralizedLogger.js';
+import { z } from 'zod';
+import { getApiErrorMessage } from '../../utils/errorHandler.js';
 
 const router = express.Router();
+
+const logSchema = z.object({
+  level: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  message: z.string().min(1, 'Message is required'),
+  meta: z.record(z.any()).optional()
+});
+
+function requireApiToken(req, res, next) {
+  if (req.headers['x-api-key'] !== process.env.ADMIN_API_KEY) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  next();
+}
 
 /**
  * GET /v1/logs
@@ -41,7 +56,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors de la récupération des logs',
-      message: error.message
+      message: getApiErrorMessage(error)
     });
   }
 });
@@ -62,7 +77,7 @@ router.get('/stats', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors de la récupération des statistiques',
-      message: error.message
+      message: getApiErrorMessage(error)
     });
   }
 });
@@ -90,7 +105,7 @@ router.get('/files', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors de la récupération des fichiers de logs',
-      message: error.message
+      message: getApiErrorMessage(error)
     });
   }
 });
@@ -141,7 +156,7 @@ router.get('/search', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors de la recherche dans les logs',
-      message: error.message
+      message: getApiErrorMessage(error)
     });
   }
 });
@@ -152,23 +167,15 @@ router.get('/search', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const { level = 'info', message, meta = {} } = req.body;
-
-    if (!message) {
+    // Validation du body avec zod
+    const parseResult = logSchema.safeParse(req.body);
+    if (!parseResult.success) {
       return res.status(400).json({
-        success: false,
-        error: 'Paramètre "message" requis'
+        error: 'Invalid request body',
+        details: parseResult.error.errors
       });
     }
-
-    // Valider le niveau de log
-    const validLevels = ['debug', 'info', 'warn', 'error'];
-    if (!validLevels.includes(level)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Niveau de log invalide. Valeurs autorisées: debug, info, warn, error'
-      });
-    }
+    const { level, message, meta = {} } = parseResult.data;
 
     // Écrire le log
     await centralizedLogger[level](message, meta);
@@ -186,7 +193,7 @@ router.post('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors de l\'écriture du log',
-      message: error.message
+      message: getApiErrorMessage(error)
     });
   }
 });
@@ -195,7 +202,7 @@ router.post('/', async (req, res) => {
  * DELETE /v1/logs
  * Nettoyer les anciens logs (admin seulement)
  */
-router.delete('/', async (req, res) => {
+router.delete('/', requireApiToken, async (req, res) => {
   try {
     const { maxAge = 24 * 60 * 60 * 1000 } = req.query; // 24 heures par défaut
 
@@ -215,7 +222,7 @@ router.delete('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erreur lors du nettoyage des logs',
-      message: error.message
+      message: getApiErrorMessage(error)
     });
   }
 });

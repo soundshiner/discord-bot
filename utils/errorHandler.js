@@ -217,3 +217,9 @@ class ErrorHandler {
 const errorHandler = new ErrorHandler();
 export default errorHandler;
 export { ErrorHandler };
+
+export function getApiErrorMessage(error) {
+  return process.env.NODE_ENV === 'production'
+    ? 'Erreur interne du serveur'
+    : error.message;
+}

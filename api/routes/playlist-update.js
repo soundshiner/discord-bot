@@ -1,6 +1,12 @@
 import express from 'express';
 import config from '../../core/config.js';
+import { z } from 'zod';
 const { VOICE_CHANNEL_ID, API_TOKEN, PLAYLIST_CHANNEL_ID } = config;
+
+const playlistSchema = z.object({
+  playlist: z.string().min(1, 'Playlist is required'),
+  topic: z.string().min(1, 'Topic is required')
+});
 
 export default (client, logger) => {
   const router = express.Router();
@@ -8,17 +14,22 @@ export default (client, logger) => {
   router.post('/', async (req, res) => {
     try {
       logger.info('POST /v1/send-playlist');
-      const { token, playlist, topic } = req.body;
 
-      // Vérification du token
-      if (!token || token !== API_TOKEN) {
-        return res.status(403).json({ error: 'Token invalide.' });
+      // Vérification du token dans le header
+      const apiKey = req.headers['x-api-key'];
+      if (!apiKey || apiKey !== API_TOKEN) {
+        return res.status(403).json({ error: 'Invalid or missing API token.' });
       }
 
-      // Vérification des paramètres requis
-      if (!playlist || !topic) {
-        return res.status(400).json({ error: 'Playlist et topic sont requis.' });
+      // Validation du body avec zod
+      const parseResult = playlistSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({
+          error: 'Invalid request body',
+          details: parseResult.error.errors
+        });
       }
+      const { playlist, topic } = parseResult.data;
 
       let playlistSent = false;
       let stageTopic = false;
@@ -38,8 +49,7 @@ export default (client, logger) => {
 
       const embed = {
         title: 'Nouvelle Playlist en cours',
-        description: `**${playlist}** est maintenant en rotation sur soundSHINE! 
-        Vous pouvez l'écouter en direct sur le canal <#1383684854255849613>.`,
+        description: `**${playlist}** est maintenant en rotation sur soundSHINE! \nVous pouvez l'écouter en direct sur le canal <#1383684854255849613>.`,
         color: 0xaff6e4,
         footer: {
           text: 'https://soundshineradio.com',
