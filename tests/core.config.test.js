@@ -62,7 +62,7 @@ describe('core/config.js', () => {
     expect(typeof config.BOT_ROLE_NAME).toBe('string');
   });
 
-  it('détecte correctement l\'environnement', async () => {
+  it("détecte correctement l'environnement", async () => {
     const config = (await import('../core/config.js')).default;
 
     // Vérifier que isDev et isProd sont des booléens

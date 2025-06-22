@@ -20,11 +20,11 @@ export default {
           logger.error(`❌ Erreur commande ${interaction.commandName}:`, error);
           if (interaction.replied || interaction.deferred) {
             await interaction.editReply({
-              content: '❌ Une erreur est survenue pendant l\'exécution de la commande.'
+              content: "❌ Une erreur est survenue pendant l'exécution de la commande."
             });
           } else {
             await interaction.reply({
-              content: '❌ Une erreur est survenue pendant l\'exécution de la commande.',
+              content: "❌ Une erreur est survenue pendant l'exécution de la commande.",
               flags: MessageFlags.Ephemeral
             });
           }

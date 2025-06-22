@@ -21,7 +21,7 @@ async function execute(interaction) {
   const connection = getVoiceConnection(interaction.guildId);
 
   if (!connection) {
-    return await interaction.reply('❌ Le bot n\'est pas connecté à un salon vocal.');
+    return await interaction.reply("❌ Le bot n'est pas connecté à un salon vocal.");
   }
 
   try {
@@ -30,7 +30,7 @@ async function execute(interaction) {
     return await interaction.reply('🛑 Stream arrêté, bot déconnecté du vocal.');
   } catch (error) {
     logger.error(`Erreur dans stop: ${error.message}`);
-    return await interaction.reply('❌ Erreur lors de l\'arrêt du stream.');
+    return await interaction.reply("❌ Erreur lors de l'arrêt du stream.");
   }
 }
 

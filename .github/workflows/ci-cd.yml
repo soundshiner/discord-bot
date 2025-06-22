@@ -23,6 +23,22 @@ jobs:
   # Tests et linting
   test:
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      DISCORD_TOKEN: test-token
+      CLIENT_ID: test-client-id
+      API_PORT: 3000
+      BOT_TOKEN: test-bot-token
+      UNSPLASH_ACCESS_KEY: test-unsplash-key
+      STREAM_URL: test-stream-url
+      JSON_URL: test-json-url
+      ICECAST_HISTORY_URL: test-icecast-url
+      ADMIN_ROLE_ID: test-admin-role
+      VOICE_CHANNEL_ID: test-voice-channel
+      PLAYLIST_CHANNEL_ID: test-playlist-channel
+      API_TOKEN: test-api-token
+      BOT_ROLE_NAME: soundSHINE
+      DEV_GUILD_ID: test-dev-guild
 
     steps:
       - name: Checkout code
@@ -42,6 +58,7 @@ jobs:
 
       - name: Run tests
         run: npm run test:coverage
+        timeout-minutes: 15
 
       - name: Check code formatting
         run: npm run format:check

@@ -105,11 +105,11 @@ class ErrorHandler {
     const messages = {
       NETWORK: 'Problème de connexion. Réessayez dans quelques instants.',
       PERMISSION: 'Permissions insuffisantes pour cette action.',
-      AUTH: 'Erreur d\'authentification. Contactez un administrateur.',
+      AUTH: "Erreur d'authentification. Contactez un administrateur.",
       RATE_LIMIT: 'Trop de requêtes. Attendez un moment avant de réessayer.',
       VOICE: 'Erreur audio. Vérifiez votre connexion vocale.',
       DATABASE: 'Erreur de base de données. Réessayez plus tard.',
-      UNKNOWN: 'Une erreur inattendue s\'est produite. Réessayez plus tard.'
+      UNKNOWN: "Une erreur inattendue s'est produite. Réessayez plus tard."
     };
 
     return messages[errorType] || messages.UNKNOWN;

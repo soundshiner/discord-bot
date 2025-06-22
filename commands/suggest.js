@@ -11,7 +11,7 @@ export default {
     .setName('suggest')
     .setDescription('Proposer un morceau pour la rotation')
     .addStringOption(option => option.setName('titre').setDescription('Le titre du morceau').setRequired(true))
-    .addStringOption(option => option.setName('artiste').setDescription('L\'artiste').setRequired(true))
+    .addStringOption(option => option.setName('artiste').setDescription("L'artiste").setRequired(true))
     .addStringOption(option => option.setName('lien').setDescription('URL Youtube ou Spotify').setRequired(false))
     .addStringOption(option =>
       option
@@ -30,7 +30,7 @@ export default {
       // Check role
       if (!interaction.member.roles.cache.has(config.roleId)) {
         return await interaction.reply({
-          content: '❌ Tu n\'as pas l\'autorisation d\'utiliser cette commande.',
+          content: "❌ Tu n'as pas l'autorisation d'utiliser cette commande.",
           flags: MessageFlags.Ephemeral
         });
       }
@@ -46,7 +46,7 @@ export default {
       // Validate URL
       if (lien && !validateURL(lien)) {
         return await interaction.reply({
-          content: '❌ Ton lien n\'est pas valide.',
+          content: "❌ Ton lien n'est pas valide.",
           flags: MessageFlags.Ephemeral
         });
       }

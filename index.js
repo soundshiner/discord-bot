@@ -115,7 +115,7 @@ class SoundShineBot {
       process.exit(0);
     } catch (error) {
       errorHandler.handleCriticalError(error, 'BOT_SHUTDOWN');
-      logger.error('Erreur lors de l\'arrêt du bot:', error);
+      logger.error("Erreur lors de l'arrêt du bot:", error);
       process.exit(1);
     }
   }

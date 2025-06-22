@@ -14,7 +14,7 @@ export default {
       // Check role
       if (!interaction.member.roles.cache.has(config.roleId)) {
         return await interaction.reply({
-          content: '❌ Tu n\'as pas l\'autorisation d\'utiliser cette commande.',
+          content: "❌ Tu n'as pas l'autorisation d'utiliser cette commande.",
           flags: MessageFlags.Ephemeral
         });
       }

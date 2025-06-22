@@ -57,7 +57,7 @@ export default {
       errorHandler.handleCriticalError(error, 'MESSAGE_CREATE');
       logger.error(`Erreur dans l'événement messageCreate: ${error.message}`);
       try {
-        await message.reply('Il y a eu une erreur l\'exécution de cette commande.');
+        await message.reply("Il y a eu une erreur l'exécution de cette commande.");
       } catch (replyError) {
         logger.error(`Erreur lors de la réponse d'erreur: ${replyError.message}`);
       }
