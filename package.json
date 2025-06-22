@@ -16,11 +16,15 @@
     "axios": "^1.9.0",
     "better-sqlite3": "^11.10.0",
     "chalk": "^4.1.2",
+    "compression": "^1.8.0",
+    "cors": "^2.8.5",
     "discord.js": "^14.0.0",
     "dotenv": "^16.0.0",
     "express": "^5.1.0",
-    "sqlite3": "^5.1.7",
-    "winston": "^3.3.3"
+    "express-rate-limit": "^7.5.1",
+    "helmet": "^8.1.0",
+    "winston": "^3.3.3",
+    "zod": "^3.25.67"
   },
   "license": "ISC",
   "author": "",
@@ -30,5 +34,9 @@
     "test": "tests",
     "deploy:dev": "node scripts/deploy-commands.js --dev",
     "deploy:prod": "node scripts/deploy-commands.js --global"
+  },
+  "devDependencies": {
+    "eslint": "^9.29.0",
+    "nodemon": "^3.1.10"
   }
 }
