@@ -49,6 +49,10 @@ class ErrorHandler {
    * Gère les erreurs API
    */
   handleApiError(error, req, res) {
+    if (typeof res.status !== 'function' || typeof res.json !== 'function') {
+      this.logger.error('handleApiError: res is not a valid Express response object');
+      return;
+    }
     const errorId = this.generateErrorId();
     const errorType = this.categorizeError(error);
 
