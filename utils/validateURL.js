@@ -1,11 +1,16 @@
 // utils/validateURL.js
 export function validateURL(url) {
+  if (!url || typeof url !== 'string') {
+    return false;
+  }
+
   try {
-    new URL(url);
+    const urlObj = new URL(url);
     return (
-      url.startsWith("https://youtu.be") ||
-      url.startsWith("https://www.youtube.com") ||
-      url.startsWith("https://open.spotify.com")
+      urlObj.hostname === 'youtu.be' ||
+      urlObj.hostname === 'www.youtube.com' ||
+      urlObj.hostname === 'youtube.com' ||
+      urlObj.hostname === 'open.spotify.com'
     );
   } catch (err) {
     return false;
