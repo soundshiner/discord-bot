@@ -1,34 +1,43 @@
 // commands/suggest-delete.js
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 // import db depuis ton gestionnaire SQLite
-import { db } from "../utils/database.js";
+import { db } from '../utils/database.js';
+import { logger } from '../utils/logger.js';
 
 export default {
   data: new SlashCommandBuilder()
-    .setName("suggest-delete")
-    .setDescription("Supprimer une suggestion.")
-    .addIntegerOption((option) =>
-      option
-        .setName("id")
-        .setDescription("ID de la suggestion")
-        .setRequired(true)
-    ),
+    .setName('suggest-delete')
+    .setDescription('Supprimer une suggestion.')
+    .addIntegerOption(option => option.setName('id').setDescription('ID de la suggestion').setRequired(true)),
   async execute(interaction) {
-    const id = interaction.options.getInteger("id");
+    const suggestionId = interaction.options.getInteger('id');
 
-    const suggestion = db
-      .prepare("SELECT * FROM suggestions WHERE id = ?")
-      .get(id);
-
-    if (!suggestion) {
+    if (!suggestionId) {
       return interaction.reply({
-        content: "❌ Suggestion non-trouvée.",
-        ephemeral: true,
+        content: '❌ ID de suggestion invalide.',
+        flags: MessageFlags.Ephemeral
       });
     }
 
-    db.prepare("DELETE FROM suggestions WHERE id = ?").run(id);
+    try {
+      const suggestion = db.prepare('SELECT * FROM suggestions WHERE id = ?').get(suggestionId);
 
-    interaction.reply({ content: "✅ Suggestion supprimée!" });
-  },
+      if (!suggestion) {
+        return interaction.reply({
+          content: '❌ Suggestion introuvable.',
+          flags: MessageFlags.Ephemeral
+        });
+      }
+
+      db.prepare('DELETE FROM suggestions WHERE id = ?').run(suggestionId);
+
+      return await interaction.reply(`✅ Suggestion **${suggestion.titre}** supprimée avec succès.`);
+    } catch (error) {
+      logger.error('Erreur suppression suggestion:', error);
+      return await interaction.reply({
+        content: '❌ Erreur lors de la suppression de la suggestion.',
+        flags: MessageFlags.Ephemeral
+      });
+    }
+  }
 };

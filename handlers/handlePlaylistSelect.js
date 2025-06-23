@@ -1,50 +1,43 @@
-import fetch from "node-fetch"; // ou 'undici' si tu préfères, ou fetch natif en Node 18+
-
-// Remplace cette fonction par ton check Arcane réel
-function userHasArcaneLevel(user, requiredLevel = 25) {
-  // Ici tu implémentes ton check (exemple fictif)
-  // Par défaut on autorise pour l’exemple
-  return true;
-}
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { logger } from '../utils/logger.js';
+import errorHandler from '../utils/errorHandler.js';
 
 export default async function handlePlaylistSelect(interaction) {
-  const playlistName = interaction.values[0];
-
-  if (!userHasArcaneLevel(interaction.user, 25)) {
-    return interaction.reply({
-      content: "❌ Tu n’as pas le niveau 25 requis pour lancer une playlist.",
-      ephemeral: true,
-    });
-  }
-
   try {
-    const response = await fetch(
-      "http://localhost:3000/v1/liquidsoap/playlist/start",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playlistName }),
-      }
+    const selectedPlaylist = interaction.values[0];
+    const userId = interaction.user.id;
+
+    logger.info(`Playlist sélectionnée par ${interaction.user.tag}: ${selectedPlaylist}`);
+
+    // Créer l'embed avec les informations de la playlist
+    const embed = new EmbedBuilder()
+      .setColor('#FF6B6B')
+      .setTitle('🎵 Playlist Sélectionnée')
+      .setDescription(`**${selectedPlaylist}**`)
+      .addFields(
+        { name: '👤 Utilisateur', value: `<@${userId}>`, inline: true },
+        { name: '📅 Date', value: new Date().toLocaleString('fr-FR'), inline: true }
+      )
+      .setFooter({ text: 'soundSHINE Radio' })
+      .setTimestamp();
+
+    // Créer les boutons d'action
+    const actionRow = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`play_${selectedPlaylist}`).setLabel('▶️ Lancer').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId(`stop_${selectedPlaylist}`).setLabel('⏹️ Arrêter').setStyle(ButtonStyle.Danger),
+      new ButtonBuilder().setCustomId(`info_${selectedPlaylist}`).setLabel('ℹ️ Info').setStyle(ButtonStyle.Primary)
     );
 
-    if (!response.ok) {
-      const data = await response.json();
-      return interaction.reply({
-        content: `❌ Erreur : ${
-          data.message || "Impossible de lancer la playlist."
-        }`,
-        ephemeral: true,
-      });
-    }
+    // Mettre à jour l'interaction
+    await interaction.update({
+      embeds: [embed],
+      components: [actionRow]
+    });
 
-    await interaction.reply({
-      content: `🎵 Playlist "${playlistName}" lancée avec succès !`,
-      ephemeral: true,
-    });
+    logger.success(`Interface de playlist mise à jour pour ${interaction.user.tag}`);
   } catch (error) {
-    await interaction.reply({
-      content: `❌ Erreur réseau : ${error.message}`,
-      ephemeral: true,
-    });
+    errorHandler.handleInteractionError(error, interaction);
+    logger.error('Erreur dans handlePlaylistSelect:', error);
+    throw error;
   }
 }
