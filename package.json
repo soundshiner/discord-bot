@@ -62,9 +62,17 @@
     "deploy:dev": "node scripts/deploy-commands.js --dev",
     "deploy:prod": "node scripts/deploy-commands.js --global",
     "git-actions": "node scripts/git-actions.js",
-    "pre-push": "node scripts/pre-commit.js"
+    "pre-push": "node scripts/pre-commit.js",
+    "security:check": "node scripts/security-check.js",
+    "prestart": "npm run security:check",
+    "deploy:staging": "bash scripts/deploy.sh staging",
+    "deploy:production": "bash scripts/deploy.sh production",
+    "docker:build": "docker build -t soundshine-bot .",
+    "docker:run": "docker run -p 3000:3000 soundshine-bot",
+    "docker:compose": "docker-compose up -d"
   },
   "engines": {
     "node": ">=18.0.0"
   }
 }
+
