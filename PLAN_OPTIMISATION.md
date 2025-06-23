@@ -65,19 +65,19 @@
 
 #### 3.1 **Containerisation**
 
-- ❓ Dockerfile multi-stage optimisé
-- ❓ Docker Compose pour développement/production
-- ❓ Health checks intégrés
-- ❓ Sécurité (utilisateur non-root)
+- ✅ Dockerfile multi-stage optimisé
+- ✅ Docker Compose pour développement/production
+- ✅ Health checks intégrés
+- ✅ Sécurité (utilisateur non-root)
 - **Gain estimé** : Déploiement 10x plus rapide
 
 #### 3.2 **CI/CD Pipeline**
 
-- ❓ GitHub Actions complet
-- ❓ Tests automatisés
-- ❓ Scan de sécurité (Trivy)
-- ❓ Build et push automatiques
-- ❓ Notifications
+- ✅ GitHub Actions complet
+- ✅ Tests automatisés
+- ✅ Scan de sécurité (Trivy)
+- ✅ Build et push automatiques
+- ✅ Notifications Discord
 - **Gain estimé** : Déploiement 100% automatisé
 
 ## 🔧 **Prochaines Étapes Recommandées**
