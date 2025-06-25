@@ -12,7 +12,7 @@ import playlistRoutes from './routes/playlist-update.js';
 import logsRoutes from './routes/logs.js';
 import alertsRoutes from './routes/alerts.js';
 import errorHandler from '../utils/errorHandler.js';
-
+import presenceRoutes from './routes/presence.js';
 class WebServer {
   constructor(client, logger) {
     this.client = client;
@@ -104,7 +104,8 @@ class WebServer {
             metrics: '/v1/metrics',
             logs: '/v1/logs',
             alerts: '/v1/alerts',
-            playlist: '/v1/send-playlist'
+            playlist: '/v1/send-playlist',
+            presence: '/v1/presence'
           }
         });
       });
@@ -149,6 +150,8 @@ class WebServer {
         this.logger.error('❌ Erreur route /v1/send-playlist:', error);
         throw error;
       }
+
+      this.app.use("/v1/presence", presenceRoutes(this.client, this.logger));
 
       // Route 404 - Utiliser une approche différente pour éviter l'erreur path-to-regexp
       this.app.use((req, res) => {

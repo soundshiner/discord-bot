@@ -138,3 +138,4 @@ dist
 playlists/
 gh-issues.js
 send-playlist.ps1
+scripts/soundshine-dev-env.bat

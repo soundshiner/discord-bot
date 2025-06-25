@@ -10,7 +10,7 @@ import errorHandler from './utils/errorHandler.js';
 import metricsCollector from './utils/metrics.js';
 import alertManager from './utils/alerts.js';
 import centralizedLogger from './utils/centralizedLogger.js';
-
+import updateStatus from './tasks/updateStatus.js';
 import WebServer from './api/server.js';
 
 class SoundShineBot {
@@ -213,6 +213,16 @@ class SoundShineBot {
 }
 
 const bot = new SoundShineBot();
+const statusInterval = updateStatus.start(client, logger, config.JSON_URL);
+
+process.on("SIGINT", async () => {
+  logger.warn("Arrêt demandé, fermeture propre...");
+
+  updateStatus.stop(); // ⛔️ On stoppe l’interval
+
+  await client.destroy();
+  process.exit(0);
+});
 
 process.on('SIGINT', () => bot.shutdown()); // Arrêter avec Ctrl+C
 process.on('SIGTERM', () => bot.shutdown()); // Arrêter depuis le système
@@ -231,5 +241,12 @@ process.on('uncaughtException', error => {
   bot.shutdown();
 });
 
+process.on('unhandledRejection', (reason, promise) => {
+  if (reason?.message?.includes("Shard 0 not found")) {
+    logger.warn("Shard non trouvé à la fermeture, c’est probablement normal.");
+  } else {
+    logger.error(`[UNHANDLED_REJECTION]: ${reason}`);
+  }
+});
 // Démarrer
 bot.initialize();
