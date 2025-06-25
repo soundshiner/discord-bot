@@ -171,11 +171,11 @@ class SoundShineBot {
     try {
       this.server = new WebServer(this.client, logger);
       this.server.start(config.API_PORT);
-      logger.info('📊 Métriques disponibles sur /v1/metrics');
-      logger.info('🏥 Health check sur /v1/health');
-      logger.info('📝 Logs centralisés disponibles sur /v1/logs');
-      logger.info('🚨 Alertes disponibles sur /v1/alerts');
-      logger.section('Start logging now...');
+      logger.info('Métriques disponibles sur /v1/metrics');
+      logger.info('Health check sur /v1/health');
+      logger.info('Logs centralisés disponibles sur /v1/logs');
+      logger.info('Alertes disponibles sur /v1/alerts');
+      logger.sectionStart('Start logging now...');
     } catch (error) {
       errorHandler.handleCriticalError(error, 'WEB_SERVER_START');
       throw error;
