@@ -3,8 +3,8 @@
 
 const requiredEnvVars = [
     'BOT_TOKEN',
-    'DISCORD_CLIENT_ID',
-    'DISCORD_GUILD_ID',
+    'CLIENT_ID',
+    'GUILD_ID',
     'API_PORT',
     'API_TOKEN',
     'PLAYLIST_CHANNEL_ID',
