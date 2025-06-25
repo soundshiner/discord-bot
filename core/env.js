@@ -2,7 +2,7 @@
 // Vérification basique des variables d'environnement essentielles
 
 const requiredEnvVars = [
-    'DISCORD_TOKEN',
+    'BOT_TOKEN',
     'DISCORD_CLIENT_ID',
     'DISCORD_GUILD_ID',
     'API_PORT',
