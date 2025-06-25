@@ -97,21 +97,29 @@ class SoundShineBot {
   }
 
   startUpdateStatus() {
-    // Execute immediately + ensuite à intervalle régulier défini dans updateStatus.interval
+    if (!updateStatus || typeof updateStatus.execute !== 'function') {
+      logger.error('updateStatus.execute est introuvable ou n’est pas une fonction, status update skipped');
+      return;
+    }
+  
+    // Premier appel direct, propre et en mode try/catch pour éviter que ça crash
+    (async () => {
+      try {
+        await updateStatus.execute(this.client);
+        logger.info(`📡 Tâche updateStatus lancée toutes les ${updateStatus.interval} ms`);
+      } catch (error) {
+        logger.error('Erreur dans updateStatus (appel initial) :', error);
+        errorHandler.handleTaskError(error, 'UPDATE_STATUS');
+      }
+    })();
+  
+    // Ensuite l’intervalle régulier
     this.updateStatusInterval = setInterval(() => {
       updateStatus.execute(this.client).catch(error => {
         logger.error('Erreur dans updateStatus :', error);
         errorHandler.handleTaskError(error, 'UPDATE_STATUS');
       });
     }, updateStatus.interval);
-
-    // Premier appel direct sans attendre l'intervalle
-    updateStatus.execute(this.client).catch(error => {
-      logger.error('Erreur dans updateStatus (appel initial) :', error);
-      errorHandler.handleTaskError(error, 'UPDATE_STATUS');
-    });
-
-    logger.info(`📡 Tâche updateStatus lancée toutes les ${updateStatus.interval} ms`);
   }
 
   initializeMonitoring() {
