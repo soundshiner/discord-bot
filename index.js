@@ -92,18 +92,11 @@ class SoundShineBot {
     }
   }
 
-  /**
-   * Initialiser le système de monitoring
-   */
   initializeMonitoring() {
     try {
-      // Démarrer la collecte de métriques périodique
       this.startMetricsCollection();
-
-      // Démarrer la vérification des alertes
       this.startAlertMonitoring();
 
-      // Enregistrer le démarrage dans les logs centralisés
       centralizedLogger.info('Bot soundSHINE démarré', {
         version: '1.0',
         environment: config.NODE_ENV,
@@ -116,49 +109,34 @@ class SoundShineBot {
     }
   }
 
-  /**
-   * Démarrer la collecte de métriques
-   */
   startMetricsCollection() {
     this.monitoringInterval = setInterval(async () => {
       try {
-        // Mettre à jour les métriques Discord
         metricsCollector.updateDiscordMetrics(this.client);
-
-        // Mettre à jour les métriques système
         metricsCollector.updateSystemMetrics();
 
-        // Enregistrer dans les logs centralisés
         await centralizedLogger.info('Métriques mises à jour', {
-          guilds: this.client.guilds?.cache?.size || 0,
-          users: this.client.users?.cache?.size || 0,
-          ping: this.client.ws?.ping || 0
+          guilds: this.client.guilds.cache.size || 0,
+          users: this.client.users.cache.size || 0,
+          ping: this.client.ws.ping || 0
         });
       } catch (error) {
         logger.error('Erreur lors de la collecte de métriques:', error);
         alertManager.createAlert('metrics_collection_error', 'error', `Erreur lors de la collecte de métriques: ${error.message}`, { context: 'monitoring' });
       }
-    }, 30000); // Toutes les 30 secondes
+    }, 30000);
   }
 
-  /**
-   * Démarrer la surveillance des alertes
-   */
   startAlertMonitoring() {
     setInterval(async () => {
       try {
-        // Vérifier les métriques et créer des alertes si nécessaire
         await alertManager.checkMetrics(this.client);
-
-        // Vérifier le taux d'erreurs
         alertManager.checkErrorRate();
-
-        // Nettoyer les anciennes alertes
         alertManager.cleanupOldAlerts();
       } catch (error) {
         logger.error('Erreur lors de la surveillance des alertes:', error);
       }
-    }, 60000); // Toutes les minutes
+    }, 60000);
   }
 
   startWebServer() {
@@ -166,10 +144,10 @@ class SoundShineBot {
       this.server = new WebServer(this.client, logger);
       this.server.start(config.API_PORT);
       logger.info('📊 Métriques disponibles sur /v1/metrics');
-      logger.info('🏥 Health check sur /health');
+      logger.info('🏥 Health check sur /v1/health');
       logger.info('📝 Logs centralisés disponibles sur /v1/logs');
       logger.info('🚨 Alertes disponibles sur /v1/alerts');
-      logger.sectionStart('Start logging now...');
+      logger.section('Start logging now...');
     } catch (error) {
       errorHandler.handleCriticalError(error, 'WEB_SERVER_START');
       throw error;
@@ -180,24 +158,24 @@ class SoundShineBot {
     logger.info('Arrêt du bot en cours...');
 
     try {
-      // Arrêter le monitoring
       if (this.monitoringInterval) {
         clearInterval(this.monitoringInterval);
         logger.info('Monitoring arrêté');
       }
 
-      // Enregistrer l'arrêt dans les logs centralisés
       await centralizedLogger.info('Bot soundSHINE arrêté', {
         uptime: process.uptime(),
         timestamp: new Date().toISOString()
       });
+
+      // Stop updateStatus interval/task
+      updateStatus.stop();
 
       if (this.client) {
         await this.client.destroy();
         logger.info('Client Discord déconnecté');
       }
 
-      // Arrêter le serveur Express
       if (this.server) {
         await this.server.stop();
       }
@@ -213,40 +191,32 @@ class SoundShineBot {
 }
 
 const bot = new SoundShineBot();
-const statusInterval = updateStatus.start(client, logger, config.JSON_URL);
 
-process.on("SIGINT", async () => {
-  logger.warn("Arrêt demandé, fermeture propre...");
+// Gestion signaux arrêt propre
+async function handleShutdown(signal) {
+  logger.warn(`Signal ${signal} reçu, arrêt demandé...`);
+  await bot.shutdown();
+}
+process.on('SIGINT', handleShutdown);
+process.on('SIGTERM', handleShutdown);
 
-  updateStatus.stop(); // ⛔️ On stoppe l’interval
-
-  await client.destroy();
-  process.exit(0);
+// Gestion erreurs non capturées
+process.on('unhandledRejection', (reason, promise) => {
+  if (reason?.message?.includes('Shard 0 not found')) {
+    logger.warn('Shard non trouvé à la fermeture, c’est probablement normal.');
+  } else {
+    errorHandler.handleCriticalError(reason, 'UNHANDLED_REJECTION');
+    alertManager.createAlert('unhandled_rejection', 'error', `Promesse rejetée non gérée: ${reason.message}`, { context: 'process' });
+    logger.error(`Promesse rejetée non gérée : ${reason.message}`);
+  }
 });
 
-process.on('SIGINT', () => bot.shutdown()); // Arrêter avec Ctrl+C
-process.on('SIGTERM', () => bot.shutdown()); // Arrêter depuis le système
-
-process.on('unhandledRejection', error => {
-  errorHandler.handleCriticalError(error, 'UNHANDLED_REJECTION');
-  alertManager.createAlert('unhandled_rejection', 'error', `Promesse rejetée non gérée: ${error.message}`, { context: 'process' });
-  logger.error(`Promesse rejetée non gérée : ${error.message}`);
-});
-
-// Exception non-capturée
-process.on('uncaughtException', error => {
+process.on('uncaughtException', async error => {
   errorHandler.handleCriticalError(error, 'UNCAUGHT_EXCEPTION');
   alertManager.createAlert('uncaught_exception', 'critical', `Exception non capturée: ${error.message}`, { context: 'process' });
   logger.error(`Exception non capturée : ${error.message}`);
-  bot.shutdown();
+  await bot.shutdown();
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-  if (reason?.message?.includes("Shard 0 not found")) {
-    logger.warn("Shard non trouvé à la fermeture, c’est probablement normal.");
-  } else {
-    logger.error(`[UNHANDLED_REJECTION]: ${reason}`);
-  }
-});
-// Démarrer
+// Démarrage du bot
 bot.initialize();
