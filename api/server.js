@@ -167,7 +167,7 @@ class WebServer {
   setupErrorHandling() {
     try {
       // Gestionnaire d'erreurs global
-      this.app.use((error, req, res) => {
+      this.app.use((error, req, res, next) => {
         errorHandler.handleApiError(error, req, res);
       });
     } catch (error) {
