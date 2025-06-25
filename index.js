@@ -131,7 +131,7 @@ class SoundShineBot {
         timestamp: new Date().toISOString()
       });
 
-      logger.info('📊 Système de monitoring initialisé');
+      logger.info('Système de monitoring initialisé');
     } catch (error) {
       logger.error('Erreur lors de l\'initialisation du monitoring:', error);
     }
@@ -175,11 +175,11 @@ class SoundShineBot {
       logger.info('Health check sur /v1/health');
       logger.info('Logs centralisés disponibles sur /v1/logs');
       logger.info('Alertes disponibles sur /v1/alerts');
-      logger.sectionStart('Start logging now...');
     } catch (error) {
       errorHandler.handleCriticalError(error, 'WEB_SERVER_START');
       throw error;
     }
+    logger.sectionStart('Start logging now...');
   }
 
   async shutdown() {
