@@ -104,7 +104,6 @@ class WebServer {
             logs: '/v1/logs',
             alerts: '/v1/alerts',
             playlist: '/v1/send-playlist',
-            presence: '/v1/presence'
           }
         });
       });
