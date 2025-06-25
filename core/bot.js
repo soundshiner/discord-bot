@@ -1,19 +1,17 @@
-// core/bot.js
-import { Client, GatewayIntentBits, Partials } from 'discord.js';
-import logger from '../utils/logger.js';
+// core/bot.js (ESM)
+import { Client, GatewayIntentBits, Collection } from 'discord.js';
+import config from './config.js';
 
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.MessageContent
   ],
-  partials: [Partials.Channel]
 });
 
-client.once('ready', () => {
-  logger.success(`🤖 Bot connecté en tant que ${client.user.tag}`);
-});
+client.commands = new Collection();
+client.config = { PREFIX: config.PREFIX };
 
 export default client;

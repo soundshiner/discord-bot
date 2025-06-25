@@ -59,7 +59,7 @@ class WebServer {
       this.setupErrorHandling();
 
       this.server = this.app.listen(port, () => {
-        this.logger.success(`🚀 Serveur Express démarré sur le port ${port}`);
+        this.logger.success(`🚀 Serveur Express démarré sur le port ${port}`);      
       });
 
       this.server.on('error', error => {
