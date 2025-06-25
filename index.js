@@ -179,7 +179,6 @@ class SoundShineBot {
       errorHandler.handleCriticalError(error, 'WEB_SERVER_START');
       throw error;
     }
-    logger.sectionStart('Start logging now...');
   }
 
   async shutdown() {
@@ -254,3 +253,4 @@ process.on('uncaughtException', async error => {
 
 // Let's roll
 bot.initialize();
+logger.sectionStart('Start logging now...');
