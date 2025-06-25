@@ -18,6 +18,7 @@ class SoundShineBot {
     this.client = null;
     this.server = null;
     this.monitoringInterval = null;
+    this.updateStatusInterval = null; // <-- interval dédié à updateStatus
   }
 
   async initialize() {
@@ -30,6 +31,9 @@ class SoundShineBot {
 
       // Charger les tâches APRÈS la connexion du bot
       await loadFiles('tasks', 'task', this.client);
+
+      // Lancement du status update régulier
+      this.startUpdateStatus();
 
       // Initialiser le monitoring
       this.initializeMonitoring();
@@ -90,6 +94,24 @@ class SoundShineBot {
       errorHandler.handleCriticalError(error, 'BOT_LOGIN');
       throw error;
     }
+  }
+
+  startUpdateStatus() {
+    // Execute immediately + ensuite à intervalle régulier défini dans updateStatus.interval
+    this.updateStatusInterval = setInterval(() => {
+      updateStatus.execute(this.client).catch(error => {
+        logger.error('Erreur dans updateStatus :', error);
+        errorHandler.handleTaskError(error, 'UPDATE_STATUS');
+      });
+    }, updateStatus.interval);
+
+    // Premier appel direct sans attendre l'intervalle
+    updateStatus.execute(this.client).catch(error => {
+      logger.error('Erreur dans updateStatus (appel initial) :', error);
+      errorHandler.handleTaskError(error, 'UPDATE_STATUS');
+    });
+
+    logger.info(`📡 Tâche updateStatus lancée toutes les ${updateStatus.interval} ms`);
   }
 
   initializeMonitoring() {
@@ -163,13 +185,15 @@ class SoundShineBot {
         logger.info('Monitoring arrêté');
       }
 
+      if (this.updateStatusInterval) {
+        clearInterval(this.updateStatusInterval);
+        logger.info('updateStatus arrêté');
+      }
+
       await centralizedLogger.info('Bot soundSHINE arrêté', {
         uptime: process.uptime(),
         timestamp: new Date().toISOString()
       });
-
-      // Stop updateStatus interval/task
-      updateStatus.stop();
 
       if (this.client) {
         await this.client.destroy();
@@ -201,7 +225,7 @@ process.on('SIGINT', handleShutdown);
 process.on('SIGTERM', handleShutdown);
 
 // Gestion erreurs non capturées
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason) => {
   if (reason?.message?.includes('Shard 0 not found')) {
     logger.warn('Shard non trouvé à la fermeture, c’est probablement normal.');
   } else {

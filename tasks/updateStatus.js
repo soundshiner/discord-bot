@@ -1,32 +1,27 @@
-// tasks/updateStatus.js
 import axios from 'axios';
 import config from '../core/config.js';
 import { ActivityType } from 'discord.js';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 import errorHandler from '../utils/errorHandler.js';
 
 const { JSON_URL } = config;
 
-// Stocke la dernière chanson connue
 let lastSong = null;
+let intervalId = null;
 
 async function updateStatus(client) {
   try {
-    const { data } = await axios.get(JSON_URL, {
-      timeout: 10000
-    });
+    const { data } = await axios.get(JSON_URL, { timeout: 10000 });
 
     let currentSong = 'Stream offline or no song information available';
 
     if (data.icestats?.source) {
       const source = Array.isArray(data.icestats.source) ? data.icestats.source[0] : data.icestats.source;
-
       if (source?.title) {
         currentSong = source.title;
       }
     }
 
-    // Ne log que si la chanson a changé
     if (currentSong !== lastSong) {
       logger.info(`Updated status to: ${currentSong}`);
       lastSong = currentSong;
@@ -54,6 +49,16 @@ async function updateStatus(client) {
 
 export default {
   name: 'updateStatus',
-  interval: 5000,
-  execute: updateStatus
+  interval: 5000, // toutes les 5 secondes (tu peux augmenter ça à 15-30 sec pour éviter les ratés)
+  execute(client) {
+    if (intervalId) clearInterval(intervalId); // safety first
+    intervalId = setInterval(() => updateStatus(client), this.interval);
+  },
+  stop() {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+      logger.info('updateStatus task stopped');
+    }
+  }
 };
