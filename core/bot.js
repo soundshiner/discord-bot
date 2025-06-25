@@ -1,4 +1,7 @@
+// ========================================
 // core/bot.js (ESM)
+// ========================================
+
 import { Client, GatewayIntentBits, Collection } from 'discord.js';
 import config from './config.js';
 
@@ -7,8 +10,8 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildVoiceStates,
-  ],
+    GatewayIntentBits.GuildVoiceStates
+  ]
 });
 
 client.commands = new Collection();

@@ -1,10 +1,14 @@
+// ========================================
 // index.js (ESM)
+// ========================================
+
 import 'dotenv/config';
-import './core/config.js'; // validation env etc
+import './core/config.js';
 import { start } from './core/startup.js';
 import { registerProcessHandlers } from './core/lifecycle.js';
 
-(async () => {
-  await start();
-  registerProcessHandlers();
-})();
+// 🚀 Lancement
+await start();
+
+// 🧼 Gestion du cycle de vie
+registerProcessHandlers();
