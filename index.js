@@ -18,7 +18,7 @@ class SoundShineBot {
     this.client = null;
     this.server = null;
     this.monitoringInterval = null;
-    this.updateStatusInterval = null; // <-- interval dédié à updateStatus
+    this.updateStatusInterval = null;
   }
 
   async initialize() {
@@ -28,20 +28,14 @@ class SoundShineBot {
 
       await this.initializeDiscordClient();
       await this.connectBot();
-
-      // Charger les tâches APRÈS la connexion du bot
       await loadFiles('tasks', 'task', this.client);
 
-      // Lancement du status update régulier
       this.startUpdateStatus();
-
-      // Initialiser le monitoring
       this.initializeMonitoring();
 
       logger.success(`✨ soundSHINE Bot démarré avec le username ${this.client.user.tag}`);
       logger.section('API');
 
-      // Démarrer le serveur Express
       this.startWebServer();
     } catch (error) {
       errorHandler.handleCriticalError(error, 'BOT_INITIALIZATION');
@@ -101,8 +95,8 @@ class SoundShineBot {
       logger.error('updateStatus.execute est introuvable ou n’est pas une fonction, status update skipped');
       return;
     }
-  
-    // Premier appel direct proprement
+
+    // Premier appel
     (async () => {
       try {
         await updateStatus.execute(this.client);
@@ -112,8 +106,7 @@ class SoundShineBot {
         errorHandler.handleTaskError(error, 'UPDATE_STATUS');
       }
     })();
-  
-    // Intervalle avec vérif avant appel
+
     this.updateStatusInterval = setInterval(() => {
       if (updateStatus && typeof updateStatus.execute === 'function') {
         updateStatus.execute(this.client).catch(error => {
@@ -126,7 +119,6 @@ class SoundShineBot {
       }
     }, updateStatus.interval);
   }
-  
 
   initializeMonitoring() {
     try {
@@ -230,25 +222,29 @@ class SoundShineBot {
 
 const bot = new SoundShineBot();
 
-// Gestion signaux arrêt propre
 async function handleShutdown(signal) {
   logger.warn(`Signal ${signal} reçu, arrêt demandé...`);
   await bot.shutdown();
 }
+
 process.on('SIGINT', handleShutdown);
 process.on('SIGTERM', handleShutdown);
 
-// Gestion erreurs non capturées
-process.on('unhandledRejection', (reason) => {
-  if (reason?.message?.includes('Shard 0 not found')) {
-    logger.warn('Shard non trouvé à la fermeture, c’est probablement normal.');
+// Rejet de promesse non gérée
+process.on('unhandledRejection', async (reason) => {
+  const isShardError = reason?.message?.includes('Shard 0 not found');
+  if (isShardError) {
+    logger.warn('⚠️ Shard non trouvé à la fermeture, c’est probablement normal.');
   } else {
     errorHandler.handleCriticalError(reason, 'UNHANDLED_REJECTION');
     alertManager.createAlert('unhandled_rejection', 'error', `Promesse rejetée non gérée: ${reason.message}`, { context: 'process' });
     logger.error(`Promesse rejetée non gérée : ${reason.message}`);
   }
+
+  await bot.shutdown();
 });
 
+// Exception non capturée
 process.on('uncaughtException', async error => {
   errorHandler.handleCriticalError(error, 'UNCAUGHT_EXCEPTION');
   alertManager.createAlert('uncaught_exception', 'critical', `Exception non capturée: ${error.message}`, { context: 'process' });
@@ -256,5 +252,5 @@ process.on('uncaughtException', async error => {
   await bot.shutdown();
 });
 
-// Démarrage du bot
+// Let's roll
 bot.initialize();
