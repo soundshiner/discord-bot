@@ -131,9 +131,10 @@ class AlertManager {
         );
       }
 
-   // Vérifier l'utilisation mémoire basée sur RSS (résident set size)
+// Vérifier l'utilisation mémoire basée sur RSS (résident set size)
 const memUsage = process.memoryUsage();
-const rssPercent = memUsage.rss / os.totalmem();
+const totalMemory = os.totalmem();
+const rssPercent = memUsage.rss / totalMemory;
 
 if (rssPercent > this.thresholds.memory) {
   this.createAlert(
@@ -141,9 +142,10 @@ if (rssPercent > this.thresholds.memory) {
     rssPercent > 0.9 ? 'critical' : 'warning',
     `Utilisation mémoire élevée: ${(rssPercent * 100).toFixed(1)}%`,
     {
-      rss: memUsage.rss,
-      totalMemory: os.totalmem(),
-      threshold: this.thresholds.memory
+      rssMB: (memUsage.rss / 1024 / 1024).toFixed(2),
+      totalMB: (totalMemory / 1024 / 1024).toFixed(2),
+      percent: (rssPercent * 100).toFixed(1),
+      threshold: (this.thresholds.memory * 100).toFixed(0) + '%'
     }
   );
 }
