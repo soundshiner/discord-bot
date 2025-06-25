@@ -29,7 +29,7 @@ class WebServer {
       }));
       this.app.use(express.json({ limit: '10mb' }));
       this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-      this.app.use(loggingMiddleware(this.logger));
+      this.app.use(loggingMiddleware());
     } catch (error) {
       errorHandler.handleCriticalError(error, 'MIDDLEWARE_SETUP');
       throw error;
