@@ -102,7 +102,7 @@ class SoundShineBot {
       return;
     }
   
-    // Premier appel direct, propre et en mode try/catch pour éviter que ça crash
+    // Premier appel direct proprement
     (async () => {
       try {
         await updateStatus.execute(this.client);
@@ -113,14 +113,20 @@ class SoundShineBot {
       }
     })();
   
-    // Ensuite l’intervalle régulier
+    // Intervalle avec vérif avant appel
     this.updateStatusInterval = setInterval(() => {
-      updateStatus.execute(this.client).catch(error => {
-        logger.error('Erreur dans updateStatus :', error);
-        errorHandler.handleTaskError(error, 'UPDATE_STATUS');
-      });
+      if (updateStatus && typeof updateStatus.execute === 'function') {
+        updateStatus.execute(this.client).catch(error => {
+          logger.error('Erreur dans updateStatus :', error);
+          errorHandler.handleTaskError(error, 'UPDATE_STATUS');
+        });
+      } else {
+        logger.error('updateStatus.execute est undefined pendant l’intervalle, arrêt du setInterval');
+        clearInterval(this.updateStatusInterval);
+      }
     }, updateStatus.interval);
   }
+  
 
   initializeMonitoring() {
     try {
