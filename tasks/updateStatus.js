@@ -1,41 +1,59 @@
+// tasks/updateStatus.js
+import axios from 'axios';
+import config from '../core/config.js';
+import { ActivityType } from 'discord.js';
+import { logger } from '../utils/logger.js';
+import errorHandler from '../utils/errorHandler.js';
+
+const { JSON_URL } = config;
+
+// Stocke la dernière chanson connue
 let lastSong = null;
-let intervalId;
 
-function startUpdateStatus(client, logger, JSON_URL) {
-  intervalId = setInterval(async () => {
-    try {
-      const { data } = await axios.get(JSON_URL, { timeout: 10000 });
-      let currentSong = "Stream offline or no song information available";
+async function updateStatus(client) {
+  try {
+    const { data } = await axios.get(JSON_URL, {
+      timeout: 10000
+    });
 
-      if (data.icestats?.source) {
-        currentSong = data.icestats.source.title || "No title available";
+    let currentSong = 'Stream offline or no song information available';
+
+    if (data.icestats?.source) {
+      const source = Array.isArray(data.icestats.source) ? data.icestats.source[0] : data.icestats.source;
+
+      if (source?.title) {
+        currentSong = source.title;
       }
-
-      if (currentSong !== lastSong) {
-        lastSong = currentSong;
-
-        await client.user.setActivity({
-          name: `📀 ${currentSong}`,
-          type: ActivityType.Custom,
-          url: "https://soundshineradio.com",
-        });
-
-        logger.info(`Updated status to: ${currentSong}`);
-      }
-    } catch (error) {
-      logger.warn(`Erreur updateStatus: ${error.message}`);
     }
-  }, 5000);
 
-  return intervalId;
-}
+    // Ne log que si la chanson a changé
+    if (currentSong !== lastSong) {
+      logger.info(`Updated status to: ${currentSong}`);
+      lastSong = currentSong;
+    }
 
-function stopUpdateStatus() {
-  if (intervalId) clearInterval(intervalId);
+    await client.user.setActivity({
+      name: `📀 ${currentSong}`,
+      type: ActivityType.Custom,
+      url: 'https://soundshineradio.com'
+    });
+  } catch (error) {
+    errorHandler.handleTaskError(error, 'UPDATE_STATUS');
+    logger.error('Error fetching metadata or updating status:', error);
+    try {
+      await client.user.setActivity('Soundshine Radio', {
+        type: ActivityType.Listening
+      });
+      logger.warn('Fallback activity set to Soundshine Radio');
+    } catch (fallbackError) {
+      errorHandler.handleTaskError(fallbackError, 'UPDATE_STATUS_FALLBACK');
+      logger.error('Error setting fallback activity:', fallbackError);
+    }
+  }
 }
 
 export default {
-  name: "updateStatus",
-  start: startUpdateStatus,
-  stop: stopUpdateStatus,
+  name: 'updateStatus',
+  interval: 5000,
+  execute: updateStatus
 };
