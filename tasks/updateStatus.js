@@ -7,7 +7,6 @@ import errorHandler from '../utils/errorHandler.js';
 const { JSON_URL } = config;
 
 let lastSong = null;
-let intervalId = null;
 
 async function updateStatus(client) {
   try {
@@ -49,16 +48,9 @@ async function updateStatus(client) {
 
 export default {
   name: 'updateStatus',
-  interval: 5000, // toutes les 5 secondes (tu peux augmenter ça à 15-30 sec pour éviter les ratés)
-  execute(client) {
-    if (intervalId) clearInterval(intervalId); // safety first
-    intervalId = setInterval(() => updateStatus(client), this.interval);
-  },
+  interval: 5000,
+  execute: updateStatus,
   stop() {
-    if (intervalId) {
-      clearInterval(intervalId);
-      intervalId = null;
-      logger.info('updateStatus task stopped');
-    }
+    // rien ici, on gère l'intervalle dans index.js
   }
 };
