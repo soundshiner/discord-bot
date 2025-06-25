@@ -5,7 +5,6 @@ import logger from '../utils/logger.js';
 import errorHandler from '../utils/errorHandler.js';
 
 const { JSON_URL } = config;
-
 let lastSong = null;
 
 async function updateStatus(client) {
@@ -49,8 +48,5 @@ async function updateStatus(client) {
 export default {
   name: 'updateStatus',
   interval: 5000,
-  execute: updateStatus,
-  stop() {
-    // rien ici, on gère l'intervalle dans index.js
-  }
+  execute: updateStatus
 };
