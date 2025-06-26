@@ -1,7 +1,7 @@
 // ========================================
 // utils/alerts.js - Système d'alertes avancé
 // ========================================
-
+import os from 'os';
 import { WebhookClient, EmbedBuilder } from 'discord.js';
 import logger from './logger.js';
 
@@ -131,23 +131,24 @@ class AlertManager {
         );
       }
 
-      // Vérifier l'utilisation mémoire
-      const memUsage = process.memoryUsage();
-      const memoryUsagePercent = memUsage.heapUsed / memUsage.heapTotal;
+// Vérifier l'utilisation mémoire basée sur RSS (résident set size)
+const memUsage = process.memoryUsage();
+const totalMemory = os.totalmem();
+const rssPercent = memUsage.rss / totalMemory;
 
-      if (memoryUsagePercent > this.thresholds.memory) {
-        this.createAlert(
-          'high_memory',
-          memoryUsagePercent > 0.9 ? 'critical' : 'warning',
-          `Utilisation mémoire élevée: ${(memoryUsagePercent * 100).toFixed(1)}%`,
-          {
-            usage: memoryUsagePercent,
-            heapUsed: memUsage.heapUsed,
-            heapTotal: memUsage.heapTotal,
-            threshold: this.thresholds.memory
-          }
-        );
-      }
+if (rssPercent > this.thresholds.memory) {
+  this.createAlert(
+    'high_memory',
+    rssPercent > 0.9 ? 'critical' : 'warning',
+    `Utilisation mémoire élevée: ${(rssPercent * 100).toFixed(1)}%`,
+    {
+      rssMB: (memUsage.rss / 1024 / 1024).toFixed(2),
+      totalMB: (totalMemory / 1024 / 1024).toFixed(2),
+      percent: (rssPercent * 100).toFixed(1),
+      threshold: (this.thresholds.memory * 100).toFixed(0) + '%'
+    }
+  );
+}
 
       // Vérifier l'uptime
       const uptime = client.uptime || 0;

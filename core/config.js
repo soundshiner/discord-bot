@@ -31,7 +31,7 @@ function getEnvVar(name, required = true, defaultValue = undefined) {
 
 // Validation
 const requiredVars = [
-  'BOT_TOKEN',
+  'DISCORD_TOKEN',
   'UNSPLASH_ACCESS_KEY',
   'STREAM_URL',
   'JSON_URL',
@@ -49,7 +49,7 @@ if (missingVars.length > 0) {
 // Config finale exportée
 const config = {
   NODE_ENV: env,
-  BOT_TOKEN: getEnvVar('BOT_TOKEN'),
+  DISCORD_TOKEN: getEnvVar('DISCORD_TOKEN'),
   UNSPLASH_ACCESS_KEY: getEnvVar('UNSPLASH_ACCESS_KEY'),
   STREAM_URL: getEnvVar('STREAM_URL'),
   JSON_URL: getEnvVar('JSON_URL'),
