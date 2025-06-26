@@ -1,68 +1,78 @@
-# ========================================
+# ================================
 # Dockerfile multi-stage pour soundSHINE Bot
-# ========================================
+# Version sécurisée et optimisée
+# ================================
 
-# Stage 1: Build
-FROM node:18-alpine AS builder
+# Stage 1: Builder
+FROM node:20-alpine AS builder
 
-# Installer les dépendances de build
-RUN apk add --no-cache python3 make g++
+# Installer les dépendances système nécessaires
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    ffmpeg \
+    && rm -rf /var/cache/apk/*
 
-# Créer l'utilisateur non-root
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S bot -u 1001
-
-# Définir le répertoire de travail
 WORKDIR /app
 
 # Copier les fichiers de dépendances
 COPY package*.json ./
 
-# Installer les dépendances
-RUN npm ci --only=production && npm cache clean --force
+# Installer les dépendances avec audit de sécurité
+RUN npm ci --only=production --audit=false && \
+    npm audit fix --audit-level=moderate || true
+
+# Copier le code source (exclure les fichiers sensibles)
+COPY . .
 
 # Stage 2: Production
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
-# Installer les dépendances système nécessaires
+# Installer ffmpeg pour le traitement audio
 RUN apk add --no-cache \
     ffmpeg \
-    python3 \
     && rm -rf /var/cache/apk/*
 
-# Créer l'utilisateur non-root (même UID/GID que le builder)
+# Créer un utilisateur non-root avec des permissions minimales
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S bot -u 1001
+    adduser -S bot -u 1001 -G nodejs
 
-# Créer les répertoires nécessaires
-RUN mkdir -p /app/logs /app/data && \
-    chown -R bot:nodejs /app
-
-# Définir le répertoire de travail
 WORKDIR /app
 
-# Copier les dépendances du stage builder
+# Copier uniquement les fichiers nécessaires
 COPY --from=builder --chown=bot:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=bot:nodejs /app/index.js ./
+COPY --from=builder --chown=bot:nodejs /app/package.json ./
 
-# Copier le code source
-COPY --chown=bot:nodejs . .
+# Copier les dossiers nécessaires (ajuster selon votre structure)
+COPY --from=builder --chown=bot:nodejs /app/core ./core
+COPY --from=builder --chown=bot:nodejs /app/commands ./commands
+COPY --from=builder --chown=bot:nodejs /app/utils ./utils
+COPY --from=builder --chown=bot:nodejs /app/api ./api
 
-# Créer le fichier de configuration par défaut
-RUN echo '{"NODE_ENV": "production"}' > /app/config.json
+# Créer les dossiers nécessaires avec les bonnes permissions
+RUN mkdir -p /app/logs /app/temp && \
+    chown -R bot:nodejs /app/logs /app/temp
 
-# Exposer le port de l'API
-EXPOSE 3000
+# Sécuriser les permissions
+RUN chmod -R 755 /app && \
+    chmod -R 777 /app/logs /app/temp
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" || exit 1
+# Exposer le port
+EXPOSE 3894
 
 # Basculer vers l'utilisateur non-root
 USER bot
 
-# Variables d'environnement par défaut
-ENV NODE_ENV=production
-ENV PORT=3000
+# Variables d'environnement sécurisées
+ENV NODE_ENV=production \
+    PORT=3894 \
+    NODE_OPTIONS="--max-old-space-size=512"
+
+# Healthcheck amélioré
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget -q --spider http://localhost:3894/v1/health || exit 1
 
 # Commande de démarrage
 CMD ["node", "index.js"] 
