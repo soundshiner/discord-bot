@@ -48,8 +48,8 @@ export default (client, logger) => {
       logger.info(`✅ Canal playlist trouvé: ${playlistChannel.name}`);
 
       const embed = {
-        title: 'Nouvelle Playlist en cours',
-        description: `**${playlist}** est maintenant en rotation sur soundSHINE! \nVous pouvez l'écouter en direct sur le canal <#1383684854255849613>.`,
+        title: '💿 Nouvelle Session en cours',
+        description: `**${playlist}** est maintenant en cours sur soundSHINE! \nVous pouvez l'écouter en direct sur le canal <#1383684854255849613>.`,
         color: 0xaff6e4,
         footer: {
           text: 'https://soundshineradio.com',
