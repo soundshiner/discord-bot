@@ -1,1 +1,22 @@
- 
+services:
+  soundshine-bot:
+    image: soundshine-bot:latest
+    build: .
+    ports:
+      - "3894:3894"
+    environment:
+      - NODE_ENV=production
+      - PORT=3894
+      # Mets ici toutes tes variables d'env perso, ex:
+      # - DISCORD_TOKEN=ton_token
+      # - DB_PATH=/app/data/soundshine.db
+    volumes:
+      - ./data:/app/data     # Persistance de ta base SQLite et logs
+      - ./logs:/app/logs
+      - ./config.env:/app/.env   # Si tu préfères un fichier .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3894/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
