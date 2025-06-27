@@ -4,7 +4,7 @@
 # ================================
 
 # Stage 1: Builder
-FROM node:20-alpine AS builder
+FROM node:20-alpine3.22 AS builder
 
 # Installer les dépendances système nécessaires
 RUN apk add --no-cache \
@@ -27,7 +27,7 @@ RUN npm ci --only=production --audit=false && \
 COPY . .
 
 # Stage 2: Production
-FROM node:20-alpine AS production
+FROM node:20-alpine3.22 AS production
 
 # Installer ffmpeg pour le traitement audio
 RUN apk add --no-cache \
