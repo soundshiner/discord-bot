@@ -40,16 +40,20 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-# Copier uniquement les fichiers nécessaires
+# Copier les fichiers de base
 COPY --from=builder --chown=bot:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=bot:nodejs /app/index.js ./
 COPY --from=builder --chown=bot:nodejs /app/package.json ./
 
-# Copier les dossiers nécessaires (ajuster selon votre structure)
+# Copier les dossiers nécessaires
 COPY --from=builder --chown=bot:nodejs /app/core ./core
 COPY --from=builder --chown=bot:nodejs /app/commands ./commands
 COPY --from=builder --chown=bot:nodejs /app/utils ./utils
 COPY --from=builder --chown=bot:nodejs /app/api ./api
+COPY --from=builder --chown=bot:nodejs /app/tasks ./tasks
+COPY --from=builder --chown=bot:nodejs /app/handlers ./handlers
+COPY --from=builder --chown=bot:nodejs /app/events ./events
+COPY --from=builder --chown=bot:nodejs /app/data ./data
 
 # Créer les dossiers nécessaires avec les bonnes permissions
 RUN mkdir -p /app/logs /app/temp && \

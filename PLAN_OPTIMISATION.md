@@ -66,7 +66,7 @@
 #### 3.1 **Containerisation**
 
 - ❓ Dockerfile multi-stage optimisé
-- ❓ Docker Compose pour développement/production
+- ✅ Docker Compose pour développement/production
 - ✅ Health checks intégrés
 - ✅ Sécurité (utilisateur non-root)
 - **Gain estimé** : Déploiement 10x plus rapide
