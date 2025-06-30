@@ -24,7 +24,9 @@ if (fs.existsSync(envSpecificPath)) dotenv.config({ path: envSpecificPath });
 function getEnvVar (name, required = true, defaultValue = undefined) {
   const value = process.env[name] ?? defaultValue;
   if (required && (value === undefined || value === '')) {
-    throw new Error(`La variable d'environnement ${name} est obligatoire mais non définie.`);
+    throw new Error(
+      `La variable d'environnement ${name} est obligatoire mais non définie.`
+    );
   }
   return value;
 }
@@ -40,10 +42,14 @@ const requiredVars = [
   'PLAYLIST_CHANNEL_ID'
 ];
 
-const missingVars = requiredVars.filter(varName => !process.env[varName] || process.env[varName] === '');
+const missingVars = requiredVars.filter(
+  (varName) => !process.env[varName] || process.env[varName] === ''
+);
 
 if (missingVars.length > 0) {
-  throw new Error(`Variables d'environnement manquantes : ${missingVars.join(', ')}`);
+  throw new Error(
+    `Variables d'environnement manquantes : ${missingVars.join(', ')}`
+  );
 }
 
 // Config finale exportée
@@ -53,7 +59,6 @@ const config = {
   UNSPLASH_ACCESS_KEY: getEnvVar('UNSPLASH_ACCESS_KEY'),
   STREAM_URL: getEnvVar('STREAM_URL'),
   JSON_URL: getEnvVar('JSON_URL'),
-  ICECAST_HISTORY_URL: getEnvVar('ICECAST_HISTORY_URL'),
   ADMIN_ROLE_ID: getEnvVar('ADMIN_ROLE_ID'),
 
   API_TOKEN: getEnvVar('API_TOKEN'),
@@ -65,6 +70,7 @@ const config = {
   BOT_ROLE_NAME: getEnvVar('BOT_ROLE_NAME', false, 'soundSHINE'),
   DEV_GUILD_ID: process.env.DEV_GUILD_ID,
   CLIENT_ID: process.env.CLIENT_ID,
+  LASTFM_API_KEY: process.env.LASTFM_API_KEY,
   isDev: env === 'dev',
   isProd: env === 'prod',
   roleId: '1292528573881651372',
@@ -72,3 +78,4 @@ const config = {
 };
 
 export default config;
+

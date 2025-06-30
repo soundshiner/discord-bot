@@ -267,7 +267,6 @@ vi.mock('../core/config.js', () => ({
     UNSPLASH_ACCESS_KEY: 'test-unsplash-key',
     STREAM_URL: 'test-stream-url',
     JSON_URL: 'test-json-url',
-    ICECAST_HISTORY_URL: 'test-icecast-url',
     ADMIN_ROLE_ID: 'test-admin-role',
     VOICE_CHANNEL_ID: 'test-voice-channel',
     PLAYLIST_CHANNEL_ID: 'test-playlist-channel',
@@ -291,7 +290,6 @@ vi.mock('../core/config.js', () => ({
 // process.env.UNSPLASH_ACCESS_KEY = 'test-unsplash-key';
 // process.env.STREAM_URL = 'test-stream-url';
 // process.env.JSON_URL = 'test-json-url';
-// process.env.ICECAST_HISTORY_URL = 'test-icecast-url';
 // process.env.ADMIN_ROLE_ID = 'test-admin-role';
 // process.env.VOICE_CHANNEL_ID = 'test-voice-channel';
 // process.env.PLAYLIST_CHANNEL_ID = 'test-playlist-channel';
