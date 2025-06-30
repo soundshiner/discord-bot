@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock Discord.js
@@ -53,7 +54,7 @@ describe('Discord Events Integration Tests', () => {
 
     it('should set bot activity on ready', async () => {
       const readyEvent = {
-        execute: vi.fn().mockImplementation(client => {
+        execute: vi.fn().mockImplementation((client) => {
           client.user.setActivity('🎵 Music', { type: 'LISTENING' });
           client.user.setStatus('online');
         })
@@ -61,7 +62,9 @@ describe('Discord Events Integration Tests', () => {
 
       await readyEvent.execute(mockClient);
 
-      expect(mockClient.user.setActivity).toHaveBeenCalledWith('🎵 Music', { type: 'LISTENING' });
+      expect(mockClient.user.setActivity).toHaveBeenCalledWith('🎵 Music', {
+        type: 'LISTENING'
+      });
       expect(mockClient.user.setStatus).toHaveBeenCalledWith('online');
     });
   });
@@ -74,7 +77,10 @@ describe('Discord Events Integration Tests', () => {
 
       await guildCreateEvent.execute(mockGuild, mockClient);
 
-      expect(guildCreateEvent.execute).toHaveBeenCalledWith(mockGuild, mockClient);
+      expect(guildCreateEvent.execute).toHaveBeenCalledWith(
+        mockGuild,
+        mockClient
+      );
     });
 
     it('should log guild join information', async () => {
@@ -87,12 +93,15 @@ describe('Discord Events Integration Tests', () => {
 
       await guildCreateEvent.execute(mockGuild, mockClient);
 
-      expect(guildCreateEvent.execute).toHaveBeenCalledWith(mockGuild, mockClient);
+      expect(guildCreateEvent.execute).toHaveBeenCalledWith(
+        mockGuild,
+        mockClient
+      );
     });
 
     it('should handle missing guild information', async () => {
       const guildCreateEvent = {
-        execute: vi.fn().mockImplementation(guild => {
+        execute: vi.fn().mockImplementation((guild) => {
           if (!guild || !guild.id) {
             throw new Error('Invalid guild data');
           }
@@ -125,7 +134,10 @@ describe('Discord Events Integration Tests', () => {
 
       await messageCreateEvent.execute(mockMessage, mockClient);
 
-      expect(messageCreateEvent.execute).toHaveBeenCalledWith(mockMessage, mockClient);
+      expect(messageCreateEvent.execute).toHaveBeenCalledWith(
+        mockMessage,
+        mockClient
+      );
     });
 
     it('should ignore bot messages', async () => {
@@ -142,7 +154,10 @@ describe('Discord Events Integration Tests', () => {
 
       await messageCreateEvent.execute(mockBotMessage, mockClient);
 
-      expect(messageCreateEvent.execute).toHaveBeenCalledWith(mockBotMessage, mockClient);
+      expect(messageCreateEvent.execute).toHaveBeenCalledWith(
+        mockBotMessage,
+        mockClient
+      );
     });
   });
 
@@ -163,12 +178,15 @@ describe('Discord Events Integration Tests', () => {
 
       await interactionCreateEvent.execute(mockInteraction, mockClient);
 
-      expect(interactionCreateEvent.execute).toHaveBeenCalledWith(mockInteraction, mockClient);
+      expect(interactionCreateEvent.execute).toHaveBeenCalledWith(
+        mockInteraction,
+        mockClient
+      );
     });
 
     it('should handle command interactions', async () => {
       const interactionCreateEvent = {
-        execute: vi.fn().mockImplementation(interaction => {
+        execute: vi.fn().mockImplementation((interaction) => {
           if (interaction.isCommand()) {
             console.log(`Command executed: ${interaction.commandName}`);
           }
@@ -186,7 +204,10 @@ describe('Discord Events Integration Tests', () => {
 
       await interactionCreateEvent.execute(mockCommandInteraction, mockClient);
 
-      expect(interactionCreateEvent.execute).toHaveBeenCalledWith(mockCommandInteraction, mockClient);
+      expect(interactionCreateEvent.execute).toHaveBeenCalledWith(
+        mockCommandInteraction,
+        mockClient
+      );
     });
   });
 
@@ -206,9 +227,17 @@ describe('Discord Events Integration Tests', () => {
         member: { id: '111111111' }
       };
 
-      await voiceStateUpdateEvent.execute(mockOldState, mockNewState, mockClient);
+      await voiceStateUpdateEvent.execute(
+        mockOldState,
+        mockNewState,
+        mockClient
+      );
 
-      expect(voiceStateUpdateEvent.execute).toHaveBeenCalledWith(mockOldState, mockNewState, mockClient);
+      expect(voiceStateUpdateEvent.execute).toHaveBeenCalledWith(
+        mockOldState,
+        mockNewState,
+        mockClient
+      );
     });
 
     it('should handle user leaving voice channel', async () => {
@@ -230,9 +259,17 @@ describe('Discord Events Integration Tests', () => {
         member: { id: '111111111' }
       };
 
-      await voiceStateUpdateEvent.execute(mockOldState, mockNewState, mockClient);
+      await voiceStateUpdateEvent.execute(
+        mockOldState,
+        mockNewState,
+        mockClient
+      );
 
-      expect(voiceStateUpdateEvent.execute).toHaveBeenCalledWith(mockOldState, mockNewState, mockClient);
+      expect(voiceStateUpdateEvent.execute).toHaveBeenCalledWith(
+        mockOldState,
+        mockNewState,
+        mockClient
+      );
     });
   });
 
@@ -252,3 +289,4 @@ describe('Discord Events Integration Tests', () => {
     });
   });
 });
+

@@ -19,7 +19,7 @@ export default {
     .setName('schedule')
     .setDescription('📅 Affiche l\'horaire des programmes')
     .setDMPermission(false),
-  async execute(interaction) {
+  async execute (interaction) {
     try {
       const schedulePath = path.join(__dirname, '..', 'schedule.txt');
       const scheduleContent = fs.readFileSync(schedulePath, 'utf-8');

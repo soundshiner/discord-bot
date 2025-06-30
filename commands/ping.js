@@ -1,10 +1,12 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 export default {
-  data: new SlashCommandBuilder().setName('ping').setDescription('Renvoie la latence du bot'),
+  data: new SlashCommandBuilder()
+    .setName('ping')
+    .setDescription('Renvoie la latence du bot'),
 
-  async execute(interaction) {
+  async execute (interaction) {
     try {
       const sent = await interaction.reply({
         content: 'Ping...',
@@ -25,3 +27,4 @@ export default {
     }
   }
 };
+

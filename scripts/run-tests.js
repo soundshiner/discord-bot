@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
 
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
@@ -20,32 +21,32 @@ const colors = {
   cyan: '\x1b[36m'
 };
 
-function log(message, color = 'reset') {
+function log (message, color = 'reset') {
   console.log(`${colors[color]}${message}${colors.reset}`);
 }
 
-function runCommand(command, description) {
+function runCommand (command, description) {
   log(`\n${colors.cyan}${description}...${colors.reset}`);
   try {
-    const result = execSync(command, {
+    execSync(command, {
       cwd: projectRoot,
       stdio: 'inherit',
       encoding: 'utf8'
     });
     log(`✅ ${description} completed successfully`, 'green');
     return true;
-  } catch (error) {
+  } catch {
     log(`❌ ${description} failed`, 'red');
     return false;
   }
 }
 
-function runTestSuite(suiteName, command, description) {
+function runTestSuite (suiteName, command, description) {
   log(`\n${colors.magenta}=== Running ${suiteName} ===${colors.reset}`);
   return runCommand(command, description);
 }
 
-async function main() {
+async function main () {
   const args = process.argv.slice(2);
   const testType = args[0] || 'all';
 
@@ -74,27 +75,47 @@ async function main() {
 
     // Tests d'intégration
     if (testType === 'all' || testType === 'integration') {
-      results.integration = runTestSuite('Integration Tests', 'npm test tests/integration/', 'Integration tests');
+      results.integration = runTestSuite(
+        'Integration Tests',
+        'npm test tests/integration/',
+        'Integration tests'
+      );
     }
 
     // Tests de performance
     if (testType === 'all' || testType === 'performance') {
-      results.performance = runTestSuite('Performance Tests', 'npm test tests/performance/', 'Performance tests');
+      results.performance = runTestSuite(
+        'Performance Tests',
+        'npm test tests/performance/',
+        'Performance tests'
+      );
     }
 
     // Tests de stress
     if (testType === 'all' || testType === 'stress') {
-      results.stress = runTestSuite('Stress Tests', 'npm test tests/stress/', 'Stress tests');
+      results.stress = runTestSuite(
+        'Stress Tests',
+        'npm test tests/stress/',
+        'Stress tests'
+      );
     }
 
     // Tests de couverture
     if (testType === 'all' || testType === 'coverage') {
-      results.coverage = runTestSuite('Coverage Tests', 'npm run test:coverage', 'Coverage tests');
+      results.coverage = runTestSuite(
+        'Coverage Tests',
+        'npm run test:coverage',
+        'Coverage tests'
+      );
     }
 
     // Vérification du formatage
     if (testType === 'all' || testType === 'format') {
-      runTestSuite('Format Check', 'npm run format:check', 'Code formatting check');
+      runTestSuite(
+        'Format Check',
+        'npm run format:check',
+        'Code formatting check'
+      );
     }
 
     // Résumé des résultats
@@ -115,10 +136,13 @@ async function main() {
     );
 
     if (passedTests === totalTests) {
-      log(`\n🎉 All tests passed! Your bot is ready for deployment.`, 'green');
+      log('\n🎉 All tests passed! Your bot is ready for deployment.', 'green');
       process.exit(0);
     } else {
-      log(`\n⚠️  Some tests failed. Please fix the issues before deploying.`, 'yellow');
+      log(
+        '\n⚠️  Some tests failed. Please fix the issues before deploying.',
+        'yellow'
+      );
       process.exit(1);
     }
   } catch (error) {
@@ -159,7 +183,8 @@ if (process.argv.includes('--help') || process.argv.includes('-h')) {
 }
 
 // Démarrer les tests
-main().catch(error => {
+main().catch((error) => {
   log(`\n💥 Unexpected error: ${error.message}`, 'red');
   process.exit(1);
 });
+

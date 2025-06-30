@@ -5,7 +5,7 @@ import errorHandler from '../utils/errorHandler.js';
 export default {
   name: 'messageCreate',
 
-  async execute(message) {
+  async execute (message) {
     try {
       // Ignorer les messages invalides, de bots ou sans auteur
       if (!message || !message.author || message.author.bot) {

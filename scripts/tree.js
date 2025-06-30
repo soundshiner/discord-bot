@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // scripts/tree.js
 import fs from 'fs';
 import path from 'path';
@@ -26,8 +27,11 @@ const CONTEXTUAL_FILES = [
 
 const OUTPUT_FILE = 'z_contexte.txt';
 
-function printTree(dirPath, prefix = '') {
-  const entries = fs.readdirSync(dirPath).filter(e => !IGNORED.includes(e)).sort();
+function printTree (dirPath, prefix = '') {
+  const entries = fs
+    .readdirSync(dirPath)
+    .filter((e) => !IGNORED.includes(e))
+    .sort();
 
   let tree = '';
   for (let i = 0; i < entries.length; i++) {
@@ -46,11 +50,11 @@ function printTree(dirPath, prefix = '') {
   return tree;
 }
 
-function buildContextualSection() {
+function buildContextualSection () {
   let section = '\n\n📂 **Fichiers recommandés pour comprendre le projet**\n';
   section += '──────────────────────────────────────────────\n';
 
-  CONTEXTUAL_FILES.forEach(file => {
+  CONTEXTUAL_FILES.forEach((file) => {
     if (fs.existsSync(file)) {
       section += `✅ ${file}\n`;
     } else {
@@ -61,9 +65,9 @@ function buildContextualSection() {
   return section;
 }
 
-function run() {
+function run () {
   const rootPath = process.cwd();
-  let output = `🧠 Structure du projet :\n───────────────────────────\n`;
+  let output = '🧠 Structure du projet :\n───────────────────────────\n';
   output += printTree(rootPath);
   output += buildContextualSection();
 
@@ -72,3 +76,4 @@ function run() {
 }
 
 run();
+

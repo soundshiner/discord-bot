@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
 
 // ========================================
 // Script de correction des ephemeral dépréciés
@@ -15,7 +16,7 @@ const __dirname = path.dirname(__filename);
 const directories = ['../commands', '../events', '../handlers'];
 
 // Fonction pour traiter un fichier
-function processFile(filePath) {
+function processFile (filePath) {
   try {
     let content = fs.readFileSync(filePath, 'utf8');
     let modified = false;
@@ -26,10 +27,15 @@ function processFile(filePath) {
 
       // Ajouter l'import MessageFlags si pas présent
       if (!content.includes('MessageFlags')) {
-        const importMatch = content.match(/import\s+{[^}]*}\s+from\s+['"]discord\.js['"]/);
+        const importMatch = content.match(
+          /import\s+{[^}]*}\s+from\s+['"]discord\.js['"]/
+        );
         if (importMatch) {
           // Ajouter MessageFlags à l'import existant
-          content = content.replace(importMatch[0], importMatch[0].replace('}', ', MessageFlags }'));
+          content = content.replace(
+            importMatch[0],
+            importMatch[0].replace('}', ', MessageFlags }')
+          );
         } else {
           // Ajouter un nouvel import
           content = `import { MessageFlags } from 'discord.js';\n${content}`;
@@ -38,7 +44,10 @@ function processFile(filePath) {
       }
 
       // Remplacer ephemeral: true par flags: MessageFlags.Ephemeral
-      content = content.replace(/ephemeral:\s*true/g, 'flags: MessageFlags.Ephemeral');
+      content = content.replace(
+        /ephemeral:\s*true/g,
+        'flags: MessageFlags.Ephemeral'
+      );
       modified = true;
 
       // Écrire le fichier modifié
@@ -48,12 +57,15 @@ function processFile(filePath) {
       }
     }
   } catch (error) {
-    console.error(`❌ Erreur lors du traitement de ${filePath}:`, error.message);
+    console.error(
+      `❌ Erreur lors du traitement de ${filePath}:`,
+      error.message
+    );
   }
 }
 
 // Fonction pour traiter un répertoire
-function processDirectory(dirPath) {
+function processDirectory (dirPath) {
   try {
     const fullPath = path.join(__dirname, dirPath);
 
@@ -71,12 +83,15 @@ function processDirectory(dirPath) {
       }
     }
   } catch (error) {
-    console.error(`❌ Erreur lors du traitement du dossier ${dirPath}:`, error.message);
+    console.error(
+      `❌ Erreur lors du traitement du dossier ${dirPath}:`,
+      error.message
+    );
   }
 }
 
 // Fonction principale
-function main() {
+function main () {
   console.log('🚀 Début de la correction des ephemeral dépréciés...\n');
 
   for (const dir of directories) {
@@ -86,7 +101,7 @@ function main() {
   }
 
   console.log('✅ Correction terminée !');
-  console.log("\n📝 N'oubliez pas de :");
+  console.log('\n📝 N\'oubliez pas de :');
   console.log('1. Vérifier que les imports sont corrects');
   console.log('2. Tester les commandes modifiées');
   console.log('3. Lancer npm run lint pour vérifier la syntaxe');
@@ -94,3 +109,4 @@ function main() {
 
 // Exécuter le script
 main();
+

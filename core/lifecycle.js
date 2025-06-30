@@ -7,7 +7,7 @@ import alertManager from '../utils/alerts.js';
 import errorHandler from '../utils/errorHandler.js';
 import { stop } from './startup.js';
 
-export function registerProcessHandlers() {
+export function registerProcessHandlers () {
   process.on('SIGINT', async () => {
     logger.warn('Signal SIGINT reçu. Arrêt du bot...');
     await stop();

@@ -49,7 +49,8 @@ export default (client, logger) => {
 
       const embed = {
         title: '💿 Nouvelle Session en cours',
-        description: `**${playlist}** est maintenant en cours sur soundSHINE! \nVous pouvez l'écouter en direct sur le canal <#1383684854255849613>.`,
+        description: `**${playlist}** est maintenant en cours sur soundSHINE! \n`
+                     + 'Vous pouvez l\'écouter en direct sur le canal <#1383684854255849613>.',
         color: 0xaff6e4,
         footer: {
           text: 'https://soundshineradio.com',

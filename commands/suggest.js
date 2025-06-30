@@ -23,9 +23,8 @@ export default {
             name: g,
             value: g.toLowerCase().replace(/\s/g, '_')
           }))
-        )
-    ),
-  async execute(interaction) {
+        )),
+  async execute (interaction) {
     try {
       // Check role
       if (!interaction.member.roles.cache.has(config.roleId)) {

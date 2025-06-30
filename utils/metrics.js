@@ -6,7 +6,7 @@ import { register, Counter, Gauge, Histogram, collectDefaultMetrics } from 'prom
 import logger from './logger.js';
 
 class MetricsCollector {
-  constructor() {
+  constructor () {
     this.register = register;
 
     // Métriques Discord
@@ -101,7 +101,7 @@ class MetricsCollector {
   /**
    * Mettre à jour les métriques Discord
    */
-  updateDiscordMetrics(client) {
+  updateDiscordMetrics (client) {
     if (!client) return;
 
     try {
@@ -134,7 +134,7 @@ class MetricsCollector {
   /**
    * Mettre à jour les métriques système
    */
-  updateSystemMetrics() {
+  updateSystemMetrics () {
     try {
       const memUsage = process.memoryUsage();
 
@@ -152,7 +152,7 @@ class MetricsCollector {
   /**
    * Enregistrer une requête API
    */
-  recordApiRequest(method, endpoint, statusCode, duration) {
+  recordApiRequest (method, endpoint, statusCode, duration) {
     try {
       this.apiRequests.inc({ method, endpoint, status_code: statusCode });
       this.apiRequestDuration.observe({ method, endpoint }, duration / 1000); // Convertir en secondes
@@ -164,7 +164,7 @@ class MetricsCollector {
   /**
    * Enregistrer une commande Discord
    */
-  recordCommand(commandName, guildId = 'dm') {
+  recordCommand (commandName, guildId = 'dm') {
     try {
       this.discordCommands.inc({ command_name: commandName, guild_id: guildId });
     } catch (error) {
@@ -175,7 +175,7 @@ class MetricsCollector {
   /**
    * Enregistrer une erreur
    */
-  recordError(errorType, context = 'unknown') {
+  recordError (errorType, context = 'unknown') {
     try {
       this.errors.inc({ error_type: errorType, context });
     } catch (error) {
@@ -186,7 +186,7 @@ class MetricsCollector {
   /**
    * Enregistrer un hit du cache
    */
-  recordCacheHit() {
+  recordCacheHit () {
     try {
       this.cacheHits.inc();
     } catch (error) {
@@ -197,7 +197,7 @@ class MetricsCollector {
   /**
    * Enregistrer un miss du cache
    */
-  recordCacheMiss() {
+  recordCacheMiss () {
     try {
       this.cacheMisses.inc();
     } catch (error) {
@@ -208,7 +208,7 @@ class MetricsCollector {
   /**
    * Mettre à jour la taille du cache
    */
-  updateCacheSize(size) {
+  updateCacheSize (size) {
     try {
       this.cacheSize.set(size);
     } catch (error) {
@@ -219,7 +219,7 @@ class MetricsCollector {
   /**
    * Mettre à jour le statut du stream
    */
-  updateStreamStatus(isOnline) {
+  updateStreamStatus (isOnline) {
     try {
       this.streamStatus.set(isOnline ? 1 : 0);
     } catch (error) {
@@ -230,7 +230,7 @@ class MetricsCollector {
   /**
    * Obtenir toutes les métriques au format Prometheus
    */
-  async getMetrics() {
+  async getMetrics () {
     try {
       return await this.register.metrics();
     } catch (error) {
@@ -242,7 +242,7 @@ class MetricsCollector {
   /**
    * Obtenir les métriques au format JSON
    */
-  async getMetricsJson() {
+  async getMetricsJson () {
     try {
       const metrics = await this.register.getMetricsAsJSON();
       return metrics;

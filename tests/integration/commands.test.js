@@ -51,7 +51,9 @@ describe('Discord Commands Integration', () => {
         tag: 'TestBot#1234'
       },
       guilds: {
-        cache: new Map([['987654321', { id: '987654321', name: 'Test Guild' }]])
+        cache: new Map([
+          ['987654321', { id: '987654321', name: 'Test Guild' }]
+        ])
       }
     };
 
@@ -68,17 +70,39 @@ describe('Discord Commands Integration', () => {
         fetchReply: true
       });
 
-      expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.stringContaining('🏓 Pong !'));
-      expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.stringContaining('Latence bot:'));
-      expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.stringContaining('Latence API:'));
+      expect(mockInteraction.editReply).toHaveBeenCalledWith(
+        expect.stringContaining('🏓 Pong !')
+      );
+      expect(mockInteraction.editReply).toHaveBeenCalledWith(
+        expect.stringContaining('Latence bot:')
+      );
+      expect(mockInteraction.editReply).toHaveBeenCalledWith(
+        expect.stringContaining('Latence API:')
+      );
     });
 
     it('should handle ping command errors gracefully', async () => {
-      // Mock a failure
-      mockInteraction.reply.mockRejectedValueOnce(new Error('Network error'));
+      // Mock a failure on the first reply
+      const testError = new Error('Network error');
+      mockInteraction.reply.mockRejectedValueOnce(testError);
+
+      // Mock the second reply call (the error message)
+      const secondReply = vi.fn().mockResolvedValue(true);
+      mockInteraction.reply.mockResolvedValueOnce({
+        content: '❌ Erreur lors de la vérification de la latence.',
+        flags: expect.any(Number),
+        reply: secondReply
+      });
 
       await pingCommand.execute(mockInteraction);
 
+      // Verify that the first reply was attempted
+      expect(mockInteraction.reply).toHaveBeenCalledWith({
+        content: 'Ping...',
+        fetchReply: true
+      });
+
+      // Verify that the second reply (error message) was called
       expect(mockInteraction.reply).toHaveBeenCalledWith({
         content: '❌ Erreur lors de la vérification de la latence.',
         flags: expect.any(Number)
@@ -96,7 +120,9 @@ describe('Discord Commands Integration', () => {
 
     it('should handle play command with valid URL', async () => {
       // Mock successful play scenario
-      mockInteraction.options.getString.mockReturnValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+      mockInteraction.options.getString.mockReturnValue(
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+      );
 
       try {
         await playCommand.execute(mockInteraction, mockClient);
@@ -120,7 +146,10 @@ describe('Discord Commands Integration', () => {
 
       await playCommand.execute(mockInteraction, mockClient);
 
-      expect(playCommand.execute).toHaveBeenCalledWith(mockInteraction, mockClient);
+      expect(playCommand.execute).toHaveBeenCalledWith(
+        mockInteraction,
+        mockClient
+      );
     });
   });
 
@@ -151,7 +180,9 @@ describe('Discord Commands Integration', () => {
 
       try {
         await stopCommand.execute(mockInteraction);
-        expect(mockInteraction.reply).toHaveBeenCalledWith(expect.stringContaining('⏹️'));
+        expect(mockInteraction.reply).toHaveBeenCalledWith(
+          expect.stringContaining('⏹️')
+        );
       } catch (error) {
         // Expected to fail in test environment
         expect(error).toBeDefined();
@@ -163,7 +194,7 @@ describe('Discord Commands Integration', () => {
     it('should validate all commands have required properties', () => {
       const commands = [pingCommand, playCommand, stopCommand];
 
-      commands.forEach(command => {
+      commands.forEach((command) => {
         expect(command).toHaveProperty('data');
         expect(command).toHaveProperty('execute');
         expect(typeof command.execute).toBe('function');
@@ -195,7 +226,10 @@ describe('Discord Commands Integration', () => {
         expect(error.message).toBe('Test error');
       }
 
-      expect(errorCommand.execute).toHaveBeenCalledWith(mockInteraction, mockClient);
+      expect(errorCommand.execute).toHaveBeenCalledWith(
+        mockInteraction,
+        mockClient
+      );
     });
 
     it('should handle missing voice channel', async () => {
@@ -215,7 +249,11 @@ describe('Discord Commands Integration', () => {
 
       await playCommand.execute(mockInteractionNoVoice, mockClient);
 
-      expect(playCommand.execute).toHaveBeenCalledWith(mockInteractionNoVoice, mockClient);
+      expect(playCommand.execute).toHaveBeenCalledWith(
+        mockInteractionNoVoice,
+        mockClient
+      );
     });
   });
 });
+

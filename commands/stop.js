@@ -10,7 +10,7 @@ const data = new SlashCommandBuilder()
   .setDescription('Arrête le stream et déconnecte le bot du salon vocal')
   .setDefaultMemberPermissions(0); // Perms custom
 
-async function execute(interaction) {
+async function execute (interaction) {
   if (!interaction.member.roles.cache.has(ADMIN_ROLE_ID)) {
     return await interaction.reply({
       content: '❌ Cette commande est réservée aux administrateurs.',

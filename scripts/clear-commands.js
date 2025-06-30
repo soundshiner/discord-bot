@@ -11,7 +11,7 @@ const route = isDev
   ? Routes.applicationGuildCommands(config.CLIENT_ID, config.DEV_GUILD_ID)
   : Routes.applicationCommands(config.CLIENT_ID);
 
-async function clearCommands() {
+async function clearCommands () {
   try {
     logger.info(`🏹 Suppression des commandes ${isDev ? 'DEV' : 'GLOBAL'}...`);
 

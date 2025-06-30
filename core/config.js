@@ -21,7 +21,7 @@ if (fs.existsSync(baseEnvPath)) dotenv.config({ path: baseEnvPath });
 if (fs.existsSync(envSpecificPath)) dotenv.config({ path: envSpecificPath });
 
 // Fonction utilitaire
-function getEnvVar(name, required = true, defaultValue = undefined) {
+function getEnvVar (name, required = true, defaultValue = undefined) {
   const value = process.env[name] ?? defaultValue;
   if (required && (value === undefined || value === '')) {
     throw new Error(`La variable d'environnement ${name} est obligatoire mais non définie.`);

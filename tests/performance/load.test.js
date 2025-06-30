@@ -1,4 +1,6 @@
+/* eslint-disable no-console */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+// import { performance } from 'perf_hooks';
 
 describe('Performance Tests', () => {
   beforeAll(() => {
@@ -31,7 +33,9 @@ describe('Performance Tests', () => {
       // L'augmentation de mémoire ne devrait pas dépasser 50MB
       expect(memoryIncrease).toBeLessThan(50 * 1024 * 1024);
 
-      console.log(`Memory increase: ${(memoryIncrease / 1024 / 1024).toFixed(2)} MB`);
+      console.log(
+        `Memory increase: ${(memoryIncrease / 1024 / 1024).toFixed(2)} MB`
+      );
     });
 
     it('should handle garbage collection properly', () => {
@@ -52,7 +56,9 @@ describe('Performance Tests', () => {
       // La mémoire ne devrait pas être excessive
       expect(memoryUsage).toBeLessThan(100 * 1024 * 1024); // 100MB
 
-      console.log(`Final memory usage: ${(memoryUsage / 1024 / 1024).toFixed(2)} MB`);
+      console.log(
+        `Final memory usage: ${(memoryUsage / 1024 / 1024).toFixed(2)} MB`
+      );
     });
   });
 
@@ -64,7 +70,7 @@ describe('Performance Tests', () => {
       const promises = [];
       for (let i = 0; i < 100; i++) {
         promises.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             // Simuler un travail CPU
             let result = 0;
             for (let j = 0; j < 1000; j++) {
@@ -93,7 +99,7 @@ describe('Performance Tests', () => {
       const dbOperations = [];
       for (let i = 0; i < 50; i++) {
         dbOperations.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             // Simuler une requête DB
             setTimeout(() => {
               resolve({ id: i, result: 'success' });
@@ -122,7 +128,7 @@ describe('Performance Tests', () => {
       const apiRequests = [];
       for (let i = 0; i < 20; i++) {
         apiRequests.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             // Simuler une requête HTTP
             setTimeout(() => {
               resolve({ status: 200, data: `response-${i}` });
@@ -149,7 +155,7 @@ describe('Performance Tests', () => {
       const wsConnections = [];
       for (let i = 0; i < 10; i++) {
         wsConnections.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             // Simuler une connexion WebSocket
             setTimeout(() => {
               resolve({ connected: true, id: i });
@@ -178,15 +184,12 @@ describe('Performance Tests', () => {
       const discordRequests = [];
       for (let i = 0; i < 30; i++) {
         discordRequests.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             // Simuler un délai de rate limiting
             const delay = Math.floor(i / 10) * 100; // Rate limit tous les 10 requêtes
-            setTimeout(
-              () => {
-                resolve({ success: true, requestId: i });
-              },
-              delay + Math.random() * 10
-            );
+            setTimeout(() => {
+              resolve({ success: true, requestId: i });
+            }, delay + Math.random() * 10);
           })
         );
       }
@@ -209,7 +212,7 @@ describe('Performance Tests', () => {
       const messageProcessing = [];
       for (let i = 0; i < 100; i++) {
         messageProcessing.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             // Simuler le traitement d'un message
             setTimeout(() => {
               resolve({ processed: true, messageId: i });
@@ -287,7 +290,7 @@ describe('Performance Tests', () => {
       const startTime = Date.now();
 
       // Simuler le processus de démarrage
-      await new Promise(resolve => {
+      await new Promise((resolve) => {
         // Simuler l'initialisation des modules
         setTimeout(() => {
           // Simuler la connexion à Discord
@@ -310,3 +313,4 @@ describe('Performance Tests', () => {
     });
   });
 });
+

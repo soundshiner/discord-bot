@@ -6,7 +6,7 @@ import { MessageFlags } from 'discord.js';
 import logger from './logger.js';
 
 class ErrorHandler {
-  constructor(loggerInstance = logger) {
+  constructor (loggerInstance = logger) {
     this.logger = loggerInstance;
     this.errorCounts = new Map();
     this.maxErrorsPerMinute = 10;
@@ -15,7 +15,7 @@ class ErrorHandler {
   /**
    * Gère les erreurs de commandes Discord
    */
-  async handleCommandError(error, interaction) {
+  async handleCommandError (error, interaction) {
     const errorId = this.generateErrorId();
     const errorType = this.categorizeError(error);
 
@@ -48,7 +48,7 @@ class ErrorHandler {
   /**
    * Gère les erreurs API
    */
-  handleApiError(error, req, res) {
+  handleApiError (error, req, res) {
     if (typeof res.status === 'function' && typeof res.json === 'function') {
       // Cas normal : on répond via Express
       const errorId = this.generateErrorId();
@@ -79,7 +79,7 @@ class ErrorHandler {
   /**
    * Gère les erreurs critiques
    */
-  handleCriticalError(error, context = 'unknown') {
+  handleCriticalError (error, context = 'unknown') {
     const errorId = this.generateErrorId();
 
     this.logger.error(`[${errorId}] ERREUR CRITIQUE [${context}]: ${error.message}`);
@@ -97,7 +97,7 @@ class ErrorHandler {
   /**
    * Catégorise les erreurs
    */
-  categorizeError(error) {
+  categorizeError (error) {
     const msg = typeof error.message === 'string' ? error.message : '';
     if (error.code === 'ECONNREFUSED') return 'NETWORK';
     if (error.code === 'ENOTFOUND') return 'NETWORK';
@@ -112,7 +112,7 @@ class ErrorHandler {
   /**
    * Messages utilisateur-friendly
    */
-  getUserFriendlyMessage(errorType) {
+  getUserFriendlyMessage (errorType) {
     const messages = {
       NETWORK: 'Problème de connexion. Réessayez dans quelques instants.',
       PERMISSION: 'Permissions insuffisantes pour cette action.',
@@ -129,7 +129,7 @@ class ErrorHandler {
   /**
    * Codes HTTP appropriés
    */
-  getHttpStatusCode(errorType) {
+  getHttpStatusCode (errorType) {
     const codes = {
       NETWORK: 503,
       PERMISSION: 403,
@@ -146,14 +146,14 @@ class ErrorHandler {
   /**
    * Génère un ID d'erreur unique
    */
-  generateErrorId() {
+  generateErrorId () {
     return `ERR-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
   /**
    * Compteur d'erreurs par minute
    */
-  incrementErrorCount(errorType) {
+  incrementErrorCount (errorType) {
     const now = Date.now();
     const minute = Math.floor(now / 60000);
 
@@ -176,7 +176,7 @@ class ErrorHandler {
   /**
    * Détermine si une alerte doit être envoyée
    */
-  shouldAlert(errorType) {
+  shouldAlert (errorType) {
     const typeCounts = this.errorCounts.get(errorType);
     if (!typeCounts) return false;
 
@@ -189,14 +189,14 @@ class ErrorHandler {
   /**
    * Détermine si le bot doit s'arrêter
    */
-  shouldShutdown(error) {
+  shouldShutdown (error) {
     return error.message.includes('TOKEN_INVALID') || error.message.includes('CRITICAL') || error.code === 'ECONNRESET';
   }
 
   /**
    * Envoie une alerte
    */
-  sendAlert(errorType, errorId) {
+  sendAlert (errorType, errorId) {
     this.logger.warn(`🚨 ALERTE: Trop d'erreurs ${errorType} détectées. Error ID: ${errorId}`);
     // Ici vous pourriez envoyer une notification Discord, email, etc.
   }
@@ -204,7 +204,7 @@ class ErrorHandler {
   /**
    * Envoie une alerte critique
    */
-  sendCriticalAlert(error, errorId, context) {
+  sendCriticalAlert (error, errorId, context) {
     this.logger.error(`🚨 ALERTE CRITIQUE [${context}]: ${errorId}`);
     // Notification immédiate aux administrateurs
   }
@@ -212,7 +212,7 @@ class ErrorHandler {
   /**
    * Statistiques d'erreurs
    */
-  getErrorStats() {
+  getErrorStats () {
     const stats = {};
     for (const [errorType, typeCounts] of this.errorCounts.entries()) {
       let total = 0;
@@ -229,7 +229,7 @@ const errorHandler = new ErrorHandler();
 export default errorHandler;
 export { ErrorHandler };
 
-export function getApiErrorMessage(error) {
+export function getApiErrorMessage (error) {
   return process.env.NODE_ENV === 'production'
     ? 'Erreur interne du serveur'
     : error.message;

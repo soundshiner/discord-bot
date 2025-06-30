@@ -10,7 +10,7 @@ export default {
     .setName('nowplaying')
     .setDescription('🎵 Affiche la chanson en cours de lecture')
     .setDMPermission(false),
-  async execute(interaction) {
+  async execute (interaction) {
     try {
       const response = await axios.get(JSON_URL);
       const { data } = response;

@@ -6,7 +6,7 @@ import { WebhookClient, EmbedBuilder } from 'discord.js';
 import logger from './logger.js';
 
 class AlertManager {
-  constructor() {
+  constructor () {
     this.alerts = new Map();
     this.thresholds = {
       ping: 500, // ms
@@ -31,7 +31,7 @@ class AlertManager {
   /**
    * Définir les seuils d'alerte
    */
-  setThresholds(newThresholds) {
+  setThresholds (newThresholds) {
     this.thresholds = { ...this.thresholds, ...newThresholds };
     logger.info('Seuils d\'alerte mis à jour:', this.thresholds);
   }
@@ -39,7 +39,7 @@ class AlertManager {
   /**
    * Créer une alerte
    */
-  createAlert(type, severity, message, data = {}) {
+  createAlert (type, severity, message, data = {}) {
     const alertId = `${type}_${Date.now()}`;
     const alert = {
       id: alertId,
@@ -64,7 +64,7 @@ class AlertManager {
   /**
    * Envoyer une notification Discord
    */
-  async sendNotification(alert) {
+  async sendNotification (alert) {
     try {
       if (!this.webhookClient) {
         logger.debug('Webhook non configuré, notification ignorée');
@@ -105,7 +105,7 @@ class AlertManager {
   /**
    * Obtenir la couleur selon la sévérité
    */
-  getSeverityColor(severity) {
+  getSeverityColor (severity) {
     const colors = {
       info: 0x3498db, // Bleu
       warning: 0xf39c12, // Orange
@@ -118,7 +118,7 @@ class AlertManager {
   /**
    * Vérifier les métriques et créer des alertes si nécessaire
    */
-  async checkMetrics(client) {
+  async checkMetrics (client) {
     try {
       // Vérifier le ping Discord
       const ping = client.ws?.ping || 0;
@@ -131,24 +131,24 @@ class AlertManager {
         );
       }
 
-// Vérifier l'utilisation mémoire basée sur RSS (résident set size)
-const memUsage = process.memoryUsage();
-const totalMemory = os.totalmem();
-const rssPercent = memUsage.rss / totalMemory;
+      // Vérifier l'utilisation mémoire basée sur RSS (résident set size)
+      const memUsage = process.memoryUsage();
+      const totalMemory = os.totalmem();
+      const rssPercent = memUsage.rss / totalMemory;
 
-if (rssPercent > this.thresholds.memory) {
-  this.createAlert(
-    'high_memory',
-    rssPercent > 0.9 ? 'critical' : 'warning',
-    `Utilisation mémoire élevée: ${(rssPercent * 100).toFixed(1)}%`,
-    {
-      rssMB: (memUsage.rss / 1024 / 1024).toFixed(2),
-      totalMB: (totalMemory / 1024 / 1024).toFixed(2),
-      percent: (rssPercent * 100).toFixed(1),
-      threshold: (this.thresholds.memory * 100).toFixed(0) + '%'
-    }
-  );
-}
+      if (rssPercent > this.thresholds.memory) {
+        this.createAlert(
+          'high_memory',
+          rssPercent > 0.9 ? 'critical' : 'warning',
+          `Utilisation mémoire élevée: ${(rssPercent * 100).toFixed(1)}%`,
+          {
+            rssMB: (memUsage.rss / 1024 / 1024).toFixed(2),
+            totalMB: (totalMemory / 1024 / 1024).toFixed(2),
+            percent: (rssPercent * 100).toFixed(1),
+            threshold: `${(this.thresholds.memory * 100).toFixed(0)  }%`
+          }
+        );
+      }
 
       // Vérifier l'uptime
       const uptime = client.uptime || 0;
@@ -187,7 +187,7 @@ if (rssPercent > this.thresholds.memory) {
   /**
    * Vérifier les erreurs récentes
    */
-  checkErrorRate() {
+  checkErrorRate () {
     try {
       // Cette méthode pourrait être étendue pour analyser les logs récents
       // et détecter des patterns d'erreurs
@@ -209,7 +209,7 @@ if (rssPercent > this.thresholds.memory) {
   /**
    * Obtenir les erreurs récentes (placeholder)
    */
-  getRecentErrors() {
+  getRecentErrors () {
     // Cette méthode devrait être implémentée pour analyser les logs
     // Pour l'instant, retourne un tableau vide
     return [];
@@ -218,7 +218,7 @@ if (rssPercent > this.thresholds.memory) {
   /**
    * Marquer une alerte comme résolue
    */
-  resolveAlert(alertId) {
+  resolveAlert (alertId) {
     const alert = this.alerts.get(alertId);
     if (alert) {
       alert.resolved = true;
@@ -234,7 +234,7 @@ if (rssPercent > this.thresholds.memory) {
   /**
    * Envoyer une notification de résolution
    */
-  async sendResolutionNotification(alert) {
+  async sendResolutionNotification (alert) {
     try {
       if (!this.webhookClient) return;
 
@@ -261,21 +261,21 @@ if (rssPercent > this.thresholds.memory) {
   /**
    * Obtenir toutes les alertes actives
    */
-  getActiveAlerts() {
+  getActiveAlerts () {
     return Array.from(this.alerts.values()).filter(alert => !alert.resolved);
   }
 
   /**
    * Obtenir les alertes par type
    */
-  getAlertsByType(type) {
+  getAlertsByType (type) {
     return Array.from(this.alerts.values()).filter(alert => alert.type === type);
   }
 
   /**
    * Nettoyer les anciennes alertes
    */
-  cleanupOldAlerts(maxAge = 24 * 60 * 60 * 1000) { // 24 heures par défaut
+  cleanupOldAlerts (maxAge = 24 * 60 * 60 * 1000) { // 24 heures par défaut
     const now = Date.now();
     const toDelete = [];
 
@@ -295,7 +295,7 @@ if (rssPercent > this.thresholds.memory) {
   /**
    * Obtenir des statistiques d'alertes
    */
-  getAlertStats() {
+  getAlertStats () {
     const alerts = Array.from(this.alerts.values());
     const stats = {
       total: alerts.length,
@@ -316,7 +316,7 @@ if (rssPercent > this.thresholds.memory) {
   /**
    * Enregistrer une erreur
    */
-  recordError(errorType, context = 'unknown') {
+  recordError (errorType, context = 'unknown') {
     try {
       this.createAlert(
         'error_recorded',
