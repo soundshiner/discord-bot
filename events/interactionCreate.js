@@ -1,6 +1,6 @@
 import { MessageFlags } from 'discord.js';
 import handlePlaylistSelect from '../handlers/handlePlaylistSelect.js'; // on importe ton handler
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 import errorHandler from '../utils/errorHandler.js';
 
 export default {
