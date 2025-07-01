@@ -7,9 +7,9 @@ import config from './config.js';
 import loadFiles from './loadFiles.js';
 import logger from '../utils/logger.js';
 import errorHandler from '../utils/errorHandler.js';
-import metricsCollector from '../utils/metrics.js';
-import alertManager from '../utils/alerts.js';
-import centralizedLogger from '../utils/centralizedLogger.js';
+// import metricsCollector from '../utils/metrics.js';
+// import alertManager from '../utils/alerts.js';
+// import centralizedLogger from '../utils/centralizedLogger.js';
 import updateStatus from '../tasks/updateStatus.js';
 import WebServer from '../api/server.js';
 
@@ -26,7 +26,7 @@ export async function start() {
     await initializeDiscordClient();
     await connectBot();
 
-    await loadSection('tasks', 'task');
+    await loadFiles('tasks', 'task', client);
     startUpdateStatus();
 
     logger.section('API');
@@ -37,7 +37,6 @@ export async function start() {
     logger.info('📊 Système de monitoring initialisé');
     logger.info('📝 Système de logging centralisé initialisé');
 
-    // Juste avant la dernière ligne
     logger.sectionStart('Start logging now...');
     logger.success(`✨ soundSHINE Bot démarré avec le username ${client.user.tag}`);
 
@@ -60,17 +59,17 @@ async function initializeDiscordClient() {
     });
 
     client.commands = new Collection();
-    client.config = { PREFIX: config.PREFIX };
 
-    await loadSection('commands', 'command');
-    await loadSection('events', 'event');
-    await loadSection('utils', 'util');
+    // Charger chaque section + stocker les résultats
+    const commandsResult = await loadFiles('commands', 'command', client);
+    const eventsResult = await loadFiles('events', 'event', client);
+    const utilsResult = await loadFiles('utils', 'util', client);
 
     logger.section('RÉSUMÉ DU CHARGEMENT');
-    summarizeLoad([
-      { type: 'commands', folder: 'commands' },
-      { type: 'events', folder: 'events' },
-      { type: 'utils', folder: 'utils' }
+    summarizeLoad(client, [
+      { type: 'commands', folder: 'commands', result: commandsResult },
+      { type: 'events', folder: 'events', result: eventsResult },
+      { type: 'utils', folder: 'utils', result: utilsResult }
     ]);
 
   } catch (error) {
@@ -131,21 +130,14 @@ function startWebServer() {
   }
 }
 
-function summarizeLoad(results) {
-  results.forEach(({ type, folder }) => {
-    logger.custom(
-      type.toUpperCase(),
-      `${client?.[type]?.size || 'n/a'} chargés depuis ${folder}`,
-      'green'
-    );
+function summarizeLoad(client, results) {
+  results.forEach(({ type, folder, result }) => {
+    const count =
+      client?.[type]?.size ??
+      result?.loaded?.length ??
+      'non suivi';
+    logger.custom(type.toUpperCase(), `${count} chargés depuis ${folder}`, 'green');
   });
-}
-
-async function loadSection(folder, type) {
-  const result = await loadFiles(folder, type, client);
-  if (result?.total > 0) {
-    logger.custom('RÉSUMÉ', `${type} - Chargés: ${result.loaded.length}, Échecs: ${result.failed.length}`);
-  }
 }
 
 export async function stop() {
