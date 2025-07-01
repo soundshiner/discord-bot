@@ -10,12 +10,11 @@ export default {
         .setName('canal')
         .setDescription('Le Stage Channel à modifier')
         .setRequired(true)
-        .addChannelTypes(ChannelType.GuildStageVoice)
-    )
+        .addChannelTypes(ChannelType.GuildStageVoice))
     .addStringOption(option => option.setName('sujet').setDescription('Le nouveau sujet du Stage').setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
 
-  async execute(interaction) {
+  async execute (interaction) {
     const channel = interaction.options.getChannel('canal');
     const newTopic = interaction.options.getString('sujet');
 

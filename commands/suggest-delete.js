@@ -9,7 +9,7 @@ export default {
     .setName('suggest-delete')
     .setDescription('Supprimer une suggestion.')
     .addIntegerOption(option => option.setName('id').setDescription('ID de la suggestion').setRequired(true)),
-  async execute(interaction) {
+  async execute (interaction) {
     const suggestionId = interaction.options.getInteger('id');
 
     if (!suggestionId) {

@@ -33,11 +33,11 @@ vi.mock('discord.js', () => ({
     let _name = '';
     let _description = '';
     const builder = {};
-    builder.setName = vi.fn(name => {
+    builder.setName = vi.fn((name) => {
       _name = name;
       return builder;
     });
-    builder.setDescription = vi.fn(desc => {
+    builder.setDescription = vi.fn((desc) => {
       _description = desc;
       return builder;
     });
@@ -52,8 +52,14 @@ vi.mock('discord.js', () => ({
     builder.setDMPermission = vi.fn(() => builder);
     builder.setDefaultMemberPermissions = vi.fn(() => builder);
     builder.toJSON = vi.fn(() => ({ name: _name, description: _description }));
-    Object.defineProperty(builder, 'name', { get: () => _name, configurable: true });
-    Object.defineProperty(builder, 'description', { get: () => _description, configurable: true });
+    Object.defineProperty(builder, 'name', {
+      get: () => _name,
+      configurable: true
+    });
+    Object.defineProperty(builder, 'description', {
+      get: () => _description,
+      configurable: true
+    });
     return builder;
   }),
   EmbedBuilder: vi.fn().mockImplementation(() => ({
@@ -132,18 +138,19 @@ vi.mock('path', () => ({
 
 // Mock utils modules
 vi.mock('../utils/validateURL.js', () => ({
-  validateURL: vi.fn().mockImplementation(url => {
+  validateURL: vi.fn().mockImplementation((url) => {
     if (!url) return false;
     if (typeof url !== 'string') return false;
 
     // URLs YouTube valides
-    if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) return true;
+    if (url.includes('youtube.com/watch') || url.includes('youtu.be/'))
+      return true;
 
     // URLs Spotify valides (corriger pour inclure open.spotify.com)
     if (
-      url.includes('open.spotify.com/track') ||
-      url.includes('open.spotify.com/playlist') ||
-      url.includes('open.spotify.com/album')
+      url.includes('open.spotify.com/track')
+      || url.includes('open.spotify.com/playlist')
+      || url.includes('open.spotify.com/album')
     )
       return true;
 
@@ -164,7 +171,7 @@ vi.mock('../utils/validateURL.js', () => ({
 }));
 
 vi.mock('../utils/checkStreamOnline.js', () => ({
-  checkStreamOnline: vi.fn().mockImplementation(async url => {
+  checkStreamOnline: vi.fn().mockImplementation(async (url) => {
     if (!url) return false;
 
     // Cas spéciaux pour les tests
@@ -175,8 +182,8 @@ vi.mock('../utils/checkStreamOnline.js', () => ({
           const response = await global.fetch(url);
           const data = await response.json();
           return data.isLive;
-        } catch (error) {
-          return false;
+        } catch {
+          // Intentionally empty: error handled silently
         }
       }
       return true; // Comportement par défaut
@@ -218,7 +225,7 @@ vi.mock('../utils/cache.js', () => {
           expirations[key] = Date.now() + ttl;
         }
       }),
-      get: vi.fn().mockImplementation(key => {
+      get: vi.fn().mockImplementation((key) => {
         // Vérifier l'expiration
         if (expirations[key] && Date.now() > expirations[key]) {
           delete storage[key];
@@ -227,7 +234,7 @@ vi.mock('../utils/cache.js', () => {
         }
         return storage[key] || null;
       }),
-      clear: vi.fn().mockImplementation(key => {
+      clear: vi.fn().mockImplementation((key) => {
         delete storage[key];
         delete expirations[key];
       }),
@@ -291,3 +298,4 @@ vi.mock('../core/config.js', () => ({
 // process.env.API_TOKEN = 'test-api-token';
 // process.env.BOT_ROLE_NAME = 'soundSHINE';
 // process.env.DEV_GUILD_ID = 'test-dev-guild';
+

@@ -22,10 +22,13 @@ vi.mock('discord.js', () => ({
 }));
 
 vi.mock('../../utils/logger.js', () => ({
-  logger: {
+  default: {
     info: vi.fn(),
     error: vi.fn(),
-    success: vi.fn()
+    success: vi.fn(),
+    warn: vi.fn(),
+    custom: vi.fn(),
+    infocmd: vi.fn()
   }
 }));
 
@@ -56,8 +59,12 @@ describe('handlePlaylistSelect', () => {
     await handlePlaylistSelect(mockInteraction);
 
     // Vérifier que les logs sont appelés
-    expect(logger.info).toHaveBeenCalledWith('Playlist sélectionnée par User#1234: Test Playlist');
-    expect(logger.success).toHaveBeenCalledWith('Interface de playlist mise à jour pour User#1234');
+    expect(logger.info).toHaveBeenCalledWith(
+      'Playlist sélectionnée par User#1234: Test Playlist'
+    );
+    expect(logger.success).toHaveBeenCalledWith(
+      'Interface de playlist mise à jour pour User#1234'
+    );
 
     // Vérifier que interaction.update est appelé
     expect(mockInteraction.update).toHaveBeenCalled();
@@ -67,8 +74,17 @@ describe('handlePlaylistSelect', () => {
     const error = new Error('update fail');
     mockInteraction.update.mockRejectedValueOnce(error);
 
-    await expect(handlePlaylistSelect(mockInteraction)).rejects.toThrow('update fail');
-    expect(errorHandler.handleInteractionError).toHaveBeenCalledWith(error, mockInteraction);
-    expect(logger.error).toHaveBeenCalledWith('Erreur dans handlePlaylistSelect:', error);
+    await expect(handlePlaylistSelect(mockInteraction)).rejects.toThrow(
+      'update fail'
+    );
+    expect(errorHandler.handleInteractionError).toHaveBeenCalledWith(
+      error,
+      mockInteraction
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      'Erreur dans handlePlaylistSelect:',
+      error
+    );
   });
 });
+

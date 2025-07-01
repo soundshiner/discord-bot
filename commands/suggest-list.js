@@ -9,7 +9,7 @@ export default {
     .setName('list_suggestions')
     .setDescription('Voir toutes les suggestions de morceaux')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
-  async execute(interaction) {
+  async execute (interaction) {
     try {
       // Check role
       if (!interaction.member.roles.cache.has(config.roleId)) {

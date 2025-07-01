@@ -15,10 +15,10 @@ import WebServer from '../api/server.js';
 
 let client = null;
 let serverInstance = null;
-let monitoringInterval = null;
+const monitoringInterval = null;
 let updateStatusInterval = null;
 
-export async function start() {
+export async function start () {
   try {
     logger.custom('BOOT', 'soundSHINE Bot v1.0', 'magenta');
     logger.custom('ENV', `Environnement : ${config.NODE_ENV}`, 'blue');
@@ -39,7 +39,6 @@ export async function start() {
 
     logger.sectionStart('Start logging now...');
     logger.success(`✨ soundSHINE Bot démarré avec le username ${client.user.tag}`);
-
   } catch (error) {
     errorHandler.handleCriticalError(error, 'BOT_STARTUP');
     logger.error(`Erreur critique lors du démarrage : ${error.message}`);
@@ -47,7 +46,7 @@ export async function start() {
   }
 }
 
-async function initializeDiscordClient() {
+async function initializeDiscordClient () {
   try {
     client = new Client({
       intents: [
@@ -71,14 +70,13 @@ async function initializeDiscordClient() {
       { type: 'events', folder: 'events', result: eventsResult },
       { type: 'utils', folder: 'utils', result: utilsResult }
     ]);
-
   } catch (error) {
     errorHandler.handleCriticalError(error, 'DISCORD_CLIENT_INIT');
     throw error;
   }
 }
 
-async function connectBot() {
+async function connectBot () {
   try {
     await client.login(config.BOT_TOKEN);
   } catch (error) {
@@ -87,7 +85,7 @@ async function connectBot() {
   }
 }
 
-function startUpdateStatus() {
+function startUpdateStatus () {
   if (!updateStatus || typeof updateStatus.execute !== 'function') {
     logger.error('updateStatus.execute est introuvable ou n’est pas une fonction, status update skipped');
     return;
@@ -115,7 +113,7 @@ function startUpdateStatus() {
   }, updateStatus.interval);
 }
 
-function startWebServer() {
+function startWebServer () {
   try {
     serverInstance = new WebServer(client, logger);
     serverInstance.start(config.API_PORT);
@@ -130,17 +128,17 @@ function startWebServer() {
   }
 }
 
-function summarizeLoad(client, results) {
+function summarizeLoad (client, results) {
   results.forEach(({ type, folder, result }) => {
-    const count =
-      client?.[type]?.size ??
-      result?.loaded?.length ??
-      'non suivi';
+    const count
+      = client?.[type]?.size
+      ?? result?.loaded?.length
+      ?? 'non suivi';
     logger.custom(type.toUpperCase(), `${count} chargés depuis ${folder}`, 'green');
   });
 }
 
-export async function stop() {
+export async function stop () {
   logger.info('Arrêt du bot en cours...');
 
   try {

@@ -5,7 +5,7 @@ import errorHandler from '../utils/errorHandler.js';
 
 export default {
   name: 'interactionCreate',
-  async execute(interaction) {
+  async execute (interaction) {
     try {
       if (interaction.isCommand()) {
         const command = interaction.client.commands.get(interaction.commandName);

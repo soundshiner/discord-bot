@@ -1,12 +1,11 @@
 // api/routes.js
-import express from 'express';
 import healthRoutes from './routes/health.js';
 import metricsRoutes from './routes/metrics.js';
 import playlistRoutes from './routes/playlist-update.js';
 import logsRoutes from './routes/logs.js';
 import alertsRoutes from './routes/alerts.js';
 
-export default function loadRoutes(app, client, logger) {
+export default function loadRoutes (app, client, logger) {
   app.get('/', (req, res) => {
     res.json({
       name: 'soundSHINE Bot API',
@@ -18,7 +17,7 @@ export default function loadRoutes(app, client, logger) {
         metrics: '/v1/metrics',
         logs: '/v1/logs',
         alerts: '/v1/alerts',
-        playlist: '/v1/send-playlist',
+        playlist: '/v1/send-playlist'
       }
     });
   });
@@ -38,3 +37,4 @@ export default function loadRoutes(app, client, logger) {
     });
   });
 }
+

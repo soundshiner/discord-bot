@@ -15,7 +15,7 @@ const logSchema = z.object({
   meta: z.record(z.any()).optional()
 });
 
-function requireApiToken(req, res, next) {
+function requireApiToken (req, res, next) {
   if (req.headers['x-api-key'] !== process.env.ADMIN_API_KEY) {
     return res.status(403).json({ error: 'Forbidden' });
   }
@@ -227,6 +227,6 @@ router.delete('/', requireApiToken, async (req, res) => {
   }
 });
 
-export default function() {
+export default function () {
   return router;
 }

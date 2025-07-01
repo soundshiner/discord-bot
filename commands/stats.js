@@ -10,7 +10,7 @@ const data = new SlashCommandBuilder()
   .setDescription('Affiche les statistiques du stream')
   .setDefaultMemberPermissions(0); // Pas de perms par défaut
 
-async function execute(interaction) {
+async function execute (interaction) {
   if (!interaction.member.roles.cache.has(ADMIN_ROLE_ID)) {
     return interaction.reply({
       content: 'Cette commande est réservée aux administrateurs.',

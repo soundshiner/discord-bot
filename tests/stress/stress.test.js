@@ -20,15 +20,16 @@ describe('Stress Tests', () => {
       const messagePromises = [];
       for (let i = 0; i < messageCount; i++) {
         messagePromises.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             setTimeout(() => {
               try {
                 // Simuler le traitement d'un message
                 processedCount++;
                 resolve({ success: true, messageId: i });
-              } catch (error) {
+              } catch {
+                // Intentionally empty: error handled silently
                 errorCount++;
-                resolve({ success: false, error: error.message });
+                resolve({ success: false });
               }
             }, Math.random() * 10); // 0-10ms délai aléatoire
           })
@@ -45,7 +46,9 @@ describe('Stress Tests', () => {
       expect(executionTime).toBeLessThan(30000); // Moins de 30 secondes
 
       console.log(`Processed ${processedCount} messages in ${executionTime}ms`);
-      console.log(`Error rate: ${((errorCount / messageCount) * 100).toFixed(2)}%`);
+      console.log(
+        `Error rate: ${((errorCount / messageCount) * 100).toFixed(2)}%`
+      );
     });
 
     it('should handle concurrent command executions', async () => {
@@ -58,15 +61,16 @@ describe('Stress Tests', () => {
       const commandPromises = [];
       for (let i = 0; i < commandCount; i++) {
         commandPromises.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             setTimeout(() => {
               try {
                 // Simuler l'exécution d'une commande
                 successCount++;
                 resolve({ success: true, commandId: i });
-              } catch (error) {
+              } catch {
+                // Intentionally empty: error handled silently
                 failureCount++;
-                resolve({ success: false, error: error.message });
+                resolve({ success: false });
               }
             }, Math.random() * 20); // 0-20ms délai aléatoire
           })
@@ -83,7 +87,9 @@ describe('Stress Tests', () => {
       expect(executionTime).toBeLessThan(15000); // Moins de 15 secondes
 
       console.log(`Executed ${successCount} commands in ${executionTime}ms`);
-      console.log(`Failure rate: ${((failureCount / commandCount) * 100).toFixed(2)}%`);
+      console.log(
+        `Failure rate: ${((failureCount / commandCount) * 100).toFixed(2)}%`
+      );
     });
 
     it('should handle rapid voice state changes', async () => {
@@ -95,7 +101,7 @@ describe('Stress Tests', () => {
       const stateChangePromises = [];
       for (let i = 0; i < stateChangeCount; i++) {
         stateChangePromises.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             setTimeout(() => {
               // Simuler le traitement d'un changement d'état
               processedChanges++;
@@ -113,7 +119,9 @@ describe('Stress Tests', () => {
       expect(processedChanges).toBe(stateChangeCount);
       expect(executionTime).toBeLessThan(5000); // Moins de 5 secondes
 
-      console.log(`Processed ${processedChanges} voice state changes in ${executionTime}ms`);
+      console.log(
+        `Processed ${processedChanges} voice state changes in ${executionTime}ms`
+      );
     });
   });
 
@@ -128,11 +136,11 @@ describe('Stress Tests', () => {
         const tempData = new Array(dataSize).fill(`iteration-${i}`);
 
         // Simuler un travail avec les données
-        tempData.map(item => item.toUpperCase());
+        tempData.map((item) => item.toUpperCase());
 
         // Attendre un peu pour permettre au GC de fonctionner
         if (i % 10 === 0) {
-          await new Promise(resolve => setTimeout(resolve, 1));
+          await new Promise((resolve) => setTimeout(resolve, 1));
         }
       }
 
@@ -142,7 +150,11 @@ describe('Stress Tests', () => {
       // La mémoire ne devrait pas augmenter de manière excessive
       expect(memoryIncrease).toBeLessThan(100 * 1024 * 1024); // 100MB
 
-      console.log(`Memory increase under stress: ${(memoryIncrease / 1024 / 1024).toFixed(2)} MB`);
+      console.log(
+        `Memory increase under stress: ${(memoryIncrease / 1024 / 1024).toFixed(
+          2
+        )} MB`
+      );
     });
 
     it('should handle cache overflow', async () => {
@@ -179,7 +191,7 @@ describe('Stress Tests', () => {
       const networkPromises = [];
       for (let i = 0; i < requestCount; i++) {
         networkPromises.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             const timeout = Math.random() * 1000; // 0-1000ms
 
             setTimeout(() => {
@@ -203,7 +215,9 @@ describe('Stress Tests', () => {
       expect(successCount + timeoutCount).toBe(requestCount);
       expect(timeoutCount).toBeGreaterThan(0); // Il devrait y avoir des timeouts
 
-      console.log(`Network requests: ${successCount} success, ${timeoutCount} timeouts`);
+      console.log(
+        `Network requests: ${successCount} success, ${timeoutCount} timeouts`
+      );
     });
 
     it('should handle rate limiting', async () => {
@@ -215,7 +229,7 @@ describe('Stress Tests', () => {
       const rateLimitPromises = [];
       for (let i = 0; i < requestCount; i++) {
         rateLimitPromises.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             // Simuler un rate limit tous les 50 requêtes
             if (i % 50 === 0 && i > 0) {
               rateLimitedCount++;
@@ -238,7 +252,9 @@ describe('Stress Tests', () => {
       expect(successCount + rateLimitedCount).toBe(requestCount);
       expect(rateLimitedCount).toBeGreaterThan(0);
 
-      console.log(`Rate limiting: ${successCount} success, ${rateLimitedCount} rate limited`);
+      console.log(
+        `Rate limiting: ${successCount} success, ${rateLimitedCount} rate limited`
+      );
     });
   });
 
@@ -252,7 +268,7 @@ describe('Stress Tests', () => {
       const operationPromises = [];
       for (let i = 0; i < operationCount; i++) {
         operationPromises.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             let attempts = 0;
             const maxAttempts = 3;
 
@@ -267,18 +283,19 @@ describe('Stress Tests', () => {
                   recoveryCount++;
                   resolve({ success: true, attempts: attempts + 1 });
                   return;
-                } catch (error) {
-                  attempts++;
+                } catch {
+                  // Intentionally empty: error handled silently
                   failureCount++;
-
-                  if (attempts >= maxAttempts) {
-                    resolve({ success: false, error: 'max_attempts_exceeded' });
-                    return;
-                  }
-
-                  // Attendre avant de réessayer
-                  await new Promise(resolve => setTimeout(resolve, 10));
+                  attempts++;
                 }
+
+                if (attempts >= maxAttempts) {
+                  resolve({ success: false, error: 'max_attempts_exceeded' });
+                  return;
+                }
+
+                // Attendre avant de réessayer
+                await new Promise((resolve) => setTimeout(resolve, 10));
               }
             };
 
@@ -293,7 +310,9 @@ describe('Stress Tests', () => {
       expect(recoveryCount).toBeGreaterThan(operationCount * 0.7); // Au moins 70% de succès
       expect(failureCount).toBeGreaterThan(0); // Il devrait y avoir des échecs
 
-      console.log(`Error recovery: ${recoveryCount} recovered, ${failureCount} failures`);
+      console.log(
+        `Error recovery: ${recoveryCount} recovered, ${failureCount} failures`
+      );
     });
 
     it('should handle cascading failures', async () => {
@@ -305,7 +324,7 @@ describe('Stress Tests', () => {
       const servicePromises = [];
       for (let i = 0; i < serviceCount; i++) {
         servicePromises.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             // Plus les services sont tardifs, plus ils ont de chances d'échouer
             const failureProbability = (i / serviceCount) * 0.5;
 
@@ -328,7 +347,9 @@ describe('Stress Tests', () => {
       expect(recoveredServices + failedServices).toBe(serviceCount);
       expect(failedServices).toBeLessThan(serviceCount * 0.8); // Moins de 80% d'échecs
 
-      console.log(`Cascading failures: ${recoveredServices} recovered, ${failedServices} failed`);
+      console.log(
+        `Cascading failures: ${recoveredServices} recovered, ${failedServices} failed`
+      );
     });
   });
 
@@ -346,9 +367,10 @@ describe('Stress Tests', () => {
       for (let i = 0; i < iterations; i++) {
         try {
           // Simuler une opération continue
-          await new Promise(resolve => setTimeout(resolve, interval));
+          await new Promise((resolve) => setTimeout(resolve, interval));
           successCount++;
-        } catch (error) {
+        } catch {
+          // Intentionally empty: error handled silently
           errorCount++;
         }
       }
@@ -360,7 +382,10 @@ describe('Stress Tests', () => {
       expect(actualDuration).toBeGreaterThanOrEqual(duration * 0.8); // Au moins 80% de la durée prévue
       expect(errorCount).toBeLessThan(iterations * 0.1); // Moins de 10% d'erreurs
 
-      console.log(`Long running test: ${successCount} success, ${errorCount} errors over ${actualDuration}ms`);
+      console.log(
+        `Long running test: ${successCount} success, ${errorCount} errors over ${actualDuration}ms`
+      );
     }, 15000); // Timeout de 15 secondes
   });
 });
+

@@ -17,7 +17,7 @@ export default {
     .setName('debugplay')
     .setDescription('🧪 Debug: play stream and trace each step')
     .setDMPermission(false),
-  async execute(interaction) {
+  async execute (interaction) {
     try {
       const { member } = interaction;
       const voiceChannel = member.voice.channel;

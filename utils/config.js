@@ -7,7 +7,7 @@ let cachedConfig = null;
 /**
  * Charge la configuration depuis les variables d'environnement
  */
-export function config() {
+export function config () {
   if (cachedConfig) {
     return cachedConfig;
   }
