@@ -10,7 +10,36 @@
     "type": "git",
     "url": "git+https://github.com/n3m01726/soundshine-bot.git"
   },
+  "main": "index.js",
+  "type": "module",
+  "license": "ISC",
+  "author": "",
+  "private": false,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "soundshine",
+    "music",
+    "nodejs",
+    "javascript"
+  ],
+  "files": [
+    "index.js",
+    "scripts/",
+    "utils/",
+    "tests/"
+  ],
+  "overrides": {
+    "glob": "^9.0.0"
+  },
   "dependencies": {
+    "@babel/generator": "^7.27.5",
+    "@babel/parser": "^7.27.7",
+    "@babel/traverse": "^7.27.7",
+    "@babel/types": "^7.27.7",
     "@discordjs/opus": "^0.10.0",
     "@discordjs/voice": "^0.18.0",
     "axios": "^1.9.0",
@@ -39,13 +68,11 @@
     "supertest": "^6.3.3",
     "vitest": "^3.2.4"
   },
-  "license": "ISC",
-  "author": "",
-  "type": "module",
-  "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "prestart": "npm run security:check",
+
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
@@ -53,48 +80,31 @@
     "test:integration": "vitest tests/integration/",
     "test:performance": "vitest tests/performance/",
     "test:stress": "vitest tests/stress/",
-    "test:all": "node scripts/run-tests.js",
+    "test:all": "node scripts/dev/run-tests.js",
+
     "lint": "eslint . --ignore-pattern 'scripts/**/*'",
     "lint:fix": "eslint . --fix --ignore-pattern 'scripts/**/*'",
-    "format": "eslint . --fix --ignore-pattern 'scripts/**/*'",
-    "format:check": "eslint . --ignore-pattern 'scripts/**/*'",
+    "format": "npm run lint:fix",
     "fix:all": "npm run lint:fix",
     "check:all": "npm run lint",
-    "fix:ephemeral": "node scripts/fix-ephemeral.js",
-    "deploy:dev": "node scripts/deploy-commands.js --dev",
-    "deploy:prod": "node scripts/deploy-commands.js --global",
-    "git-actions": "node scripts/git-actions.js",
-    "pre-push": "node scripts/pre-commit.js",
-    "security:check": "node scripts/security-check.js",
-    "prestart": "npm run security:check",
-    "deploy:staging": "bash scripts/deploy.sh staging",
-    "deploy:production": "bash scripts/deploy.sh production",
+
+    "fix:ephemeral": "node scripts/bot/fix-ephemeral.js",
+    "pre-push": "node scripts/dev/pre-commit.js",
+    "security:check": "node scripts/infra/security-check.js",
+
+    "deploy:dev": "node scripts/bot/deploy-commands.js --dev",
+    "deploy:prod": "node scripts/bot/deploy-commands.js --global",
+
+    "deploy:staging": "bash scripts/infra/deploy.sh staging",
+    "deploy:production": "bash scripts/infra/deploy.sh production",
+
     "docker:build": "docker build -t soundshine-bot .",
     "docker:run": "docker run -p 3000:3000 soundshine-bot",
     "docker:compose": "docker-compose up -d",
+
+    "git-actions": "node scripts/git/git-actions.js",
     "db:deploy": "node utils/database.js"
   },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "overrides": {
-    "glob": "^9.0.0"
-  },
-  "keywords": [
-    "discord",
-    "bot",
-    "soundshine",
-    "music",
-    "nodejs",
-    "javascript"
-  ],
-  "private": false,
-  "files": [
-    "index.js",
-    "scripts/",
-    "utils/",
-    "tests/"
-  ],
   "eslintConfig": {
     "extends": [
       "eslint:recommended",

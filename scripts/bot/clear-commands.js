@@ -1,7 +1,7 @@
 // clear-commands.js
 import { REST, Routes } from 'discord.js';
-import config from '../core/config.js';
-import logger from '../utils/logger.js';
+import config from '../../core/config.js';
+import logger from '../../utils/logger.js';
 
 const rest = new REST({ version: '10' }).setToken(config.BOT_TOKEN);
 

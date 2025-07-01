@@ -123,7 +123,7 @@ async function runGitActions () {
 
   // Étape 5: Vérification du formatage
   if (
-    !runCommand('npm run format:check', 'Vérification du formatage du code')
+    !runCommand('npm run fix:all', 'Vérification du formatage du code')
   ) {
     allTestsPassed = false;
   }
