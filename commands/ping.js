@@ -1,14 +1,16 @@
-import { SlashCommandBuilder, MessageFlags } from 'discord.js';
-import logger from '../utils/logger.js';
+import { SlashCommandBuilder, MessageFlags } from "discord.js";
+import logger from "../utils/centralizedLogger.js";
 
 export default {
-  data: new SlashCommandBuilder().setName('ping').setDescription('Renvoie la latence du bot'),
+  data: new SlashCommandBuilder()
+    .setName("ping")
+    .setDescription("Renvoie la latence du bot"),
 
-  async execute (interaction) {
+  async execute(interaction) {
     try {
       const sent = await interaction.reply({
-        content: 'Ping...',
-        fetchReply: true
+        content: "Ping...",
+        fetchReply: true,
       });
       const latency = sent.createdTimestamp - interaction.createdTimestamp;
       const apiLatency = Math.round(interaction.client.ws.ping);
@@ -17,11 +19,12 @@ export default {
         `🏓 Pong !\n🕒 Latence bot: **${latency}ms**\n📡 Latence API: **${apiLatency}ms**`
       );
     } catch (error) {
-      logger.error('Erreur lors de la commande ping:', error);
+      logger.error("Erreur lors de la commande ping:", error);
       return await interaction.reply({
-        content: '❌ Erreur lors de la vérification de la latence.',
-        flags: MessageFlags.Ephemeral
+        content: "❌ Erreur lors de la vérification de la latence.",
+        flags: MessageFlags.Ephemeral,
       });
     }
-  }
+  },
 };
+

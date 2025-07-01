@@ -1,110 +1,119 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import updateStatusTask from '../../tasks/updateStatus.js';
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { Client, GatewayIntentBits } from "discord.js";
+import { createClient } from "@supabase/supabase-js";
+import { getCurrentTrack, getPlaylist } from "../../utils/playlistManager.js";
+import { formatDuration, formatTimestamp } from "../../utils/formatters.js";
+import { getWallpaper } from "../../commands/getwallpaper.js";
+import { postToSocialChannel } from "../../utils/socialChannel.js";
+import { validateURL } from "../../utils/validateURL.js";
+import { genres } from "../../utils/genres.js";
+import config from "../../core/config.js";
+import logger from "../../utils/centralizedLogger.js";
+import updateStatusTask from "../../tasks/updateStatus.js";
 
-vi.mock('axios', () => ({
+vi.mock("axios", () => ({
   default: {
-    get: vi.fn()
-  }
+    get: vi.fn(),
+  },
 }));
-import axios from 'axios';
+import axios from "axios";
 
-vi.mock('../../core/config.js', () => ({
+vi.mock("../../core/config.js", () => ({
   default: {
-    JSON_URL: 'http://mock-json-url'
-  }
+    JSON_URL: "http://mock-json-url",
+  },
 }));
 
-vi.mock('../../utils/logger.js', () => ({
+vi.mock("../../utils/centralizedLogger.js", () => ({
   default: {
     info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
-    success: vi.fn(),
+    logSuccess: vi.fn(),
     custom: vi.fn(),
-    infocmd: vi.fn()
-  }
+    logCommand: vi.fn(),
+  },
 }));
-import logger from '../../utils/logger.js';
 
-vi.mock('../../utils/errorHandler.js', () => ({
+vi.mock("../../utils/errorHandler.js", () => ({
   default: {
-    handleTaskError: vi.fn()
-  }
+    handleTaskError: vi.fn(),
+  },
 }));
-import errorHandler from '../../utils/errorHandler.js';
+import errorHandler from "../../utils/errorHandler.js";
 
-vi.mock('discord.js', () => ({
-  ActivityType: { Custom: 42, Listening: 2 }
+vi.mock("discord.js", () => ({
+  ActivityType: { Custom: 42, Listening: 2 },
 }));
 
 const mockSetActivity = vi.fn();
 const mockClient = {
   user: {
-    setActivity: mockSetActivity
-  }
+    setActivity: mockSetActivity,
+  },
 };
 
-describe('updateStatus task', () => {
+describe("updateStatus task", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('met à jour le status Discord avec la chanson courante', async () => {
+  it("met à jour le status Discord avec la chanson courante", async () => {
     axios.get.mockResolvedValue({
       data: {
         icestats: {
-          source: { title: 'Test Song' }
-        }
-      }
+          source: { title: "Test Song" },
+        },
+      },
     });
 
     await updateStatusTask.execute(mockClient);
 
-    expect(axios.get).toHaveBeenCalledWith('http://mock-json-url', {
-      timeout: 10000
+    expect(axios.get).toHaveBeenCalledWith("http://mock-json-url", {
+      timeout: 10000,
     });
-    expect(logger.info).toHaveBeenCalledWith('Updated status to: Test Song');
+    expect(logger.info).toHaveBeenCalledWith("Updated status to: Test Song");
     expect(mockSetActivity).toHaveBeenCalledWith({
-      name: '📀 Test Song',
+      name: "📀 Test Song",
       type: expect.any(Number),
-      url: 'https://soundshineradio.com'
+      url: "https://soundshineradio.com",
     });
   });
 
-  it('utilise le fallback si axios échoue', async () => {
-    axios.get.mockRejectedValue(new Error('axios fail'));
+  it("utilise le fallback si axios échoue", async () => {
+    axios.get.mockRejectedValue(new Error("axios fail"));
     mockSetActivity.mockResolvedValue();
 
     await updateStatusTask.execute(mockClient);
 
     expect(errorHandler.handleTaskError).toHaveBeenCalledWith(
       expect.any(Error),
-      'UPDATE_STATUS'
+      "UPDATE_STATUS"
     );
     expect(logger.error).toHaveBeenCalledWith(
-      'Error fetching metadata or updating status:',
+      "Error fetching metadata or updating status:",
       expect.any(Error)
     );
-    expect(mockSetActivity).toHaveBeenCalledWith('Soundshine Radio', {
-      type: expect.any(Number)
+    expect(mockSetActivity).toHaveBeenCalledWith("Soundshine Radio", {
+      type: expect.any(Number),
     });
     expect(logger.warn).toHaveBeenCalledWith(
-      'Fallback activity set to Soundshine Radio'
+      "Fallback activity set to Soundshine Radio"
     );
   });
 
-  it('log une erreur si le fallback échoue aussi', async () => {
-    axios.get.mockRejectedValue(new Error('axios fail'));
-    mockSetActivity.mockRejectedValueOnce(new Error('setActivity fail'));
+  it("log une erreur si le fallback échoue aussi", async () => {
+    axios.get.mockRejectedValue(new Error("axios fail"));
+    mockSetActivity.mockRejectedValueOnce(new Error("setActivity fail"));
 
     await updateStatusTask.execute(mockClient);
 
     expect(errorHandler.handleTaskError).toHaveBeenCalledWith(
       expect.any(Error),
-      'UPDATE_STATUS_FALLBACK'
+      "UPDATE_STATUS_FALLBACK"
     );
     expect(logger.error).toHaveBeenCalledWith(
-      'Error setting fallback activity:',
+      "Error setting fallback activity:",
       expect.any(Error)
     );
   });

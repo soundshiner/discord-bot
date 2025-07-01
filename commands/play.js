@@ -1,36 +1,36 @@
-import { SlashCommandBuilder, ChannelType, MessageFlags } from 'discord.js';
+import { SlashCommandBuilder, ChannelType, MessageFlags } from "discord.js";
 import {
   joinVoiceChannel,
   createAudioPlayer,
   createAudioResource,
   AudioPlayerStatus,
-  NoSubscriberBehavior
-} from '@discordjs/voice';
-import config from '../core/config.js';
-import logger from '../utils/logger.js';
+  NoSubscriberBehavior,
+} from "@discordjs/voice";
+import config from "../core/config.js";
+import logger from "../utils/centralizedLogger.js";
 
 const { STREAM_URL } = config;
 
 export default {
   data: new SlashCommandBuilder()
-    .setName('play')
-    .setDescription('▶️ Lance le stream dans un Stage Channel')
+    .setName("play")
+    .setDescription("▶️ Lance le stream dans un Stage Channel")
     .setDMPermission(false),
 
-  async execute (interaction) {
+  async execute(interaction) {
     const { channel } = interaction.member.voice;
 
     if (!channel) {
       return interaction.reply({
-        content: '❌ Tu dois être dans un salon vocal ou Stage Channel.',
-        flags: MessageFlags.Ephemeral
+        content: "❌ Tu dois être dans un salon vocal ou Stage Channel.",
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     if (channel.type !== ChannelType.GuildStageVoice) {
       return interaction.reply({
-        content: '❌ Cette commande ne fonctionne que dans un Stage Channel.',
-        flags: MessageFlags.Ephemeral
+        content: "❌ Cette commande ne fonctionne que dans un Stage Channel.",
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -42,17 +42,17 @@ export default {
         channelId: channel.id,
         guildId: channel.guild.id,
         adapterCreator: channel.guild.voiceAdapterCreator,
-        selfDeaf: false
+        selfDeaf: false,
       });
 
       const player = createAudioPlayer({
         behaviors: {
-          noSubscriber: NoSubscriberBehavior.Pause
-        }
+          noSubscriber: NoSubscriberBehavior.Pause,
+        },
       });
 
       const resource = createAudioResource(STREAM_URL, {
-        inlineVolume: true
+        inlineVolume: true,
       });
 
       player.play(resource);
@@ -62,31 +62,38 @@ export default {
 
       // 🔁 Sécurité si le stream prend trop de temps
       const timeout = setTimeout(() => {
-        interaction.editReply('⚠️ Aucun son détecté après 5s. Lecture échouée ?');
+        interaction.editReply(
+          "⚠️ Aucun son détecté après 5s. Lecture échouée ?"
+        );
       }, 5000);
 
       player.once(AudioPlayerStatus.Playing, async () => {
         clearTimeout(timeout);
-        await interaction.editReply('▶️ Stream lancé dans le stage channel.');
+        await interaction.editReply("▶️ Stream lancé dans le stage channel.");
       });
 
-      player.on('error', async error => {
+      player.on("error", async (error) => {
         clearTimeout(timeout);
-        logger.error('❌ Erreur du player:', error);
-        return await interaction.editReply('❌ Erreur pendant la lecture du stream.');
+        logger.error("❌ Erreur du player:", error);
+        return await interaction.editReply(
+          "❌ Erreur pendant la lecture du stream."
+        );
       });
     } catch (error) {
-      logger.error('❌ Erreur exécution /play :', error);
+      logger.error("❌ Erreur exécution /play :", error);
       if (interaction.deferred || interaction.replied) {
         return await interaction.editReply({
-          content: '❌ Une erreur est survenue pendant la tentative de lecture.'
+          content:
+            "❌ Une erreur est survenue pendant la tentative de lecture.",
         });
       } else {
         return await interaction.reply({
-          content: '❌ Une erreur est survenue pendant la tentative de lecture.',
-          flags: MessageFlags.Ephemeral
+          content:
+            "❌ Une erreur est survenue pendant la tentative de lecture.",
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
-  }
+  },
 };
+

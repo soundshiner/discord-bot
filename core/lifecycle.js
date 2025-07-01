@@ -2,46 +2,51 @@
 // core/lifecycle.js (ESM)
 // ========================================
 
-import logger from '../utils/logger.js';
-import alertManager from '../utils/alerts.js';
-import errorHandler from '../utils/errorHandler.js';
-import { stop } from './startup.js';
+import { Client } from "discord.js";
+import config from "./config.js";
+import logger from "../utils/centralizedLogger.js";
+import alertManager from "../utils/alerts.js";
+import errorHandler from "../utils/errorHandler.js";
+import { stop } from "./startup.js";
 
-export function registerProcessHandlers () {
-  process.on('SIGINT', async () => {
-    logger.warn('Signal SIGINT reçu. Arrêt du bot...');
+export function registerProcessHandlers() {
+  process.on("SIGINT", async () => {
+    logger.warn("Signal SIGINT reçu. Arrêt du bot...");
     await stop();
   });
 
-  process.on('SIGTERM', async () => {
-    logger.warn('Signal SIGTERM reçu. Arrêt du bot...');
+  process.on("SIGTERM", async () => {
+    logger.warn("Signal SIGTERM reçu. Arrêt du bot...");
     await stop();
   });
 
-  process.on('unhandledRejection', (reason) => {
-    if (reason?.message?.includes('Shard 0 not found')) {
-      logger.warn('Shard non trouvé à la fermeture, c’est probablement normal.');
+  process.on("unhandledRejection", (reason) => {
+    if (reason?.message?.includes("Shard 0 not found")) {
+      logger.warn(
+        "Shard non trouvé à la fermeture, c'est probablement normal."
+      );
     } else {
-      errorHandler.handleCriticalError(reason, 'UNHANDLED_REJECTION');
+      errorHandler.handleCriticalError(reason, "UNHANDLED_REJECTION");
       alertManager.createAlert(
-        'unhandled_rejection',
-        'error',
+        "unhandled_rejection",
+        "error",
         `Promesse rejetée non gérée: ${reason.message}`,
-        { context: 'process' }
+        { context: "process" }
       );
       logger.error(`Promesse rejetée non gérée : ${reason.message}`);
     }
   });
 
-  process.on('uncaughtException', async (error) => {
-    errorHandler.handleCriticalError(error, 'UNCAUGHT_EXCEPTION');
+  process.on("uncaughtException", async (error) => {
+    errorHandler.handleCriticalError(error, "UNCAUGHT_EXCEPTION");
     alertManager.createAlert(
-      'uncaught_exception',
-      'critical',
+      "uncaught_exception",
+      "critical",
       `Exception non capturée: ${error.message}`,
-      { context: 'process' }
+      { context: "process" }
     );
     logger.error(`Exception non capturée : ${error.message}`);
     await stop();
   });
 }
+

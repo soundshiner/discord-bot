@@ -2,22 +2,25 @@
 // api/routes/logs.js - Routes pour les logs centralisés
 // ========================================
 
-import express from 'express';
-import centralizedLogger from '../../utils/centralizedLogger.js';
-import { z } from 'zod';
-import { getApiErrorMessage } from '../../utils/errorHandler.js';
+import express from "express";
+import path from "path";
+import fs from "fs";
+import { promises as fsPromises } from "fs";
+import logger from "../../utils/centralizedLogger.js";
+import { z } from "zod";
+import { getApiErrorMessage } from "../../utils/errorHandler.js";
 
 const router = express.Router();
 
 const logSchema = z.object({
-  level: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-  message: z.string().min(1, 'Message is required'),
-  meta: z.record(z.any()).optional()
+  level: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  message: z.string().min(1, "Message is required"),
+  meta: z.record(z.any()).optional(),
 });
 
-function requireApiToken (req, res, next) {
-  if (req.headers['x-api-key'] !== process.env.ADMIN_API_KEY) {
-    return res.status(403).json({ error: 'Forbidden' });
+function requireApiToken(req, res, next) {
+  if (req.headers["x-api-key"] !== process.env.ADMIN_API_KEY) {
+    return res.status(403).json({ error: "Forbidden" });
   }
   next();
 }
@@ -26,18 +29,18 @@ function requireApiToken (req, res, next) {
  * GET /v1/logs
  * Obtenir les logs récents
  */
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const { limit = 100, level, search } = req.query;
 
     let logs;
     if (search) {
-      logs = await centralizedLogger.searchLogs(search, {
+      logs = await logger.searchLogs(search, {
         level: level || null,
-        limit: parseInt(limit, 10)
+        limit: parseInt(limit, 10),
       });
     } else {
-      logs = await centralizedLogger.getRecentLogs(parseInt(limit, 10), level || null);
+      logs = await logger.getRecentLogs(parseInt(limit, 10), level || null);
     }
 
     res.json({
@@ -46,17 +49,17 @@ router.get('/', async (req, res) => {
         logs,
         total: logs.length,
         filters: {
-          level: level || 'all',
+          level: level || "all",
           limit: parseInt(limit, 10),
-          search: search || null
-        }
-      }
+          search: search || null,
+        },
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Erreur lors de la récupération des logs',
-      message: getApiErrorMessage(error)
+      error: "Erreur lors de la récupération des logs",
+      message: getApiErrorMessage(error),
     });
   }
 });
@@ -65,19 +68,19 @@ router.get('/', async (req, res) => {
  * GET /v1/logs/stats
  * Obtenir les statistiques des logs
  */
-router.get('/stats', async (req, res) => {
+router.get("/stats", async (req, res) => {
   try {
-    const stats = await centralizedLogger.getLogStats();
+    const stats = await logger.getLogStats();
 
     res.json({
       success: true,
-      data: stats
+      data: stats,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Erreur lors de la récupération des statistiques',
-      message: getApiErrorMessage(error)
+      error: "Erreur lors de la récupération des statistiques",
+      message: getApiErrorMessage(error),
     });
   }
 });
@@ -86,26 +89,26 @@ router.get('/stats', async (req, res) => {
  * GET /v1/logs/files
  * Obtenir la liste des fichiers de logs
  */
-router.get('/files', async (req, res) => {
+router.get("/files", async (req, res) => {
   try {
-    const files = await centralizedLogger.getLogFiles();
+    const files = await logger.getLogFiles();
 
     res.json({
       success: true,
       data: {
-        files: files.map(file => ({
-          name: file.split('/').pop(),
+        files: files.map((file) => ({
+          name: file.split("/").pop(),
           path: file,
-          size: 'N/A' // Taille pourrait être ajoutée si nécessaire
+          size: "N/A", // Taille pourrait être ajoutée si nécessaire
         })),
-        total: files.length
-      }
+        total: files.length,
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Erreur lors de la récupération des fichiers de logs',
-      message: getApiErrorMessage(error)
+      error: "Erreur lors de la récupération des fichiers de logs",
+      message: getApiErrorMessage(error),
     });
   }
 });
@@ -114,28 +117,22 @@ router.get('/files', async (req, res) => {
  * GET /v1/logs/search
  * Rechercher dans les logs
  */
-router.get('/search', async (req, res) => {
+router.get("/search", async (req, res) => {
   try {
-    const {
-      query,
-      level,
-      startDate,
-      endDate,
-      limit = 100
-    } = req.query;
+    const { query, level, startDate, endDate, limit = 100 } = req.query;
 
     if (!query) {
       return res.status(400).json({
         success: false,
-        error: 'Paramètre "query" requis pour la recherche'
+        error: 'Paramètre "query" requis pour la recherche',
       });
     }
 
-    const logs = await centralizedLogger.searchLogs(query, {
+    const logs = await logger.searchLogs(query, {
       level: level || null,
       startDate: startDate || null,
       endDate: endDate || null,
-      limit: parseInt(limit, 10)
+      limit: parseInt(limit, 10),
     });
 
     res.json({
@@ -145,18 +142,18 @@ router.get('/search', async (req, res) => {
         total: logs.length,
         search: {
           query,
-          level: level || 'all',
+          level: level || "all",
           startDate: startDate || null,
           endDate: endDate || null,
-          limit: parseInt(limit, 10)
-        }
-      }
+          limit: parseInt(limit, 10),
+        },
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Erreur lors de la recherche dans les logs',
-      message: getApiErrorMessage(error)
+      error: "Erreur lors de la recherche dans les logs",
+      message: getApiErrorMessage(error),
     });
   }
 });
@@ -165,35 +162,35 @@ router.get('/search', async (req, res) => {
  * POST /v1/logs
  * Écrire un nouveau log
  */
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     // Validation du body avec zod
     const parseResult = logSchema.safeParse(req.body);
     if (!parseResult.success) {
       return res.status(400).json({
-        error: 'Invalid request body',
-        details: parseResult.error.errors
+        error: "Invalid request body",
+        details: parseResult.error.errors,
       });
     }
     const { level, message, meta = {} } = parseResult.data;
 
     // Écrire le log
-    await centralizedLogger[level](message, meta);
+    await logger[level](message, meta);
 
     res.json({
       success: true,
-      message: 'Log écrit avec succès',
+      message: "Log écrit avec succès",
       data: {
         level,
         message,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Erreur lors de l\'écriture du log',
-      message: getApiErrorMessage(error)
+      error: "Erreur lors de l'écriture du log",
+      message: getApiErrorMessage(error),
     });
   }
 });
@@ -202,27 +199,27 @@ router.post('/', async (req, res) => {
  * DELETE /v1/logs
  * Nettoyer les anciens logs (admin seulement)
  */
-router.delete('/', requireApiToken, async (req, res) => {
+router.delete("/", requireApiToken, async (req, res) => {
   try {
     const { maxAge = 24 * 60 * 60 * 1000 } = req.query; // 24 heures par défaut
 
     // Cette fonctionnalité pourrait être protégée par authentification
     // Pour l'instant, on l'expose directement
 
-    await centralizedLogger.cleanupOldLogs(parseInt(maxAge, 10));
+    await logger.cleanupOldLogs(parseInt(maxAge, 10));
 
     res.json({
       success: true,
-      message: 'Nettoyage des anciens logs effectué',
+      message: "Nettoyage des anciens logs effectué",
       data: {
-        maxAge: parseInt(maxAge, 10)
-      }
+        maxAge: parseInt(maxAge, 10),
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Erreur lors du nettoyage des logs',
-      message: getApiErrorMessage(error)
+      error: "Erreur lors du nettoyage des logs",
+      message: getApiErrorMessage(error),
     });
   }
 });
@@ -230,3 +227,4 @@ router.delete('/', requireApiToken, async (req, res) => {
 export default function () {
   return router;
 }
+
