@@ -27,6 +27,15 @@ logger.section = (sectionName) => {
   console.log(chalk.blue.bold(`Chargement de la section : ${sectionName}`));
   console.log(chalk.blue(`${separator}`));
 };
+
+logger.sectionStart = (sectionName) => {
+  const separator = "═".repeat(50);
+  console.log(chalk.blue(`\n${separator}`));
+  console.log(chalk.blue.bold(`${sectionName}`));
+  console.log(chalk.blue(`${separator}`));
+};
+
+
 logger.sectionWithContent = (sectionName, content) => {
   const separator = "═".repeat(50);
   console.log(chalk.blue(`\n${separator}`));

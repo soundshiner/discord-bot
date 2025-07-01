@@ -1,5 +1,5 @@
 // events/messageCreate.js
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 import errorHandler from '../utils/errorHandler.js';
 
 export default {
