@@ -4,7 +4,7 @@ import { db } from '../utils/database.js';
 import { validateURL } from '../utils/validateURL.js';
 import { genres } from '../utils/genres.js';
 import config from '../core/config.js';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 export default {
   data: new SlashCommandBuilder()

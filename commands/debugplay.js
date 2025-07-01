@@ -8,7 +8,7 @@ import {
 } from '@discordjs/voice';
 import { checkStreamOnline } from '../utils/checkStreamOnline.js';
 import config from '../core/config.js';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 const { STREAM_URL } = config;
 

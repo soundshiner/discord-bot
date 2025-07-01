@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { getVoiceConnection } from '@discordjs/voice';
 import config from '../core/config.js';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 const { ADMIN_ROLE_ID } = config;
 

@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import axios from 'axios';
 import config from '../core/config.js';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 const { JSON_URL } = config;
 

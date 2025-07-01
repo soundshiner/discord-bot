@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 export default {
   data: new SlashCommandBuilder().setName('ping').setDescription('Renvoie la latence du bot'),

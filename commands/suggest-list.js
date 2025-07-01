@@ -2,7 +2,7 @@
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import { db } from '../utils/database.js';
 import config from '../core/config.js';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 export default {
   data: new SlashCommandBuilder()

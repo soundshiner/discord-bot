@@ -2,7 +2,7 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 // import db depuis ton gestionnaire SQLite
 import { db } from '../utils/database.js';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 export default {
   data: new SlashCommandBuilder()
