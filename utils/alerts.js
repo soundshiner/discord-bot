@@ -9,9 +9,8 @@ import {
   ButtonBuilder,
   ButtonStyle,
 } from "discord.js";
-import { postToSocialChannel } from "./socialChannel.js";
-import { getCurrentTrack } from "./playlistManager.js";
-import { formatDuration, formatTimestamp } from "./formatters.js";
+// import { postToSocialChannel } from "./socialChannel.js";
+// import { formatDuration, formatTimestamp } from "./formatters.js";
 import logger from "./centralizedLogger.js";
 
 class AlertManager {
