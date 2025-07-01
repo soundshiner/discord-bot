@@ -37,7 +37,7 @@ vi.mock('../../utils/errorHandler.js', () => ({
 
 // Imports après les mocks
 import handlePlaylistSelect from '../../handlers/handlePlaylistSelect.js';
-import { logger } from '../../utils/logger.js';
+import logger from '../../utils/logger.js';
 import errorHandler from '../../utils/errorHandler.js';
 
 describe('handlePlaylistSelect', () => {

@@ -21,7 +21,7 @@ vi.mock('../../utils/logger.js', () => ({
     warn: vi.fn()
   }
 }));
-import { logger } from '../../utils/logger.js';
+import logger from '../../utils/logger.js';
 
 vi.mock('../../utils/errorHandler.js', () => ({
   default: {
