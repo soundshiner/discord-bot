@@ -6,7 +6,6 @@
 // process.env.NODE_ENV = 'test';
 // process.env.BOT_TOKEN = 'test-token';
 // process.env.API_PORT = '3001';
-// process.env.PREFIX = '!';
 // process.env.JSON_URL = 'http://localhost:8000/status-json.xsl';
 // process.env.VOICE_CHANNEL_ID = '123456789';
 // process.env.API_TOKEN = 'test-api-token';
@@ -46,7 +45,6 @@ global.testUtils = {
     createdTimestamp: Date.now(),
     reply: async () => {},
     client: {
-      config: { PREFIX: '!' },
       commands: new Map(),
       user: { id: 'bot-id' }
     },

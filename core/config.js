@@ -59,7 +59,6 @@ const config = {
   API_TOKEN: getEnvVar('API_TOKEN'),
   API_PORT: Number(getEnvVar('API_PORT', false, 3000)),
 
-  PREFIX: getEnvVar('PREFIX', false, '!s'),
   VOICE_CHANNEL_ID: getEnvVar('VOICE_CHANNEL_ID'),
   PLAYLIST_CHANNEL_ID: getEnvVar('PLAYLIST_CHANNEL_ID'),
   BOT_ROLE_NAME: getEnvVar('BOT_ROLE_NAME', false, 'soundSHINE'),
