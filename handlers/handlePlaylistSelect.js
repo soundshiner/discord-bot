@@ -2,16 +2,12 @@ import {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle,
-} from "discord.js";
-import { getCurrentTrack, getPlaylist } from "../utils/playlistManager.js";
-import { formatDuration, formatTimestamp } from "../utils/formatters.js";
-import { getWallpaper } from "../commands/getwallpaper.js";
-import { postToSocialChannel } from "../utils/socialChannel.js";
-import logger from "../utils/centralizedLogger.js";
-import errorHandler from "../utils/errorHandler.js";
+  ButtonStyle
+} from 'discord.js';
+import logger from '../utils/logger.js';
+import errorHandler from '../utils/errorHandler.js';
 
-export default async function handlePlaylistSelect(interaction) {
+export default async function handlePlaylistSelect (interaction) {
   try {
     const [selectedPlaylist] = interaction.values;
     const userId = interaction.user.id;
@@ -22,40 +18,40 @@ export default async function handlePlaylistSelect(interaction) {
 
     // Créer l'embed avec les informations de la playlist
     const embed = new EmbedBuilder()
-      .setColor("#FF6B6B")
-      .setTitle("🎵 Playlist Sélectionnée")
+      .setColor('#FF6B6B')
+      .setTitle('🎵 Playlist Sélectionnée')
       .setDescription(`**${selectedPlaylist}**`)
       .addFields(
-        { name: "👤 Utilisateur", value: `<@${userId}>`, inline: true },
+        { name: '👤 Utilisateur', value: `<@${userId}>`, inline: true },
         {
-          name: "📅 Date",
-          value: new Date().toLocaleString("fr-FR"),
-          inline: true,
+          name: '📅 Date',
+          value: new Date().toLocaleString('fr-FR'),
+          inline: true
         }
       )
-      .setFooter({ text: "soundSHINE Radio" })
+      .setFooter({ text: 'soundSHINE Radio' })
       .setTimestamp();
 
     // Créer les boutons d'action
     const actionRow = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(`play_${selectedPlaylist}`)
-        .setLabel("▶️ Lancer")
+        .setLabel('▶️ Lancer')
         .setStyle(ButtonStyle.Success),
       new ButtonBuilder()
         .setCustomId(`stop_${selectedPlaylist}`)
-        .setLabel("⏹️ Arrêter")
+        .setLabel('⏹️ Arrêter')
         .setStyle(ButtonStyle.Danger),
       new ButtonBuilder()
         .setCustomId(`info_${selectedPlaylist}`)
-        .setLabel("ℹ️ Info")
+        .setLabel('ℹ️ Info')
         .setStyle(ButtonStyle.Primary)
     );
 
     // Mettre à jour l'interaction
     await interaction.update({
       embeds: [embed],
-      components: [actionRow],
+      components: [actionRow]
     });
 
     logger.success(
@@ -63,7 +59,7 @@ export default async function handlePlaylistSelect(interaction) {
     );
   } catch (error) {
     errorHandler.handleInteractionError(error, interaction);
-    logger.error("Erreur dans handlePlaylistSelect:", error);
+    logger.error('Erreur dans handlePlaylistSelect:', error);
     throw error;
   }
 }

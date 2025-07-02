@@ -1,11 +1,11 @@
 // events/messageCreate.js
-import logger from "../utils/centralizedLogger.js";
-import errorHandler from "../utils/errorHandler.js";
+import logger from '../utils/logger.js';
+import errorHandler from '../utils/errorHandler.js';
 
 export default {
-  name: "messageCreate",
+  name: 'messageCreate',
 
-  async execute(message) {
+  async execute (message) {
     try {
       // Ignorer les messages invalides, de bots ou sans auteur
       if (!message || !message.author || message.author.bot) {
@@ -16,9 +16,7 @@ export default {
       const MAX_MESSAGE_AGE_MS = 30 * 1000;
       const messageAge = Date.now() - message.createdTimestamp;
       if (messageAge > MAX_MESSAGE_AGE_MS) {
-        logger.warn(
-          `Message ignoré car trop vieux (${messageAge} ms): "${message.content}" de ${message.author.tag}`
-        );
+        logger.warn(`Message ignoré car trop vieux (${messageAge} ms): "${message.content}" de ${message.author.tag}`);
         return;
       }
 
@@ -31,26 +29,18 @@ export default {
       // Ignorer les réponses aux messages du bot
       if (message.reference?.messageId) {
         try {
-          const repliedMessage = await message.channel.messages.fetch(
-            message.reference.messageId
-          );
+          const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);
           if (repliedMessage.author.id === message.client.user.id) {
-            logger.warn(
-              `Message ignoré car c'est une réponse au bot: "${message.content}" de ${message.author.tag}`
-            );
+            logger.warn(`Message ignoré car c'est une réponse au bot: "${message.content}" de ${message.author.tag}`);
             return;
           }
         } catch (err) {
           // Pas de panique si le fetch échoue, on laisse passer
-          logger.debug(
-            `Erreur lors du fetch du message référencé: ${err.message}`
-          );
+          logger.debug(`Erreur lors du fetch du message référencé: ${err.message}`);
         }
       }
 
-      logger.info(
-        `${message.author.tag} → "${message.content}" (${messageAge} ms)`
-      );
+      logger.info(`${message.author.tag} → "${message.content}" (${messageAge} ms)`);
 
       const args = message.content.slice(prefix.length).trim().split(/ +/);
       const commandName = args.shift().toLowerCase();
@@ -62,22 +52,15 @@ export default {
       }
 
       await command.execute(message, args, message.client, logger);
-      logger.info(
-        `Commande exécutée: ${commandName} par ${message.author.tag}`
-      );
+      logger.info(`Commande exécutée: ${commandName} par ${message.author.tag}`);
     } catch (error) {
-      errorHandler.handleCriticalError(error, "MESSAGE_CREATE");
+      errorHandler.handleCriticalError(error, 'MESSAGE_CREATE');
       logger.error(`Erreur dans l'événement messageCreate: ${error.message}`);
       try {
-        await message.reply(
-          "Il y a eu une erreur l'exécution de cette commande."
-        );
+        await message.reply('Il y a eu une erreur l\'exécution de cette commande.');
       } catch (replyError) {
-        logger.error(
-          `Erreur lors de la réponse d'erreur: ${replyError.message}`
-        );
+        logger.error(`Erreur lors de la réponse d'erreur: ${replyError.message}`);
       }
     }
-  },
+  }
 };
-
