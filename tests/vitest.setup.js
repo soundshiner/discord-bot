@@ -259,7 +259,6 @@ vi.mock('../utils/database.js', () => ({
 // Mock core/config
 vi.mock('../core/config.js', () => ({
   default: {
-    PREFIX: '!',
     DISCORD_TOKEN: 'test-token',
     CLIENT_ID: 'test-client-id',
     API_PORT: 3000,

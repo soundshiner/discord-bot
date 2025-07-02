@@ -24,7 +24,6 @@ describe('core/config.js', () => {
     expect(config).toBeDefined();
     expect(typeof config.BOT_TOKEN).toBe('string');
     expect(typeof config.API_PORT).toBe('number');
-    expect(typeof config.PREFIX).toBe('string');
     expect(typeof config.isDev).toBe('boolean');
     expect(typeof config.isProd).toBe('boolean');
   });
@@ -42,7 +41,6 @@ describe('core/config.js', () => {
     expect(config).toHaveProperty('NODE_ENV');
     expect(config).toHaveProperty('BOT_TOKEN');
     expect(config).toHaveProperty('API_PORT');
-    expect(config).toHaveProperty('PREFIX');
     expect(config).toHaveProperty('VOICE_CHANNEL_ID');
     expect(config).toHaveProperty('PLAYLIST_CHANNEL_ID');
     expect(config).toHaveProperty('API_TOKEN');
@@ -55,10 +53,8 @@ describe('core/config.js', () => {
 
     // Ces valeurs peuvent être définies dans .env, mais on vérifie qu'elles existent
     expect(config).toHaveProperty('API_PORT');
-    expect(config).toHaveProperty('PREFIX');
     expect(config).toHaveProperty('BOT_ROLE_NAME');
     expect(typeof config.API_PORT).toBe('number');
-    expect(typeof config.PREFIX).toBe('string');
     expect(typeof config.BOT_ROLE_NAME).toBe('string');
   });
 

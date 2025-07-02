@@ -18,10 +18,6 @@ logger.success = (msg) => console.log(chalk.green(`[✔ SUCCÈS ] ${msg}`));
 logger.infocmd = (msg) => console.log(chalk.magenta(`[📡 CMD ] : ${msg}`));
 logger.warn = (msg) => console.log(chalk.yellow(`[ ⚠ AVERTISSEMENT ] ${msg}`));
 logger.error = (msg) => console.error(chalk.red(`[✖ ERREUR ] ${msg}`));
-logger.custom = (prefix, msg, color = 'blue') => {
-  const colorFn = chalk[color] || chalk.white;
-  console.log(colorFn(`[ ${prefix} ] ${msg}`));
-};
 logger.section = (sectionName) => {
   const separator = '═'.repeat(50);
   console.log(chalk.blue(`\n${separator}`));

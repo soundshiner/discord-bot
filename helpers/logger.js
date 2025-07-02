@@ -11,11 +11,6 @@ const summary = (text) => {
   console.log(chalk.bold.yellow(`\n📌 Résumé : ${text}`));
 };
 
-const custom = (prefix, message, color = 'blue') => {
-  const colorFn = chalk[color] || chalk.white;
-  console.log(colorFn(`[ ${prefix} ] ${message}`));
-};
-
 const consoleLogger = {
   sectionStart,
   summary,

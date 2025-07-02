@@ -72,6 +72,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "migrate:logs":"node scripts/dev/loggerMigrate.js",
     "prestart": "npm run security:check",
     "test": "vitest",
     "test:watch": "vitest --watch",

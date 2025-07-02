@@ -83,11 +83,6 @@ describe('Logger', () => {
     );
   });
 
-  it('should log custom messages with prefix', () => {
-    const prefix = 'CUSTOM';
-    const message = 'Test custom message';
-    logger.custom(prefix, message);
-
     expect(consoleSpy.log).toHaveBeenCalledWith(
       expect.stringContaining('[ CUSTOM ]')
     );
