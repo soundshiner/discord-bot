@@ -1,7 +1,7 @@
 // ========================================
 // utils/loggerMigration.js - Migration vers le système unifié
 // ========================================
-import unifiedLogger from "../../utils/centralizedLogger.js";
+import unifiedLogger from '../../utils/centralizedLogger.js';
 
 // Redirection des anciens imports pour compatibilité
 export const { logInfo } = unifiedLogger;
@@ -22,8 +22,8 @@ export const error = unifiedLogger.logError;
 export default unifiedLogger;
 
 // Message de migration
-console.log("\n🔄 Migration vers le système de logging centralisé");
-console.log("📝 Les anciens imports continuent de fonctionner");
+console.log('\n🔄 Migration vers le système de logging centralisé');
+console.log('📝 Les anciens imports continuent de fonctionner');
 console.log(
   '🎯 Utilisez maintenant: import logger from "./utils/centralizedLogger.js"\n'
 );

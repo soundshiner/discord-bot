@@ -21,7 +21,7 @@ export default {
     .setDMPermission(false),
   async execute (interaction) {
     try {
-      const schedulePath = path.join(__dirname, '..', 'schedule.txt');
+      const schedulePath = path.join(__dirname, '../data/', 'schedule.txt');
       const scheduleContent = fs.readFileSync(schedulePath, 'utf-8');
 
       const sections = scheduleContent.split('🗓');
