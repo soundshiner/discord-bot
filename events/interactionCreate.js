@@ -1,11 +1,11 @@
 import { MessageFlags } from 'discord.js';
 import handlePlaylistSelect from '../handlers/handlePlaylistSelect.js'; // on importe ton handler
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 import errorHandler from '../utils/errorHandler.js';
 
 export default {
   name: 'interactionCreate',
-  async execute(interaction) {
+  async execute (interaction) {
     try {
       if (interaction.isCommand()) {
         const command = interaction.client.commands.get(interaction.commandName);

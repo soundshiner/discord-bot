@@ -42,14 +42,19 @@ export default (client, logger) => {
 
       if (!playlistChannel?.isTextBased()) {
         logger.error('❌ Canal playlist introuvable ou invalide');
-        return res.status(500).json({ error: 'Canal Discord invalide pour la playlist.' });
+        return res
+          .status(500)
+          .json({ error: 'Canal Discord invalide pour la playlist.' });
       }
 
       logger.info(`✅ Canal playlist trouvé: ${playlistChannel.name}`);
 
+      const description = `**${playlist}** est maintenant en cours sur soundSHINE! 
+      \nVous pouvez l'écouter en direct sur le canal <#1383684854255849613>.`;
+
       const embed = {
         title: '💿 Nouvelle Session en cours',
-        description: `**${playlist}** est maintenant en cours sur soundSHINE! \nVous pouvez l'écouter en direct sur le canal <#1383684854255849613>.`,
+        description,
         color: 0xaff6e4,
         footer: {
           text: 'https://soundshineradio.com',
@@ -63,7 +68,9 @@ export default (client, logger) => {
         logger.info('✅ Embed playlist envoyé avec succès');
         playlistSent = true;
       } catch (embedErr) {
-        logger.error(`❌ Erreur lors de l'envoi de l'embed: ${embedErr.message}`);
+        logger.error(
+          `❌ Erreur lors de l'envoi de l'embed: ${embedErr.message}`
+        );
         logger.error(`Code d'erreur embed: ${embedErr.code}`);
         // Continue quand même pour tester le stage channel
       }
@@ -74,7 +81,9 @@ export default (client, logger) => {
         const stageChannel = await client.channels.fetch(VOICE_CHANNEL_ID);
 
         if (!stageChannel || stageChannel.type !== 13) {
-          logger.error(`❌ Stage channel invalide. Type: ${stageChannel?.type}, ID: ${VOICE_CHANNEL_ID}`);
+          logger.error(
+            `❌ Stage channel invalide. Type: ${stageChannel?.type}, ID: ${VOICE_CHANNEL_ID}`
+          );
           throw new Error('Canal Stage invalide');
         }
 
@@ -84,7 +93,9 @@ export default (client, logger) => {
         const { stageInstance } = stageChannel;
 
         if (!stageInstance) {
-          logger.info('🔄 Étape 5a: Aucune instance active, création en cours...');
+          logger.info(
+            '🔄 Étape 5a: Aucune instance active, création en cours...'
+          );
           try {
             await stageChannel.createStageInstance({ topic });
             logger.info(`✅ Instance de stage créée avec sujet: ${topic}`);
@@ -95,13 +106,17 @@ export default (client, logger) => {
             throw createErr;
           }
         } else {
-          logger.info('🔄 Étape 5b: Instance existante, modification du sujet...');
+          logger.info(
+            '🔄 Étape 5b: Instance existante, modification du sujet...'
+          );
           try {
             await stageInstance.edit({ topic });
             logger.info(`✅ Sujet modifié: ${topic}`);
             stageTopic = true;
           } catch (editErr) {
-            logger.error(`❌ Erreur lors de la modification: ${editErr.message}`);
+            logger.error(
+              `❌ Erreur lors de la modification: ${editErr.message}`
+            );
             logger.error(`Code d'erreur modification: ${editErr.code}`);
             throw editErr;
           }
@@ -144,9 +159,12 @@ export default (client, logger) => {
       logger.error(`ERREUR FATALE: ${err.message}`);
       logger.error(`Code: ${err.code}`);
       logger.error(`Stack: ${err.stack}`);
-      return res.status(500).json({ error: 'Erreur serveur lors du traitement.' });
+      return res
+        .status(500)
+        .json({ error: 'Erreur serveur lors du traitement.' });
     }
   });
 
   return router;
 };
+

@@ -26,7 +26,7 @@ const CONTEXTUAL_FILES = [
 
 const OUTPUT_FILE = 'z_contexte.txt';
 
-function printTree(dirPath, prefix = '') {
+function printTree (dirPath, prefix = '') {
   const entries = fs.readdirSync(dirPath).filter(e => !IGNORED.includes(e)).sort();
 
   let tree = '';
@@ -46,7 +46,7 @@ function printTree(dirPath, prefix = '') {
   return tree;
 }
 
-function buildContextualSection() {
+function buildContextualSection () {
   let section = '\n\n📂 **Fichiers recommandés pour comprendre le projet**\n';
   section += '──────────────────────────────────────────────\n';
 
@@ -61,9 +61,9 @@ function buildContextualSection() {
   return section;
 }
 
-function run() {
+function run () {
   const rootPath = process.cwd();
-  let output = `🧠 Structure du projet :\n───────────────────────────\n`;
+  let output = '🧠 Structure du projet :\n───────────────────────────\n';
   output += printTree(rootPath);
   output += buildContextualSection();
 

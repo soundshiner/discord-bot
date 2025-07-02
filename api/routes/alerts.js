@@ -18,7 +18,7 @@ const alertSchema = z.object({
 
 const thresholdsSchema = z.record(z.enum(['ping', 'memory', 'errors', 'uptime', 'apiLatency']), z.number().min(0));
 
-function requireApiToken(req, res, next) {
+function requireApiToken (req, res, next) {
   if (req.headers['x-api-key'] !== process.env.ADMIN_API_KEY) {
     return res.status(403).json({ error: 'Forbidden' });
   }
@@ -227,7 +227,7 @@ router.put('/thresholds', async (req, res) => {
  */
 router.get('/thresholds', async (req, res) => {
   try {
-    const thresholds = alertManager.thresholds;
+    const { thresholds } = alertManager;
 
     res.json({
       success: true,
@@ -308,6 +308,6 @@ router.post('/test', async (req, res) => {
   }
 });
 
-export default function() {
+export default function () {
   return router;
 }

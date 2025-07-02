@@ -9,7 +9,7 @@ import {
   EmbedBuilder,
   MessageFlags
 } from 'discord.js';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,9 +19,9 @@ export default {
     .setName('schedule')
     .setDescription('📅 Affiche l\'horaire des programmes')
     .setDMPermission(false),
-  async execute(interaction) {
+  async execute (interaction) {
     try {
-      const schedulePath = path.join(__dirname, '..', 'schedule.txt');
+      const schedulePath = path.join(__dirname, '../data/', 'schedule.txt');
       const scheduleContent = fs.readFileSync(schedulePath, 'utf-8');
 
       const sections = scheduleContent.split('🗓');

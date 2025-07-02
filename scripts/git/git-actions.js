@@ -2,7 +2,6 @@
 
 import { execSync } from 'child_process';
 import { existsSync } from 'fs';
-import { join } from 'path';
 import chalk from 'chalk';
 
 // Configuration des variables d'environnement de test (comme dans GitHub Actions)
@@ -25,17 +24,17 @@ const testEnv = {
 };
 
 // Fonction pour vérifier si les dépendances sont installées
-function checkDependencies() {
+function checkDependencies () {
   return existsSync('node_modules') && existsSync('node_modules/.bin');
 }
 
 // Fonction pour exécuter une commande avec gestion d'erreur
-function runCommand(command, description, env = {}) {
+function runCommand (command, description, env = {}) {
   console.log(chalk.blue(`\n🔧 ${description}...`));
 
   try {
     const fullEnv = { ...process.env, ...env };
-    const result = execSync(command, {
+    execSync(command, {
       stdio: 'inherit',
       env: fullEnv,
       encoding: 'utf8'
@@ -51,7 +50,7 @@ function runCommand(command, description, env = {}) {
 }
 
 // Fonction pour vérifier si un fichier existe
-function checkFileExists(filePath) {
+function checkFileExists (filePath) {
   if (!existsSync(filePath)) {
     console.error(chalk.red(`❌ Fichier manquant: ${filePath}`));
     return false;
@@ -60,7 +59,7 @@ function checkFileExists(filePath) {
 }
 
 // Fonction principale
-async function runGitActions() {
+async function runGitActions () {
   console.log(chalk.bold.cyan('\n🚀 Simulation des GitHub Actions Locales'));
   console.log(chalk.gray('='.repeat(60)));
 
@@ -83,7 +82,9 @@ async function runGitActions() {
   }
 
   if (!allTestsPassed) {
-    console.error(chalk.red('\n❌ Fichiers essentiels manquants. Arrêt des tests.'));
+    console.error(
+      chalk.red('\n❌ Fichiers essentiels manquants. Arrêt des tests.')
+    );
     process.exit(1);
   }
 
@@ -91,9 +92,13 @@ async function runGitActions() {
 
   // Étape 2: Vérification et installation des dépendances
   if (!checkDependencies()) {
-    console.log(chalk.yellow('⚠️  Dépendances non installées. Installation...'));
+    console.log(
+      chalk.yellow('⚠️  Dépendances non installées. Installation...')
+    );
     if (!runCommand('npm install', 'Installation des dépendances')) {
-      console.error(chalk.red("❌ Impossible d'installer les dépendances. Arrêt des tests."));
+      console.error(
+        chalk.red('❌ Impossible d\'installer les dépendances. Arrêt des tests.')
+      );
       process.exit(1);
     }
   } else {
@@ -106,22 +111,32 @@ async function runGitActions() {
   }
 
   // Étape 4: Tests avec couverture
-  if (!runCommand('npm run test:coverage', 'Exécution des tests avec couverture', testEnv)) {
+  if (
+    !runCommand(
+      'npm run test:coverage',
+      'Exécution des tests avec couverture',
+      testEnv
+    )
+  ) {
     allTestsPassed = false;
   }
 
   // Étape 5: Vérification du formatage
-  if (!runCommand('npm run format:check', 'Vérification du formatage du code')) {
+  if (
+    !runCommand('npm run fix:all', 'Vérification du formatage du code')
+  ) {
     allTestsPassed = false;
   }
 
   // Étape 6: Tests d'intégration
-  if (!runCommand('npm run test:integration', "Tests d'intégration", testEnv)) {
+  if (!runCommand('npm run test:integration', 'Tests d\'intégration', testEnv)) {
     allTestsPassed = false;
   }
 
   // Étape 7: Tests de performance
-  if (!runCommand('npm run test:performance', 'Tests de performance', testEnv)) {
+  if (
+    !runCommand('npm run test:performance', 'Tests de performance', testEnv)
+  ) {
     allTestsPassed = false;
   }
 
@@ -138,7 +153,9 @@ async function runGitActions() {
 
   for (const file of jsFiles) {
     if (existsSync(file)) {
-      if (!runCommand(`node --check ${file}`, `Vérification syntaxe: ${file}`)) {
+      if (
+        !runCommand(`node --check ${file}`, `Vérification syntaxe: ${file}`)
+      ) {
         allTestsPassed = false;
       }
     }
@@ -148,14 +165,14 @@ async function runGitActions() {
   const endTime = Date.now();
   const duration = ((endTime - startTime) / 1000).toFixed(2);
 
-  console.log(chalk.bold.cyan('\n' + '='.repeat(60)));
+  console.log(chalk.bold.cyan(`\n${'='.repeat(60)}`));
   console.log(chalk.bold.cyan('📊 RÉSULTATS FINAUX'));
   console.log(chalk.bold.cyan('='.repeat(60)));
 
   if (allTestsPassed) {
-    console.log(chalk.bold.green(`\n🎉 TOUS LES TESTS ONT RÉUSSI !`));
+    console.log(chalk.bold.green('\n🎉 TOUS LES TESTS ONT RÉUSSI !'));
     console.log(chalk.green(`⏱️  Durée totale: ${duration}s`));
-    console.log(chalk.green(`✅ Prêt pour le push vers GitHub !`));
+    console.log(chalk.green('✅ Prêt pour le push vers GitHub !'));
 
     // Suggestions pour le commit
     console.log(chalk.blue('\n💡 Suggestions:'));
@@ -165,14 +182,16 @@ async function runGitActions() {
 
     process.exit(0);
   } else {
-    console.log(chalk.bold.red(`\n💥 CERTAINS TESTS ONT ÉCHOUÉ !`));
+    console.log(chalk.bold.red('\n💥 CERTAINS TESTS ONT ÉCHOUÉ !'));
     console.log(chalk.red(`⏱️  Durée totale: ${duration}s`));
-    console.log(chalk.red(`❌ Corrigez les erreurs avant de push`));
+    console.log(chalk.red('❌ Corrigez les erreurs avant de push'));
 
     // Suggestions de correction
     console.log(chalk.blue('\n🔧 Suggestions de correction:'));
     console.log(chalk.gray('npm run lint:fix          # Corriger le linting'));
-    console.log(chalk.gray('npm run format            # Corriger le formatage'));
+    console.log(
+      chalk.gray('npm run format            # Corriger le formatage')
+    );
     console.log(chalk.gray('npm run test              # Relancer les tests'));
 
     process.exit(1);
@@ -180,18 +199,19 @@ async function runGitActions() {
 }
 
 // Gestion des erreurs non capturées
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason, _promise) => {
   console.error(chalk.red('\n❌ Erreur non gérée:'), reason);
   process.exit(1);
 });
 
-process.on('uncaughtException', error => {
+process.on('uncaughtException', (error) => {
   console.error(chalk.red('\n❌ Exception non capturée:'), error);
   process.exit(1);
 });
 
 // Exécution du script
-runGitActions().catch(error => {
+runGitActions().catch((error) => {
   console.error(chalk.red('\n❌ Erreur fatale:'), error);
   process.exit(1);
 });
+

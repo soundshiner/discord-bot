@@ -14,7 +14,7 @@ const isGlobal = args.includes('--global');
 const shouldClear = args.includes('--clear');
 
 const GUILD_ID = process.env.TEST_GUILD_ID;
-const CLIENT_ID = process.env.CLIENT_ID;
+const { CLIENT_ID } = process.env;
 const TOKEN = process.env.BOT_TOKEN;
 
 if (!TOKEN || !CLIENT_ID) {
@@ -79,7 +79,6 @@ for (const file of commandFiles) {
     if (args.includes('--restart-service')) {
       console.log(chalk.gray('ℹ️  Restart du service demandé (non implémenté)'));
     }
-
   } catch (error) {
     console.error(chalk.red('❌ Erreur lors du déploiement des commandes :'), error);
     process.exit(1);

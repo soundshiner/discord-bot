@@ -1,5 +1,5 @@
 // utils/validateURL.js
-export function validateURL(url) {
+export function validateURL (url) {
   if (!url || typeof url !== 'string') {
     return false;
   }
@@ -7,12 +7,13 @@ export function validateURL(url) {
   try {
     const urlObj = new URL(url);
     return (
-      urlObj.hostname === 'youtu.be' ||
-      urlObj.hostname === 'www.youtube.com' ||
-      urlObj.hostname === 'youtube.com' ||
-      urlObj.hostname === 'open.spotify.com'
+      urlObj.hostname === 'youtu.be'
+      || urlObj.hostname === 'www.youtube.com'
+      || urlObj.hostname === 'youtube.com'
+      || urlObj.hostname === 'open.spotify.com'
     );
-  } catch (err) {
-    return false;
+  } catch {
+    // Intentionally empty: error handled silently
   }
 }
+

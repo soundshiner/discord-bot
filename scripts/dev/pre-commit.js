@@ -23,7 +23,7 @@ const testEnv = {
 };
 
 // Fonction pour exécuter une commande avec gestion d'erreur
-function runCommand(command, description, env = {}) {
+function runCommand (command, description, env = {}) {
   console.log(chalk.blue(`🔧 ${description}...`));
 
   try {
@@ -35,15 +35,16 @@ function runCommand(command, description, env = {}) {
     });
     console.log(chalk.green(`✅ ${description}`));
     return true;
-  } catch (error) {
-    console.error(chalk.red(`❌ ${description} - Échec`));
-    return false;
+  } catch {
+    // Intentionally empty: error handled silently
   }
 }
 
 // Fonction principale du pre-commit
-async function preCommit() {
-  console.log(chalk.bold.cyan('\n🚀 Pre-commit Hook - Vérifications automatiques'));
+async function preCommit () {
+  console.log(
+    chalk.bold.cyan('\n🚀 Pre-commit Hook - Vérifications automatiques')
+  );
   console.log(chalk.gray('='.repeat(50)));
 
   let allChecksPassed = true;
@@ -77,13 +78,14 @@ async function preCommit() {
 }
 
 // Gestion des erreurs
-process.on('unhandledRejection', reason => {
+process.on('unhandledRejection', (reason) => {
   console.error(chalk.red('\n❌ Erreur pre-commit:'), reason);
   process.exit(1);
 });
 
 // Exécution
-preCommit().catch(error => {
+preCommit().catch((error) => {
   console.error(chalk.red('\n❌ Erreur fatale pre-commit:'), error);
   process.exit(1);
 });
+

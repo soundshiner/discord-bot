@@ -51,24 +51,36 @@ describe('Logger', () => {
     const message = 'Test error message';
     logger.error(message);
 
-    expect(consoleSpy.error).toHaveBeenCalledWith(expect.stringContaining('[✖]'));
-    expect(consoleSpy.error).toHaveBeenCalledWith(expect.stringContaining(message));
+    expect(consoleSpy.error).toHaveBeenCalledWith(
+      expect.stringContaining('[✖ ERREUR ]')
+    );
+    expect(consoleSpy.error).toHaveBeenCalledWith(
+      expect.stringContaining(message)
+    );
   });
 
   it('should log warning messages with custom format', () => {
     const message = 'Test warning message';
     logger.warn(message);
 
-    expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining('[⚠]'));
-    expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining(message));
+    expect(consoleSpy.log).toHaveBeenCalledWith(
+      expect.stringContaining('[ ⚠ AVERTISSEMENT ]')
+    );
+    expect(consoleSpy.log).toHaveBeenCalledWith(
+      expect.stringContaining(message)
+    );
   });
 
   it('should log success messages with custom format', () => {
     const message = 'Test success message';
     logger.success(message);
 
-    expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining('[✔]'));
-    expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining(message));
+    expect(consoleSpy.log).toHaveBeenCalledWith(
+      expect.stringContaining('[✔ SUCCÈS ]')
+    );
+    expect(consoleSpy.log).toHaveBeenCalledWith(
+      expect.stringContaining(message)
+    );
   });
 
   it('should log custom messages with prefix', () => {
@@ -76,8 +88,12 @@ describe('Logger', () => {
     const message = 'Test custom message';
     logger.custom(prefix, message);
 
-    expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining(`[${prefix}]`));
-    expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining(message));
+    expect(consoleSpy.log).toHaveBeenCalledWith(
+      expect.stringContaining('[ CUSTOM ]')
+    );
+    expect(consoleSpy.log).toHaveBeenCalledWith(
+      expect.stringContaining(message)
+    );
   });
 
   it('should log section headers', () => {
@@ -85,9 +101,13 @@ describe('Logger', () => {
     logger.section(sectionName);
 
     expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining('══════════════════════════════════════════════════')
+      expect.stringContaining(
+        '══════════════════════════════════════════════════'
+      )
     );
-    expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining(sectionName));
+    expect(consoleSpy.log).toHaveBeenCalledWith(
+      expect.stringContaining(sectionName)
+    );
   });
 
   it('should log section start headers', () => {
@@ -95,16 +115,25 @@ describe('Logger', () => {
     logger.sectionStart(sectionName);
 
     expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining('══════════════════════════════════════════════════')
+      expect.stringContaining(
+        '══════════════════════════════════════════════════'
+      )
     );
-    expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining(sectionName));
+    expect(consoleSpy.log).toHaveBeenCalledWith(
+      expect.stringContaining(sectionName)
+    );
   });
 
   it('should log infocmd messages', () => {
     const message = 'Test CMD message';
     logger.infocmd(message);
 
-    expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining('[CMD]'));
-    expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining(message));
+    expect(consoleSpy.log).toHaveBeenCalledWith(
+      expect.stringContaining('[📡 CMD ]')
+    );
+    expect(consoleSpy.log).toHaveBeenCalledWith(
+      expect.stringContaining(message)
+    );
   });
 });
+

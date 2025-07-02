@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import axios from 'axios';
 import config from '../core/config.js';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 const { UNSPLASH_ACCESS_KEY } = config;
 
@@ -10,7 +10,7 @@ export default {
     .setName('getwallpaper')
     .setDescription('📷 Récupère une photo aléatoire depuis Unsplash')
     .setDMPermission(false),
-  async execute(interaction) {
+  async execute (interaction) {
     try {
       const response = await axios.get(
         `https://api.unsplash.com/photos/random?client_id=${UNSPLASH_ACCESS_KEY}&count=1`

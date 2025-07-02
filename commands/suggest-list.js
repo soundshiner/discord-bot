@@ -2,14 +2,14 @@
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import { db } from '../utils/database.js';
 import config from '../core/config.js';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 export default {
   data: new SlashCommandBuilder()
     .setName('list_suggestions')
     .setDescription('Voir toutes les suggestions de morceaux')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
-  async execute(interaction) {
+  async execute (interaction) {
     try {
       // Check role
       if (!interaction.member.roles.cache.has(config.roleId)) {

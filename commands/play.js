@@ -17,7 +17,7 @@ export default {
     .setDescription('▶️ Lance le stream dans un Stage Channel')
     .setDMPermission(false),
 
-  async execute(interaction) {
+  async execute (interaction) {
     const { channel } = interaction.member.voice;
 
     if (!channel) {

@@ -8,7 +8,7 @@ import loadRoutes from './routes.js';
 import errorHandler from '../utils/errorHandler.js';
 
 class WebServer {
-  constructor(client, logger) {
+  constructor (client, logger) {
     this.client = client;
     this.logger = logger;
     this.app = express();
@@ -16,17 +16,20 @@ class WebServer {
     this.server = null;
   }
 
-  setupMiddleware() {
+  setupMiddleware () {
     try {
       this.app.use(helmetMiddleware);
       this.app.use(corsMiddleware);
-      this.app.use(rateLimit({
-        windowMs: 15 * 60 * 1000,
-        max: 100,
-        message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.',
-        standardHeaders: true,
-        legacyHeaders: false
-      }));
+      this.app.use(
+        rateLimit({
+          windowMs: 15 * 60 * 1000,
+          max: 100,
+          message:
+            'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.',
+          standardHeaders: true,
+          legacyHeaders: false
+        })
+      );
       this.app.use(express.json({ limit: '10mb' }));
       this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
       this.app.use(loggingMiddleware());
@@ -36,7 +39,7 @@ class WebServer {
     }
   }
 
-  setupRoutes() {
+  setupRoutes () {
     try {
       loadRoutes(this.app, this.client, this.logger);
       this.logger.info('✅ Routes API chargées');
@@ -46,23 +49,23 @@ class WebServer {
     }
   }
 
-  setupErrorHandling() {
-    this.app.use((err, req, res, next) => {
+  setupErrorHandling () {
+    this.app.use((err, req, res, _next) => {
       errorHandler.handleApiError(err, req, res);
     });
   }
 
-  start(port) {
+  start (port) {
     try {
       this.setupMiddleware();
       this.setupRoutes();
       this.setupErrorHandling();
 
       this.server = this.app.listen(port, () => {
-        this.logger.success(`🚀 Serveur Express démarré sur le port ${port}`);      
+        this.logger.success(`🚀 Serveur Express démarré sur le port ${port}`);
       });
 
-      this.server.on('error', error => {
+      this.server.on('error', (error) => {
         errorHandler.handleCriticalError(error, 'SERVER_ERROR');
         this.logger.error(`Erreur serveur: ${error.message}`);
       });
@@ -74,10 +77,10 @@ class WebServer {
     }
   }
 
-  async stop() {
+  async stop () {
     if (this.server) {
       return new Promise((resolve, reject) => {
-        this.server.close(err => {
+        this.server.close((err) => {
           if (err) {
             errorHandler.handleCriticalError(err, 'SERVER_STOP');
             reject(err);
@@ -92,3 +95,4 @@ class WebServer {
 }
 
 export default WebServer;
+

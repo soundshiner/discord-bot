@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import axios from 'axios';
 import config from '../core/config.js';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 const { JSON_URL } = config;
 
@@ -10,7 +10,7 @@ export default {
     .setName('nowplaying')
     .setDescription('🎵 Affiche la chanson en cours de lecture')
     .setDMPermission(false),
-  async execute(interaction) {
+  async execute (interaction) {
     try {
       const response = await axios.get(JSON_URL);
       const { data } = response;

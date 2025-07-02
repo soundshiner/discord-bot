@@ -15,13 +15,16 @@ vi.mock('../../core/config.js', () => ({
 }));
 
 vi.mock('../../utils/logger.js', () => ({
-  logger: {
+  default: {
     info: vi.fn(),
     error: vi.fn(),
-    warn: vi.fn()
+    warn: vi.fn(),
+    success: vi.fn(),
+    custom: vi.fn(),
+    infocmd: vi.fn()
   }
 }));
-import { logger } from '../../utils/logger.js';
+import logger from '../../utils/logger.js';
 
 vi.mock('../../utils/errorHandler.js', () => ({
   default: {
@@ -57,7 +60,9 @@ describe('updateStatus task', () => {
 
     await updateStatusTask.execute(mockClient);
 
-    expect(axios.get).toHaveBeenCalledWith('http://mock-json-url', { timeout: 10000 });
+    expect(axios.get).toHaveBeenCalledWith('http://mock-json-url', {
+      timeout: 10000
+    });
     expect(logger.info).toHaveBeenCalledWith('Updated status to: Test Song');
     expect(mockSetActivity).toHaveBeenCalledWith({
       name: '📀 Test Song',
@@ -72,10 +77,20 @@ describe('updateStatus task', () => {
 
     await updateStatusTask.execute(mockClient);
 
-    expect(errorHandler.handleTaskError).toHaveBeenCalledWith(expect.any(Error), 'UPDATE_STATUS');
-    expect(logger.error).toHaveBeenCalledWith('Error fetching metadata or updating status:', expect.any(Error));
-    expect(mockSetActivity).toHaveBeenCalledWith('Soundshine Radio', { type: expect.any(Number) });
-    expect(logger.warn).toHaveBeenCalledWith('Fallback activity set to Soundshine Radio');
+    expect(errorHandler.handleTaskError).toHaveBeenCalledWith(
+      expect.any(Error),
+      'UPDATE_STATUS'
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      'Error fetching metadata or updating status:',
+      expect.any(Error)
+    );
+    expect(mockSetActivity).toHaveBeenCalledWith('Soundshine Radio', {
+      type: expect.any(Number)
+    });
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Fallback activity set to Soundshine Radio'
+    );
   });
 
   it('log une erreur si le fallback échoue aussi', async () => {
@@ -84,7 +99,14 @@ describe('updateStatus task', () => {
 
     await updateStatusTask.execute(mockClient);
 
-    expect(errorHandler.handleTaskError).toHaveBeenCalledWith(expect.any(Error), 'UPDATE_STATUS_FALLBACK');
-    expect(logger.error).toHaveBeenCalledWith('Error setting fallback activity:', expect.any(Error));
+    expect(errorHandler.handleTaskError).toHaveBeenCalledWith(
+      expect.any(Error),
+      'UPDATE_STATUS_FALLBACK'
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      'Error setting fallback activity:',
+      expect.any(Error)
+    );
   });
 });
+

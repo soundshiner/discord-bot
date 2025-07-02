@@ -7,7 +7,7 @@ import errorHandler from '../utils/errorHandler.js';
 const { JSON_URL } = config;
 let lastSong = null;
 
-async function updateStatus(client) {
+async function updateStatus (client) {
   try {
     const { data } = await axios.get(JSON_URL, { timeout: 10000 });
 
