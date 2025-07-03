@@ -13,18 +13,20 @@ vi.mock('node:fs', () => ({
 vi.mock('node:path', () => ({
   default: {
     join: vi.fn((...args) => ['/fake/dir', ...args.slice(2)].join('/')),
-    dirname: vi.fn(() => '/fake/dir')
+    dirname: vi.fn(() => '/fake/dir'),
+    resolve: vi.fn((...args) => args.join('/'))
   },
   join: vi.fn((...args) => ['/fake/dir', ...args.slice(2)].join('/')),
-  dirname: vi.fn(() => '/fake/dir')
+  dirname: vi.fn(() => '/fake/dir'),
+  resolve: vi.fn((...args) => args.join('/'))
 }));
 
 vi.mock('node:url', () => ({
   default: {
-    pathToFileURL: vi.fn(p => ({ href: p })),
+    pathToFileURL: vi.fn((p) => ({ href: p })),
     fileURLToPath: vi.fn(() => '/fake/dir')
   },
-  pathToFileURL: vi.fn(p => ({ href: p })),
+  pathToFileURL: vi.fn((p) => ({ href: p })),
   fileURLToPath: vi.fn(() => '/fake/dir')
 }));
 
@@ -61,15 +63,24 @@ beforeEach(async () => {
   fsReaddirSync = vi.mocked(fs.readdirSync);
 
   // Dynamically import loadFiles after mocks are set up
-  ({ loadFiles } = await import('../core/loadFiles.js'));
+  loadFiles = (await import('../core/loadFiles.js')).default;
 });
 
 describe('loadFiles', () => {
   it('retourne vide si le dossier est manquant', async () => {
     fsExistsSync.mockReturnValue(false);
-    const res = await loadFiles('commands', 'command', mockClient, null, mockLogger, importMock);
+    const res = await loadFiles(
+      'commands',
+      'command',
+      mockClient,
+      null,
+      mockLogger,
+      importMock
+    );
     expect(res).toEqual({ loaded: [], failed: [], total: 0 });
-    expect(mockLogger.warn).toHaveBeenCalledWith('Dossier commands introuvable.');
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      'Dossier commands introuvable.'
+    );
   });
 
   it('charge une commande valide', async () => {
@@ -84,19 +95,41 @@ describe('loadFiles', () => {
     });
 
     const client = { commands: { set: vi.fn() } };
-    const res = await loadFiles('commands', 'command', client, null, mockLogger, importMock);
+    const res = await loadFiles(
+      'commands',
+      'command',
+      client,
+      null,
+      mockLogger,
+      importMock
+    );
     expect(res.loaded).toContain('ping');
-    expect(client.commands.set).toHaveBeenCalledWith('ping', expect.any(Object));
-    expect(mockLogger.custom).toHaveBeenCalledWith('CMD', expect.stringContaining('ping'));
+    expect(client.commands.set).toHaveBeenCalledWith(
+      'ping',
+      expect.any(Object)
+    );
+    expect(mockLogger.custom).toHaveBeenCalledWith(
+      'CMD',
+      expect.stringContaining('ping')
+    );
   });
 
   it('signale une commande invalide', async () => {
     fsExistsSync.mockReturnValue(true);
     fsReaddirSync.mockReturnValue(['bad.js']);
     importMock.mockResolvedValue({ default: {} });
-    const res = await loadFiles('commands', 'command', mockClient, null, mockLogger, importMock);
+    const res = await loadFiles(
+      'commands',
+      'command',
+      mockClient,
+      null,
+      mockLogger,
+      importMock
+    );
     expect(res.failed).toContain('bad.js');
-    expect(mockLogger.warn).toHaveBeenCalledWith('Commande invalide dans bad.js');
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      'Commande invalide dans bad.js'
+    );
   });
 
   it('charge un event valide', async () => {
@@ -109,9 +142,19 @@ describe('loadFiles', () => {
       }
     });
     const client = { on: vi.fn(), once: vi.fn() };
-    const res = await loadFiles('events', 'event', client, null, mockLogger, importMock);
+    const res = await loadFiles(
+      'events',
+      'event',
+      client,
+      null,
+      mockLogger,
+      importMock
+    );
     expect(res.loaded).toContain('ready');
-    expect(mockLogger.custom).toHaveBeenCalledWith('EVENTS', expect.stringContaining('ready'));
+    expect(mockLogger.custom).toHaveBeenCalledWith(
+      'EVENTS',
+      expect.stringContaining('ready')
+    );
   });
 
   it('charge une tâche valide', async () => {
@@ -124,18 +167,38 @@ describe('loadFiles', () => {
         interval: 1
       }
     });
-    const res = await loadFiles('tasks', 'task', mockClient, null, mockLogger, importMock);
+    const res = await loadFiles(
+      'tasks',
+      'task',
+      mockClient,
+      null,
+      mockLogger,
+      importMock
+    );
     expect(res.loaded).toContain('task');
-    expect(mockLogger.custom).toHaveBeenCalledWith('TASKS', expect.stringContaining('task'));
+    expect(mockLogger.custom).toHaveBeenCalledWith(
+      'TASKS',
+      expect.stringContaining('task')
+    );
   });
 
   it('charge un utilitaire', async () => {
     fsExistsSync.mockReturnValue(true);
     fsReaddirSync.mockReturnValue(['util.js']);
     importMock.mockResolvedValue({});
-    const res = await loadFiles('utils', 'util', mockClient, null, mockLogger, importMock);
+    const res = await loadFiles(
+      'utils',
+      'util',
+      mockClient,
+      null,
+      mockLogger,
+      importMock
+    );
     expect(res.loaded).toContain('util.js');
-    expect(mockLogger.custom).toHaveBeenCalledWith('UTILS', expect.stringContaining('util.js'));
+    expect(mockLogger.custom).toHaveBeenCalledWith(
+      'UTILS',
+      expect.stringContaining('util.js')
+    );
   });
 
   it('charge une route Express', async () => {
@@ -145,18 +208,38 @@ describe('loadFiles', () => {
       default: vi.fn(() => (req, res) => res.send('ok'))
     });
     const app = { use: vi.fn() };
-    const res = await loadFiles('api', 'route', mockClient, app, mockLogger, importMock);
+    const res = await loadFiles(
+      'api',
+      'route',
+      mockClient,
+      app,
+      mockLogger,
+      importMock
+    );
     expect(res.loaded).toContain('route');
     expect(app.use).toHaveBeenCalledWith('/v1/route', expect.any(Function));
-    expect(mockLogger.custom).toHaveBeenCalledWith('ROUTE', expect.stringContaining('route'));
+    expect(mockLogger.custom).toHaveBeenCalledWith(
+      'ROUTE',
+      expect.stringContaining('route')
+    );
   });
 
   it('signale une erreur de chargement', async () => {
     fsExistsSync.mockReturnValue(true);
     fsReaddirSync.mockReturnValue(['fail.js']);
     importMock.mockRejectedValue(new Error('fail!'));
-    const res = await loadFiles('commands', 'command', mockClient, null, mockLogger, importMock);
+    const res = await loadFiles(
+      'commands',
+      'command',
+      mockClient,
+      null,
+      mockLogger,
+      importMock
+    );
     expect(res.failed).toContain('fail.js');
-    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('fail.js'));
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      expect.stringContaining('fail.js')
+    );
   });
 });
+

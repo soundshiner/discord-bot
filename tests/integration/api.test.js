@@ -26,6 +26,24 @@ vi.mock('discord.js', () => ({
   }
 }));
 
+vi.mock('path', () => ({
+  default: {
+    resolve: vi.fn((...args) => args.join('/')),
+    join: vi.fn((...args) => args.join('/'))
+  },
+  resolve: vi.fn((...args) => args.join('/')),
+  join: vi.fn((...args) => args.join('/'))
+}));
+
+vi.mock('fs', () => ({
+  default: {
+    existsSync: vi.fn(() => true),
+    mkdirSync: vi.fn()
+  },
+  existsSync: vi.fn(() => true),
+  mkdirSync: vi.fn()
+}));
+
 import healthRoute from '../../api/routes/health.js';
 import metricsRoute from '../../api/routes/metrics.js';
 import playlistUpdateRoute from '../../api/routes/playlist-update.js';
@@ -80,6 +98,9 @@ describe('API Integration Tests', () => {
       info: vi.fn(),
       error: vi.fn(),
       warn: vi.fn(),
+      debug: vi.fn(),
+      success: vi.fn(),
+      section: vi.fn(),
       custom: vi.fn()
     };
 

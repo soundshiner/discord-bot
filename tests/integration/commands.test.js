@@ -3,6 +3,24 @@ import pingCommand from '../../commands/ping.js';
 import playCommand from '../../commands/play.js';
 import stopCommand from '../../commands/stop.js';
 
+vi.mock('path', () => ({
+  default: {
+    resolve: vi.fn((...args) => args.join('/')),
+    join: vi.fn((...args) => args.join('/'))
+  },
+  resolve: vi.fn((...args) => args.join('/')),
+  join: vi.fn((...args) => args.join('/'))
+}));
+
+vi.mock('fs', () => ({
+  default: {
+    existsSync: vi.fn(() => true),
+    mkdirSync: vi.fn()
+  },
+  existsSync: vi.fn(() => true),
+  mkdirSync: vi.fn()
+}));
+
 describe('Discord Commands Integration', () => {
   let mockInteraction;
   let mockClient;
@@ -51,7 +69,9 @@ describe('Discord Commands Integration', () => {
         tag: 'TestBot#1234'
       },
       guilds: {
-        cache: new Map([['987654321', { id: '987654321', name: 'Test Guild' }]])
+        cache: new Map([
+          ['987654321', { id: '987654321', name: 'Test Guild' }]
+        ])
       }
     };
 
@@ -68,9 +88,15 @@ describe('Discord Commands Integration', () => {
         fetchReply: true
       });
 
-      expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.stringContaining('🏓 Pong !'));
-      expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.stringContaining('Latence bot:'));
-      expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.stringContaining('Latence API:'));
+      expect(mockInteraction.editReply).toHaveBeenCalledWith(
+        expect.stringContaining('🏓 Pong !')
+      );
+      expect(mockInteraction.editReply).toHaveBeenCalledWith(
+        expect.stringContaining('Latence bot:')
+      );
+      expect(mockInteraction.editReply).toHaveBeenCalledWith(
+        expect.stringContaining('Latence API:')
+      );
     });
 
     it('should handle ping command errors gracefully', async () => {
@@ -96,7 +122,9 @@ describe('Discord Commands Integration', () => {
 
     it('should handle play command with valid URL', async () => {
       // Mock successful play scenario
-      mockInteraction.options.getString.mockReturnValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+      mockInteraction.options.getString.mockReturnValue(
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+      );
 
       try {
         await playCommand.execute(mockInteraction, mockClient);
@@ -120,7 +148,10 @@ describe('Discord Commands Integration', () => {
 
       await playCommand.execute(mockInteraction, mockClient);
 
-      expect(playCommand.execute).toHaveBeenCalledWith(mockInteraction, mockClient);
+      expect(playCommand.execute).toHaveBeenCalledWith(
+        mockInteraction,
+        mockClient
+      );
     });
   });
 
@@ -151,7 +182,9 @@ describe('Discord Commands Integration', () => {
 
       try {
         await stopCommand.execute(mockInteraction);
-        expect(mockInteraction.reply).toHaveBeenCalledWith(expect.stringContaining('⏹️'));
+        expect(mockInteraction.reply).toHaveBeenCalledWith(
+          expect.stringContaining('⏹️')
+        );
       } catch (error) {
         // Expected to fail in test environment
         expect(error).toBeDefined();
@@ -163,7 +196,7 @@ describe('Discord Commands Integration', () => {
     it('should validate all commands have required properties', () => {
       const commands = [pingCommand, playCommand, stopCommand];
 
-      commands.forEach(command => {
+      commands.forEach((command) => {
         expect(command).toHaveProperty('data');
         expect(command).toHaveProperty('execute');
         expect(typeof command.execute).toBe('function');
@@ -195,7 +228,10 @@ describe('Discord Commands Integration', () => {
         expect(error.message).toBe('Test error');
       }
 
-      expect(errorCommand.execute).toHaveBeenCalledWith(mockInteraction, mockClient);
+      expect(errorCommand.execute).toHaveBeenCalledWith(
+        mockInteraction,
+        mockClient
+      );
     });
 
     it('should handle missing voice channel', async () => {
@@ -215,7 +251,11 @@ describe('Discord Commands Integration', () => {
 
       await playCommand.execute(mockInteractionNoVoice, mockClient);
 
-      expect(playCommand.execute).toHaveBeenCalledWith(mockInteractionNoVoice, mockClient);
+      expect(playCommand.execute).toHaveBeenCalledWith(
+        mockInteractionNoVoice,
+        mockClient
+      );
     });
   });
 });
+

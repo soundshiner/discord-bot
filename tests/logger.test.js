@@ -24,13 +24,32 @@ vi.mock('winston', () => ({
   }
 }));
 
+vi.mock('path', () => ({
+  default: {
+    resolve: vi.fn((...args) => args.join('/')),
+    join: vi.fn((...args) => args.join('/'))
+  },
+  resolve: vi.fn((...args) => args.join('/')),
+  join: vi.fn((...args) => args.join('/'))
+}));
+
+vi.mock('fs', () => ({
+  default: {
+    existsSync: vi.fn(() => true),
+    mkdirSync: vi.fn()
+  },
+  existsSync: vi.fn(() => true),
+  mkdirSync: vi.fn()
+}));
+
 describe('Logger', () => {
   let consoleSpy;
 
   beforeEach(() => {
     consoleSpy = {
       log: vi.spyOn(console, 'log').mockImplementation(() => {}),
-      error: vi.spyOn(console, 'error').mockImplementation(() => {})
+      error: vi.spyOn(console, 'error').mockImplementation(() => {}),
+      warn: vi.spyOn(console, 'warn').mockImplementation(() => {})
     };
   });
 
@@ -51,54 +70,40 @@ describe('Logger', () => {
     const message = 'Test error message';
     logger.error(message);
 
-    expect(consoleSpy.error).toHaveBeenCalledWith(
-      expect.stringContaining('[✖ ERREUR ]')
-    );
-    expect(consoleSpy.error).toHaveBeenCalledWith(
-      expect.stringContaining(message)
-    );
+    expect(consoleSpy.error).toHaveBeenCalledWith('[ERROR]', message);
   });
 
   it('should log warning messages with custom format', () => {
     const message = 'Test warning message';
     logger.warn(message);
 
-    expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining('[ ⚠ AVERTISSEMENT ]')
-    );
-    expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining(message)
-    );
+    expect(consoleSpy.warn).toHaveBeenCalledWith('[WARN]', message);
   });
 
   it('should log success messages with custom format', () => {
     const message = 'Test success message';
     logger.success(message);
 
+    expect(consoleSpy.log).toHaveBeenCalledWith('[SUCCESS]', message);
+  });
+
+  it('should log custom messages with custom format', () => {
+    const label = 'CUSTOM';
+    const message = 'Test custom message';
+    logger.custom(label, message);
+
     expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining('[✔ SUCCÈS ]')
-    );
-    expect(consoleSpy.log).toHaveBeenCalledWith(
+      expect.stringContaining(`[${label}]`),
       expect.stringContaining(message)
     );
   });
-
-  const message = 'Test custom message';
-  expect(consoleSpy.log).toHaveBeenCalledWith(
-    expect.stringContaining('[ CUSTOM ]')
-  );
-  expect(consoleSpy.log).toHaveBeenCalledWith(
-    expect.stringContaining(message)
-  );
 
   it('should log section headers', () => {
     const sectionName = 'Test Section';
     logger.section(sectionName);
 
     expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining(
-        '══════════════════════════════════════════════════'
-      )
+      expect.stringContaining('━'.repeat(30))
     );
     expect(consoleSpy.log).toHaveBeenCalledWith(
       expect.stringContaining(sectionName)
@@ -107,28 +112,21 @@ describe('Logger', () => {
 
   it('should log section start headers', () => {
     const sectionName = 'Test Section Start';
-    logger.sectionStart(sectionName);
+    logger.section(sectionName);
 
     expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining(
-        '══════════════════════════════════════════════════'
-      )
+      expect.stringContaining('━'.repeat(30))
     );
     expect(consoleSpy.log).toHaveBeenCalledWith(
       expect.stringContaining(sectionName)
     );
   });
 
-  it('should log infocmd messages', () => {
+  it('should log info messages', () => {
     const message = 'Test CMD message';
-    logger.infocmd(message);
+    logger.info(message);
 
-    expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining('[📡 CMD ]')
-    );
-    expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining(message)
-    );
+    expect(consoleSpy.log).toHaveBeenCalledWith('[INFO]', message);
   });
 });
 

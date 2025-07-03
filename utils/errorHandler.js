@@ -2,11 +2,11 @@
 // utils/errorHandler.js - Gestion centralisée des erreurs
 // ========================================
 
-import { MessageFlags } from "discord.js";
-import logger from "./logger.js";
+import { MessageFlags } from 'discord.js';
+import logger from './logger.js';
 
 class ErrorHandler {
-  constructor(loggerInstance = logger) {
+  constructor (loggerInstance = logger) {
     this.logger = loggerInstance;
     this.errorCounts = new Map();
     this.maxErrorsPerMinute = 10;
@@ -15,13 +15,13 @@ class ErrorHandler {
   /**
    * Gère les erreurs de commandes Discord
    */
-  async handleCommandError(error, interaction) {
+  async handleCommandError (error, interaction) {
     const errorId = this.generateErrorId();
     const errorType = this.categorizeError(error);
 
     // Log l'erreur
-    this.logger.logError(
-      `[${errorId}] Erreur commande ${interaction?.commandName || "unknown"}: ${
+    this.logger.error(
+      `[${errorId}] Erreur commande ${interaction?.commandName || 'unknown'}: ${
         error.message
       }`
     );
@@ -34,12 +34,12 @@ class ErrorHandler {
       const userMessage = this.getUserFriendlyMessage(errorType);
       await interaction.reply({
         content: userMessage,
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
     } else if (interaction && (interaction.replied || interaction.deferred)) {
       const userMessage = this.getUserFriendlyMessage(errorType);
       await interaction.editReply({
-        content: userMessage,
+        content: userMessage
       });
     }
 
@@ -52,39 +52,39 @@ class ErrorHandler {
   /**
    * Gère les erreurs API
    */
-  handleApiError(error, req, res) {
-    if (typeof res.status === "function" && typeof res.json === "function") {
+  handleApiError (error, req, res) {
+    if (typeof res.status === 'function' && typeof res.json === 'function') {
       // Cas normal : on répond via Express
       const errorId = this.generateErrorId();
       const errorType = this.categorizeError(error);
-      this.logger.logError(
+      this.logger.error(
         `[${errorId}] Erreur API ${req?.method} ${req?.path}: ${error.message}`
       );
       const statusCode = this.getHttpStatusCode(errorType);
       const response = {
         error: this.getUserFriendlyMessage(errorType),
         errorId,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString()
       };
       res.status(statusCode).json(response);
     } else {
       // Cas anormal : log, mais ne bloque pas, et tente une réponse basique si possible
-      this.logger.logError(
-        "handleApiError: res is not a valid Express response object"
+      this.logger.error(
+        'handleApiError: res is not a valid Express response object'
       );
-      this.logger.logError("req.url:", req?.url);
-      this.logger.logError("res type:", typeof res, res);
-      this.logger.logError(new Error().stack);
+      this.logger.error('req.url:', req?.url);
+      this.logger.error('res type:', typeof res, res);
+      this.logger.error(new Error().stack);
       // Tente d'envoyer une réponse basique si res.writeHead existe (cas Node pur)
       if (
-        typeof res?.writeHead === "function" &&
-        typeof res?.end === "function"
+        typeof res?.writeHead === 'function'
+        && typeof res?.end === 'function'
       ) {
-        res.writeHead(500, { "Content-Type": "application/json" });
+        res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(
           JSON.stringify({
-            error: "Internal server error",
-            timestamp: new Date().toISOString(),
+            error: 'Internal server error',
+            timestamp: new Date().toISOString()
           })
         );
       }
@@ -95,13 +95,13 @@ class ErrorHandler {
   /**
    * Gère les erreurs critiques
    */
-  handleCriticalError(error, context = "unknown") {
+  handleCriticalError (error, context = 'unknown') {
     const errorId = this.generateErrorId();
 
-    this.logger.logError(
+    this.logger.error(
       `[${errorId}] ERREUR CRITIQUE [${context}]: ${error.message}`
     );
-    this.logger.logError(`Stack trace: ${error.stack}`);
+    this.logger.error(`Stack trace: ${error.stack}`);
 
     // Notification immédiate
     this.sendCriticalAlert(error, errorId, context);
@@ -115,43 +115,43 @@ class ErrorHandler {
   /**
    * Gère les erreurs de tâches planifiées ou asynchrones
    */
-  handleTaskError(error, context = "TASK") {
+  handleTaskError (error, context = 'TASK') {
     const errorId = this.generateErrorId();
-    this.logger.logError(
+    this.logger.error(
       `[${errorId}] ERREUR TÂCHE [${context}]: ${error.message}`
     );
-    if (this.shouldAlert("TASK")) {
-      this.sendAlert("TASK", errorId);
+    if (this.shouldAlert('TASK')) {
+      this.sendAlert('TASK', errorId);
     }
   }
 
   /**
    * Catégorise les erreurs
    */
-  categorizeError(error) {
-    const msg = typeof error.message === "string" ? error.message : "";
-    if (error.code === "ECONNREFUSED") return "NETWORK";
-    if (error.code === "ENOTFOUND") return "NETWORK";
-    if (msg.includes("permission")) return "PERMISSION";
-    if (msg.includes("token")) return "AUTH";
-    if (msg.includes("rate limit")) return "RATE_LIMIT";
-    if (msg.includes("voice")) return "VOICE";
-    if (msg.includes("database")) return "DATABASE";
-    return "UNKNOWN";
+  categorizeError (error) {
+    const msg = typeof error.message === 'string' ? error.message : '';
+    if (error.code === 'ECONNREFUSED') return 'NETWORK';
+    if (error.code === 'ENOTFOUND') return 'NETWORK';
+    if (msg.includes('permission')) return 'PERMISSION';
+    if (msg.includes('token')) return 'AUTH';
+    if (msg.includes('rate limit')) return 'RATE_LIMIT';
+    if (msg.includes('voice')) return 'VOICE';
+    if (msg.includes('database')) return 'DATABASE';
+    return 'UNKNOWN';
   }
 
   /**
    * Messages utilisateur-friendly
    */
-  getUserFriendlyMessage(errorType) {
+  getUserFriendlyMessage (errorType) {
     const messages = {
-      NETWORK: "Problème de connexion. Réessayez dans quelques instants.",
-      PERMISSION: "Permissions insuffisantes pour cette action.",
-      AUTH: "Erreur d'authentification. Contactez un administrateur.",
-      RATE_LIMIT: "Trop de requêtes. Attendez un moment avant de réessayer.",
-      VOICE: "Erreur audio. Vérifiez votre connexion vocale.",
-      DATABASE: "Erreur de base de données. Réessayez plus tard.",
-      UNKNOWN: "Une erreur inattendue s'est produite. Réessayez plus tard.",
+      NETWORK: 'Problème de connexion. Réessayez dans quelques instants.',
+      PERMISSION: 'Permissions insuffisantes pour cette action.',
+      AUTH: 'Erreur d\'authentification. Contactez un administrateur.',
+      RATE_LIMIT: 'Trop de requêtes. Attendez un moment avant de réessayer.',
+      VOICE: 'Erreur audio. Vérifiez votre connexion vocale.',
+      DATABASE: 'Erreur de base de données. Réessayez plus tard.',
+      UNKNOWN: 'Une erreur inattendue s\'est produite. Réessayez plus tard.'
     };
 
     return messages[errorType] || messages.UNKNOWN;
@@ -160,7 +160,7 @@ class ErrorHandler {
   /**
    * Codes HTTP appropriés
    */
-  getHttpStatusCode(errorType) {
+  getHttpStatusCode (errorType) {
     const codes = {
       NETWORK: 503,
       PERMISSION: 403,
@@ -168,7 +168,7 @@ class ErrorHandler {
       RATE_LIMIT: 429,
       VOICE: 400,
       DATABASE: 500,
-      UNKNOWN: 500,
+      UNKNOWN: 500
     };
 
     return codes[errorType] || 500;
@@ -177,14 +177,14 @@ class ErrorHandler {
   /**
    * Génère un ID d'erreur unique
    */
-  generateErrorId() {
+  generateErrorId () {
     return `ERR-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
   /**
    * Compteur d'erreurs par minute
    */
-  incrementErrorCount(errorType) {
+  incrementErrorCount (errorType) {
     const now = Date.now();
     const minute = Math.floor(now / 60000);
 
@@ -207,7 +207,7 @@ class ErrorHandler {
   /**
    * Détermine si une alerte doit être envoyée
    */
-  shouldAlert(errorType) {
+  shouldAlert (errorType) {
     const typeCounts = this.errorCounts.get(errorType);
     if (!typeCounts) return false;
 
@@ -220,19 +220,19 @@ class ErrorHandler {
   /**
    * Détermine si le bot doit s'arrêter
    */
-  shouldShutdown(error) {
+  shouldShutdown (error) {
     return (
-      error.message.includes("TOKEN_INVALID") ||
-      error.message.includes("CRITICAL") ||
-      error.code === "ECONNRESET"
+      error.message.includes('TOKEN_INVALID')
+      || error.message.includes('CRITICAL')
+      || error.code === 'ECONNRESET'
     );
   }
 
   /**
    * Envoie une alerte
    */
-  sendAlert(errorType, errorId) {
-    this.logger.logWarn(
+  sendAlert (errorType, errorId) {
+    this.logger.warn(
       `🚨 ALERTE: Trop d'erreurs ${errorType} détectées. Error ID: ${errorId}`
     );
     // Ici vous pourriez envoyer une notification Discord, email, etc.
@@ -241,15 +241,15 @@ class ErrorHandler {
   /**
    * Envoie une alerte critique
    */
-  sendCriticalAlert(error, errorId, context) {
-    this.logger.logError(`🚨 ALERTE CRITIQUE [${context}]: ${errorId}`);
+  sendCriticalAlert (error, errorId, context) {
+    this.logger.error(`🚨 ALERTE CRITIQUE [${context}]: ${errorId}`);
     // Notification immédiate aux administrateurs
   }
 
   /**
    * Statistiques d'erreurs
    */
-  getErrorStats() {
+  getErrorStats () {
     const stats = {};
     for (const [errorType, typeCounts] of this.errorCounts.entries()) {
       let total = 0;
@@ -266,9 +266,9 @@ const errorHandler = new ErrorHandler();
 export default errorHandler;
 export { ErrorHandler };
 
-export function getApiErrorMessage(error) {
-  return process.env.NODE_ENV === "production"
-    ? "Erreur interne du serveur"
+export function getApiErrorMessage (error) {
+  return process.env.NODE_ENV === 'production'
+    ? 'Erreur interne du serveur'
     : error.message;
 }
 

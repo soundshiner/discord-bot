@@ -20,7 +20,9 @@ export function registerProcessHandlers () {
 
   process.on('unhandledRejection', (reason) => {
     if (reason?.message?.includes('Shard 0 not found')) {
-      logger.warn('Shard non trouvé à la fermeture, c’est probablement normal.');
+      logger.warn(
+        'Shard non trouvé à la fermeture, c’est probablement normal.'
+      );
     } else {
       errorHandler.handleCriticalError(reason, 'UNHANDLED_REJECTION');
       alertManager.createAlert(
@@ -45,3 +47,4 @@ export function registerProcessHandlers () {
     await stop();
   });
 }
+

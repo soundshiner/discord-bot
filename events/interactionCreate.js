@@ -8,7 +8,9 @@ export default {
   async execute (interaction) {
     try {
       if (interaction.isCommand()) {
-        const command = interaction.client.commands.get(interaction.commandName);
+        const command = interaction.client.commands.get(
+          interaction.commandName
+        );
         if (!command) {
           return;
         }
@@ -20,11 +22,13 @@ export default {
           logger.error(`❌ Erreur commande ${interaction.commandName}:`, error);
           if (interaction.replied || interaction.deferred) {
             await interaction.editReply({
-              content: '❌ Une erreur est survenue pendant l\'exécution de la commande.'
+              content:
+                '❌ Une erreur est survenue pendant l\'exécution de la commande.'
             });
           } else {
             await interaction.reply({
-              content: '❌ Une erreur est survenue pendant l\'exécution de la commande.',
+              content:
+                '❌ Une erreur est survenue pendant l\'exécution de la commande.',
               flags: MessageFlags.Ephemeral
             });
           }
@@ -38,11 +42,13 @@ export default {
             logger.error('Erreur dans handlePlaylistSelect:', error);
             if (interaction.replied || interaction.deferred) {
               await interaction.editReply({
-                content: '❌ Une erreur est survenue lors du lancement de la playlist.'
+                content:
+                  '❌ Une erreur est survenue lors du lancement de la playlist.'
               });
             } else {
               await interaction.reply({
-                content: '❌ Une erreur est survenue lors du lancement de la playlist.',
+                content:
+                  '❌ Une erreur est survenue lors du lancement de la playlist.',
                 flags: MessageFlags.Ephemeral
               });
             }
@@ -55,3 +61,4 @@ export default {
     }
   }
 };
+
