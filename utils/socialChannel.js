@@ -9,23 +9,23 @@ export async function postToSocialChannel(client, message) {
   const channelId = process.env.DISCORD_SOCIAL_CHANNEL_ID;
 
   if (!channelId) {
-    logger.error("DISCORD_SOCIAL_CHANNEL_ID manquant dans .env");
+    logger.logError("DISCORD_SOCIAL_CHANNEL_ID manquant dans .env");
     return;
   }
 
   try {
-    logger.info("Tentative d’envoi de message dans #social");
+    logger.logInfo("Tentative d'envoi de message dans #social");
 
     const channel = await client.channels.fetch(channelId);
 
     if (!channel) {
-      logger.warn("Canal introuvable", { channelId });
+      logger.logWarn("Canal introuvable", { channelId });
       return;
     }
 
     const sentMessage = await channel.send(message);
 
-    logger.info("Message posté dans #social", {
+    logger.logInfo("Message posté dans #social", {
       messageId: sentMessage.id,
       content: sentMessage.content,
       channel: channel.name,
@@ -33,7 +33,7 @@ export async function postToSocialChannel(client, message) {
 
     return sentMessage;
   } catch (error) {
-    logger.error("Erreur lors de l’envoi dans #social", {
+    logger.logError("Erreur lors de l'envoi dans #social", {
       error: error.message,
       stack: error.stack,
     });

@@ -81,9 +81,11 @@ const infocmd = (msg) => {
   console.log(chalk.magenta(`[📡 CMD ] : ${msg}`));
 };
 
-const custom = (msg, color = "white") => {
-  logger.info(msg);
-  console.log(chalk[color](`[CUSTOM] ${msg}`));
+const custom = (label, msg, color = "white") => {
+  logger.info(`[${label}] ${msg}`);
+  const colorFn =
+    typeof chalk[color] === "function" ? chalk[color] : chalk.white;
+  console.log(colorFn(`[${label}]`), msg);
 };
 
 const warn = (msg) => {
