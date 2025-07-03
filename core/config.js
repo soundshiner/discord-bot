@@ -53,7 +53,6 @@ const config = {
   UNSPLASH_ACCESS_KEY: getEnvVar('UNSPLASH_ACCESS_KEY'),
   STREAM_URL: getEnvVar('STREAM_URL'),
   JSON_URL: getEnvVar('JSON_URL'),
-  ICECAST_HISTORY_URL: getEnvVar('ICECAST_HISTORY_URL'),
   ADMIN_ROLE_ID: getEnvVar('ADMIN_ROLE_ID'),
 
   API_TOKEN: getEnvVar('API_TOKEN'),
