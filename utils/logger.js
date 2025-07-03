@@ -62,9 +62,9 @@ const logger = winston.createLogger({
 
 // Helpers ergonomiques (console + chalk)
 const sectionStart = (title) => {
-  console.log(chalk.cyan("\n┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
-  console.log(chalk.cyan(`┃ ${title}`));
-  console.log(chalk.cyan("┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
+  console.log(chalk.cyan("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
+  console.log(chalk.cyan(` ${title}`));
+  console.log(chalk.cyan("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
 };
 
 const summary = (text) => {
