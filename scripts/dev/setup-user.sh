@@ -98,7 +98,6 @@ PLAYLIST_CHANNEL_ID=your_playlist_channel_id_here
 UNSPLASH_ACCESS_KEY=your_unsplash_key_here
 STREAM_URL=your_stream_url_here
 JSON_URL=your_json_url_here
-ICECAST_HISTORY_URL=your_icecast_url_here
 
 # Bot Configuration
 BOT_ROLE_NAME=soundSHINE

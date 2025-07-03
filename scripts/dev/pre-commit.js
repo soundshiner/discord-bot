@@ -13,7 +13,6 @@ const testEnv = {
   UNSPLASH_ACCESS_KEY: 'test-unsplash-key',
   STREAM_URL: 'test-stream-url',
   JSON_URL: 'test-json-url',
-  ICECAST_HISTORY_URL: 'test-icecast-url',
   ADMIN_ROLE_ID: 'test-admin-role',
   VOICE_CHANNEL_ID: 'test-voice-channel',
   PLAYLIST_CHANNEL_ID: 'test-playlist-channel',

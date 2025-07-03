@@ -1,48 +1,121 @@
 // utils/logger.js (ESM)
 /* eslint-disable no-console */
-import winston from 'winston';
-import chalk from 'chalk';
+import winston from "winston";
+import "winston-daily-rotate-file";
+import path from "path";
+import fs from "fs";
+import chalk from "chalk";
 
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.printf(({ level, message }) => {
-    return `[${level.toUpperCase()}] : ${message}`;
-  }),
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'logs/bot.log' })
-  ]
+const logDir = path.resolve("logs");
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir);
+}
+
+// Format JSON compatible Loki
+const jsonFormat = winston.format.combine(
+  winston.format.timestamp(),
+  winston.format.printf(({ timestamp, level, message, ...meta }) => {
+    return JSON.stringify({
+      timestamp,
+      level,
+      message,
+      ...meta,
+    });
+  })
+);
+
+const dailyRotateTransport = new winston.transports.DailyRotateFile({
+  filename: path.join(logDir, "app-%DATE%.log"),
+  datePattern: "YYYY-MM-DD",
+  zippedArchive: true,
+  maxFiles: "14d",
+  maxSize: "20m",
+  level: "debug",
+  format: jsonFormat,
 });
 
-logger.success = (msg) => console.log(chalk.green(`[✔ SUCCÈS ] ${msg}`));
-logger.infocmd = (msg) => console.log(chalk.magenta(`[📡 CMD ] : ${msg}`));
-logger.warn = (msg) => console.log(chalk.yellow(`[ ⚠ AVERTISSEMENT ] ${msg}`));
-logger.error = (msg) => console.error(chalk.red(`[✖ ERREUR ] ${msg}`));
-logger.section = (sectionName) => {
-  const separator = '═'.repeat(50);
-  console.log(chalk.blue(`\n${separator}`));
-  console.log(chalk.blue.bold(`Chargement de la section : ${sectionName}`));
-  console.log(chalk.blue(`${separator}`));
+const errorRotateTransport = new winston.transports.DailyRotateFile({
+  filename: path.join(logDir, "error-%DATE%.log"),
+  datePattern: "YYYY-MM-DD",
+  zippedArchive: true,
+  maxFiles: "30d",
+  maxSize: "20m",
+  level: "error",
+  format: jsonFormat,
+});
+
+const logger = winston.createLogger({
+  level: "debug",
+  transports: [
+    dailyRotateTransport,
+    errorRotateTransport,
+    new winston.transports.Console({
+      level: "info",
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      ),
+    }),
+  ],
+  exitOnError: false,
+});
+
+// Helpers ergonomiques (console + chalk)
+const sectionStart = (title) => {
+  console.log(chalk.cyan("\n┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
+  console.log(chalk.cyan(`┃ ${title}`));
+  console.log(chalk.cyan("┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
 };
 
-logger.sectionStart = (sectionName) => {
-  const separator = '═'.repeat(50);
-  console.log(chalk.blue(`\n${separator}`));
-  console.log(chalk.blue.bold(`${sectionName}`));
-  console.log(chalk.blue(`${separator}`));
+const summary = (text) => {
+  console.log(chalk.bold.yellow(`\n📌 Résumé : ${text}`));
 };
 
-logger.sectionWithContent = (sectionName, content) => {
-  const separator = '═'.repeat(50);
-  console.log(chalk.blue(`\n${separator}`));
-  console.log(chalk.blue.bold(`Chargement de la section : ${sectionName}`));
-  console.log(chalk.blue(`${separator}`));
-  content.forEach((line) => console.log(line));
+const success = (msg) => {
+  logger.info(msg);
+  console.log(chalk.green(`[✔ SUCCÈS ] ${msg}`));
 };
 
-logger.summary = (label, success, failure) => {
-  logger.info(`[ RÉSUMÉ ] ${label} - Chargés: ${success}, Échecs: ${failure}`);
+const infocmd = (msg) => {
+  logger.info(msg);
+  console.log(chalk.magenta(`[📡 CMD ] : ${msg}`));
 };
 
-export default logger; // ← n'oublie pas celui-là !;
+const custom = (label, msg, color = "white") => {
+  logger.info(`[${label}] ${msg}`);
+  const colorFn =
+    typeof chalk[color] === "function" ? chalk[color] : chalk.white;
+  console.log(colorFn(`[${label}]`), msg);
+};
+
+const warn = (msg) => {
+  logger.warn(msg);
+  console.warn(chalk.yellow(`[⚠ WARN ] ${msg}`));
+};
+
+const error = (msg) => {
+  logger.error(msg);
+  console.error(chalk.red(`[✖ ERROR ] ${msg}`));
+};
+
+// API classique
+const logInfo = (msg, meta = {}) => logger.info(msg, meta);
+const logError = (msg, meta = {}) => logger.error(msg, meta);
+const logDebug = (msg, meta = {}) => logger.debug(msg, meta);
+const logWarn = (msg, meta = {}) => logger.warn(msg, meta);
+
+export default {
+  logger,
+  logInfo,
+  logError,
+  logDebug,
+  logWarn,
+  sectionStart,
+  summary,
+  success,
+  infocmd,
+  custom,
+  warn,
+  error,
+};
 
