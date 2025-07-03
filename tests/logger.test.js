@@ -83,13 +83,13 @@ describe('Logger', () => {
     );
   });
 
-    expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining('[ CUSTOM ]')
-    );
-    expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining(message)
-    );
-  });
+  const message = 'Test custom message';
+  expect(consoleSpy.log).toHaveBeenCalledWith(
+    expect.stringContaining('[ CUSTOM ]')
+  );
+  expect(consoleSpy.log).toHaveBeenCalledWith(
+    expect.stringContaining(message)
+  );
 
   it('should log section headers', () => {
     const sectionName = 'Test Section';

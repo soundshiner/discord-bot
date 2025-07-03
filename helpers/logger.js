@@ -14,7 +14,7 @@ const summary = (text) => {
 const consoleLogger = {
   sectionStart,
   summary,
-  custom,
+  custom: (msg, color = 'white') => console.log(chalk[color](`[CUSTOM] ${msg}`)),
   success: (msg) => console.log(chalk.green(`[✔ SUCCÈS ] ${msg}`)),
   infocmd: (msg) => console.log(chalk.magenta(`[📡 CMD ] : ${msg}`)),
   warn: (msg) => console.warn(chalk.yellow(`[⚠ WARN ] ${msg}`)),
