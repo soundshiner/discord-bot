@@ -1,10 +1,32 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ErrorHandler } from '../utils/errorHandler.js';
 
+vi.mock('path', () => ({
+  default: {
+    resolve: vi.fn((...args) => args.join('/')),
+    join: vi.fn((...args) => args.join('/'))
+  },
+  resolve: vi.fn((...args) => args.join('/')),
+  join: vi.fn((...args) => args.join('/'))
+}));
+
+vi.mock('fs', () => ({
+  default: {
+    existsSync: vi.fn(() => true),
+    mkdirSync: vi.fn()
+  },
+  existsSync: vi.fn(() => true),
+  mkdirSync: vi.fn()
+}));
+
 const mockLogger = {
+  info: vi.fn(),
   error: vi.fn(),
   warn: vi.fn(),
-  info: vi.fn()
+  debug: vi.fn(),
+  success: vi.fn(),
+  section: vi.fn(),
+  custom: vi.fn()
 };
 
 let errorHandler;
@@ -35,7 +57,9 @@ describe('ErrorHandler', () => {
 
     await errorHandler.handleCommandError(error, mockInteraction);
 
-    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Test command error'));
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      expect.stringContaining('Test command error')
+    );
     expect(mockInteraction.reply).toHaveBeenCalled();
   });
 
@@ -49,7 +73,9 @@ describe('ErrorHandler', () => {
 
     errorHandler.handleApiError(error, mockReq, mockRes);
 
-    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Test API error'));
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      expect.stringContaining('Test API error')
+    );
     expect(mockRes.status).toHaveBeenCalled();
     expect(mockRes.json).toHaveBeenCalled();
   });
@@ -60,8 +86,12 @@ describe('ErrorHandler', () => {
 
     errorHandler.handleCriticalError(error, context);
 
-    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Test critical error'));
-    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining(context));
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      expect.stringContaining('Test critical error')
+    );
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      expect.stringContaining(context)
+    );
   });
 
   it('should categorize errors correctly', () => {
@@ -77,7 +107,9 @@ describe('ErrorHandler', () => {
     expect(errorHandler.getUserFriendlyMessage('NETWORK')).toBe(
       'Problème de connexion. Réessayez dans quelques instants.'
     );
-    expect(errorHandler.getUserFriendlyMessage('PERMISSION')).toBe('Permissions insuffisantes pour cette action.');
+    expect(errorHandler.getUserFriendlyMessage('PERMISSION')).toBe(
+      'Permissions insuffisantes pour cette action.'
+    );
   });
 
   it('should return correct HTTP status codes', () => {
@@ -86,3 +118,4 @@ describe('ErrorHandler', () => {
     expect(errorHandler.getHttpStatusCode('AUTH')).toBe(401);
   });
 });
+

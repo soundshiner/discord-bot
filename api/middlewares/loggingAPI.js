@@ -1,10 +1,10 @@
 // api/middlewares/loggingAPI.js
-import logger from "../../utils/logger.js";
+import logger from '../../utils/logger.js';
 
-export default function loggingAPI() {
+export default function loggingAPI () {
   return (req, res, next) => {
     const start = Date.now();
-    res.on("finish", () => {
+    res.on('finish', () => {
       const duration = Date.now() - start;
       const status = res.statusCode;
       const { method } = req;
@@ -17,7 +17,7 @@ export default function loggingAPI() {
 
       const log = `${method} ${url} - ${status} - ${duration}ms - ${ip}`;
       // eslint-disable-next-line no-unused-expressions
-      status >= 400 ? logger.logWarn(log) : logger.logInfo(log);
+      status >= 400 ? logger.warn(log) : logger.info(log);
     });
     next();
   };

@@ -25,10 +25,14 @@ vi.mock('../../utils/logger.js', () => ({
   default: {
     info: vi.fn(),
     error: vi.fn(),
-    success: vi.fn(),
     warn: vi.fn(),
+    success: vi.fn(),
     custom: vi.fn(),
-    infocmd: vi.fn()
+    infocmd: vi.fn(),
+    logError: vi.fn(),
+    logInfo: vi.fn(),
+    logWarn: vi.fn(),
+    logDebug: vi.fn()
   }
 }));
 
