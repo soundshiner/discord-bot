@@ -2,7 +2,7 @@
 // utils/cache.js - Système de cache en mémoire avec TTL
 // ========================================
 
-import logger from './logger.js';
+import logger from '../bot/logger.js';
 
 class Cache {
   constructor () {

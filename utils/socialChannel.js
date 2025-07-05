@@ -1,4 +1,4 @@
-import logger from './logger.js';
+import logger from '../bot/logger.js';
 
 /**
  * Envoie un message dans le canal #social.

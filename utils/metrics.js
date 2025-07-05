@@ -9,7 +9,7 @@ import {
   Histogram,
   collectDefaultMetrics
 } from 'prom-client';
-import logger from './logger.js';
+import logger from '../bot/logger.js';
 
 class MetricsCollector {
   constructor () {
