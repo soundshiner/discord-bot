@@ -1,4 +1,4 @@
-import logger from '../bot/logger.js';
+import logger from '../logger.js';
 
 /**
  * Envoie un message dans le canal #social.
@@ -39,4 +39,3 @@ export async function postToSocialChannel (client, message) {
     });
   }
 }
-

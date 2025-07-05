@@ -7,7 +7,7 @@ import { startBot } from "./bot/startup.js";
 import { registerProcessHandlers } from "./core/lifecycle.js";
 import WebServer from "./api/index.js";
 import logger from "./bot/logger.js";
-import { getGlobalConfig } from "./utils/globalConfig.js";
+import { getGlobalConfig } from "./bot/utils/globalConfig.js";
 
 // Configuration globale
 const config = getGlobalConfig();

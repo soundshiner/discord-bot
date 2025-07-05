@@ -1,6 +1,6 @@
 import axios from 'axios';
-import config from '../core/config.js';
-import logger from '../util../bot/logger.js';
+import config from '../config.js';
+import logger from '../logger.js';
 
 const { JSON_URL } = config;
 
@@ -18,4 +18,3 @@ export async function checkStreamOnline () {
     return false;
   }
 }
-

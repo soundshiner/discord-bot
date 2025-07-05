@@ -1,17 +1,17 @@
-import axios from "axios";
-import config from "../config.js";
-import { ActivityType } from "discord.js";
-import logger from "../logger.js";
-import monitor from "../../core/monitor.js";
+import axios from 'axios';
+import config from '../config.js';
+import { ActivityType } from 'discord.js';
+import logger from '../logger.js';
+import monitor from '../../core/monitor.js';
 
 const { JSON_URL } = config;
 let lastSong = null;
 
-async function updateStatus(client) {
+async function updateStatus (client) {
   try {
     const { data } = await axios.get(JSON_URL, { timeout: 10000 });
 
-    let currentSong = "Stream offline or no song information available";
+    let currentSong = 'Stream offline or no song information available';
 
     if (data.icestats?.source) {
       const source = Array.isArray(data.icestats.source)
@@ -30,25 +30,25 @@ async function updateStatus(client) {
     await client.user.setActivity({
       name: `📀 ${currentSong}`,
       type: ActivityType.Custom,
-      url: "https://soundshineradio.com",
+      url: 'https://soundshineradio.com'
     });
   } catch (error) {
-    monitor.handleTaskError(error, "UPDATE_STATUS");
-    logger.error("Error fetching metadata or updating status:", error);
+    monitor.handleTaskError(error, 'UPDATE_STATUS');
+    logger.error('Error fetching metadata or updating status:', error);
     try {
-      await client.user.setActivity("Soundshine Radio", {
-        type: ActivityType.Listening,
+      await client.user.setActivity('Soundshine Radio', {
+        type: ActivityType.Listening
       });
-      logger.warn("Fallback activity set to Soundshine Radio");
+      logger.warn('Fallback activity set to Soundshine Radio');
     } catch (fallbackError) {
-      monitor.handleTaskError(fallbackError, "UPDATE_STATUS_FALLBACK");
-      logger.error("Error setting fallback activity:", fallbackError);
+      monitor.handleTaskError(fallbackError, 'UPDATE_STATUS_FALLBACK');
+      logger.error('Error setting fallback activity:', fallbackError);
     }
   }
 }
 
 export default {
-  name: "updateStatus",
+  name: 'updateStatus',
   interval: 5000,
-  execute: updateStatus,
+  execute: updateStatus
 };

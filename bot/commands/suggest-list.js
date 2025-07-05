@@ -1,6 +1,10 @@
 // commands/list_suggestions.js
-import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
-import { db } from '../../utils/database.js';
+import {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  MessageFlags
+} from 'discord.js';
+import { db } from '../../bot/utils/database.js';
 import config from '../config.js';
 import logger from '../logger.js';
 
@@ -20,7 +24,9 @@ export default {
       }
 
       // Retrieve from SQLite
-      const suggestions = db.prepare('SELECT * FROM suggestions ORDER BY createdAt DESC LIMIT 20').all();
+      const suggestions = db
+        .prepare('SELECT * FROM suggestions ORDER BY createdAt DESC LIMIT 20')
+        .all();
 
       if (suggestions.length === 0) {
         return await interaction.reply({
@@ -32,7 +38,7 @@ export default {
       // Format the list
       const msg = suggestions
         .map(
-          s =>
+          (s) =>
             `**${s.id}.** ${s.titre} - ${s.artiste} [${s.genre}] (Proposé par ${
               s.username
             })${s.lien ? `\nLien : ${s.lien}` : ''}`
@@ -40,7 +46,10 @@ export default {
         .join('\n\n');
 
       // Reply with the list (ephemeral)
-      return await interaction.reply({ content: msg.slice(0, 2000), flags: MessageFlags.Ephemeral });
+      return await interaction.reply({
+        content: msg.slice(0, 2000),
+        flags: MessageFlags.Ephemeral
+      });
     } catch (error) {
       logger.error('Erreur lors de la récupération des suggestions:', error);
       return await interaction.reply({
