@@ -277,7 +277,7 @@ class DatabasePool {
 }
 
 // Singleton instance
-const dbPool = new DatabasePool();
+const db = new DatabasePool();
 
 export async function getDatabase () {
   await dbPool.connect();
@@ -292,5 +292,5 @@ export function isDatabaseHealthy () {
 export function getDatabaseStats () {
   return dbPool.getStats();
 }
-export default dbPool;
+export { db };
 

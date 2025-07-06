@@ -15,10 +15,10 @@ const shouldClear = args.includes('--clear');
 
 const GUILD_ID = process.env.TEST_GUILD_ID;
 const { CLIENT_ID } = process.env;
-const TOKEN = process.env.BOT_TOKEN;
+const TOKEN = process.env.DISCORD_TOKEN;
 
 if (!TOKEN || !CLIENT_ID) {
-  console.error(chalk.red('❌ BOT_TOKEN ou CLIENT_ID manquant dans le fichier .env'));
+  console.error(chalk.red('❌ DISCORD_TOKEN ou CLIENT_ID manquant dans le fichier .env'));
   process.exit(1);
 }
 
