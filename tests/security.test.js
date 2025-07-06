@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // ========================================
-// tests/security.test.js - Tests de sécurité complets
+// tests/security.test.js - Tests de sécurité complets et fonctionnels
 // ========================================
 
 import { vi } from "vitest";
