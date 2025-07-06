@@ -3,9 +3,9 @@
 // ========================================
 
 import express from 'express';
-import alertManager from '../../utils/alerts.js';
+import alertManager from '../../bot/utils/alerts.js';
 import { z } from 'zod';
-import { getApiErrorMessage } from '../../utils/errorHandler.js';
+import { getApiErrorMessage } from '../../core/monitor.js';
 
 const router = express.Router();
 
@@ -16,7 +16,10 @@ const alertSchema = z.object({
   data: z.record(z.any()).optional()
 });
 
-const thresholdsSchema = z.record(z.enum(['ping', 'memory', 'errors', 'uptime', 'apiLatency']), z.number().min(0));
+const thresholdsSchema = z.record(
+  z.enum(['ping', 'memory', 'errors', 'uptime', 'apiLatency']),
+  z.number().min(0)
+);
 
 function requireApiToken (req, res, next) {
   if (req.headers['x-api-key'] !== process.env.ADMIN_API_KEY) {
@@ -37,12 +40,12 @@ router.get('/', async (req, res) => {
 
     // Filtrer par type si spécifié
     if (type) {
-      alerts = alerts.filter(alert => alert.type === type);
+      alerts = alerts.filter((alert) => alert.type === type);
     }
 
     // Filtrer par sévérité si spécifiée
     if (severity) {
-      alerts = alerts.filter(alert => alert.severity === severity);
+      alerts = alerts.filter((alert) => alert.severity === severity);
     }
 
     // Limiter le nombre de résultats
@@ -99,7 +102,9 @@ router.get('/:type', async (req, res) => {
     const { type } = req.params;
     const { limit = 50 } = req.query;
 
-    const alerts = alertManager.getAlertsByType(type).slice(0, parseInt(limit, 10));
+    const alerts = alertManager
+      .getAlertsByType(type)
+      .slice(0, parseInt(limit, 10));
 
     res.json({
       success: true,
@@ -281,7 +286,11 @@ router.delete('/', requireApiToken, async (req, res) => {
  */
 router.post('/test', async (req, res) => {
   try {
-    const { type = 'test', severity = 'info', message = 'Test d\'alerte' } = req.body;
+    const {
+      type = 'test',
+      severity = 'info',
+      message = 'Test d\'alerte'
+    } = req.body;
 
     const alertId = alertManager.createAlert(type, severity, message, {
       test: true,

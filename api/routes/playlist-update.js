@@ -1,7 +1,8 @@
 import express from 'express';
-import config from '../../core/config.js';
+import botConfig from '../../bot/config.js';
 import { z } from 'zod';
-const { VOICE_CHANNEL_ID, API_TOKEN, PLAYLIST_CHANNEL_ID } = config;
+
+const { VOICE_CHANNEL_ID, API_TOKEN, PLAYLIST_CHANNEL_ID } = botConfig;
 
 const playlistSchema = z.object({
   playlist: z.string().min(1, 'Playlist is required'),
@@ -167,4 +168,3 @@ export default (client, logger) => {
 
   return router;
 };
-
