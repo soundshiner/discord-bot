@@ -1,45 +1,151 @@
 // ========================================
-// core/monitor.js - Gestion centralisée des erreurs et monitoring
+// core/monitor.js - Gestion centralisée des erreurs et monitoring optimisé
 // ========================================
 
-import { MessageFlags } from 'discord.js';
-import logger from '../bot/logger.js';
+import { MessageFlags } from "discord.js";
+import logger from "../bot/logger.js";
+import { isDatabaseHealthy, getDatabaseStats } from "../bot/utils/database.js";
+import { isClientReady } from "../bot/client.js";
 
 class Monitor {
-  constructor (loggerInstance = logger) {
+  constructor(loggerInstance = logger) {
     this.logger = loggerInstance;
     this.errorCounts = new Map();
     this.maxErrorsPerMinute = 10;
+    this.startTime = Date.now();
+    this.metrics = {
+      commandsExecuted: 0,
+      commandsFailed: 0,
+      apiRequests: 0,
+      apiErrors: 0,
+      databaseQueries: 0,
+      databaseErrors: 0,
+      uptime: 0,
+    };
+    this.healthStatus = {
+      database: true,
+      discord: true,
+      api: true,
+      lastCheck: Date.now(),
+    };
+  }
+
+  /**
+   * Met à jour les métriques
+   */
+  updateMetric(metricName, increment = 1) {
+    if (this.metrics.hasOwnProperty(metricName)) {
+      this.metrics[metricName] += increment;
+    }
+  }
+
+  /**
+   * Récupère les métriques actuelles
+   */
+  getMetrics() {
+    this.metrics.uptime = Date.now() - this.startTime;
+    return {
+      ...this.metrics,
+      errorCounts: Object.fromEntries(this.errorCounts),
+      healthStatus: this.healthStatus,
+    };
+  }
+
+  /**
+   * Vérifie l'état de santé du système
+   */
+  async checkHealth() {
+    const health = {
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      services: {},
+      uptime: Date.now() - this.startTime,
+    };
+
+    try {
+      // Vérifier la base de données
+      const dbHealthy = isDatabaseHealthy();
+      health.services.database = {
+        status: dbHealthy ? "healthy" : "unhealthy",
+        details: dbHealthy ? "Connected" : "Connection failed",
+      };
+
+      // Vérifier Discord
+      const discordHealthy = isClientReady();
+      health.services.discord = {
+        status: discordHealthy ? "healthy" : "unhealthy",
+        details: discordHealthy ? "Connected" : "Connection failed",
+      };
+
+      // Vérifier l'API (basique)
+      health.services.api = {
+        status: "healthy",
+        details: "Server running",
+      };
+
+      // Déterminer le statut global
+      const allHealthy = Object.values(health.services).every(
+        (service) => service.status === "healthy"
+      );
+      health.status = allHealthy ? "healthy" : "degraded";
+
+      this.healthStatus = {
+        database: dbHealthy,
+        discord: discordHealthy,
+        api: true,
+        lastCheck: Date.now(),
+      };
+
+      return health;
+    } catch (error) {
+      logger.error("Erreur lors du health check:", error);
+      return {
+        status: "unhealthy",
+        timestamp: new Date().toISOString(),
+        error: error.message,
+        uptime: Date.now() - this.startTime,
+      };
+    }
   }
 
   /**
    * Gère les erreurs de commandes Discord
    */
-  async handleCommandError (error, interaction) {
+  async handleCommandError(error, interaction) {
     const errorId = this.generateErrorId();
     const errorType = this.categorizeError(error);
 
-    // Log l'erreur
-    this.logger.error(
-      `[${errorId}] Erreur commande ${interaction?.commandName || 'unknown'}: ${
-        error.message
-      }`
-    );
-
-    // Compteur d'erreurs par minute
+    // Mettre à jour les métriques
+    this.updateMetric("commandsFailed");
     this.incrementErrorCount(errorType);
 
-    // Réponse à l'utilisateur
+    // Log l'erreur avec contexte détaillé
+    this.logger.error(
+      `[${errorId}] Erreur commande ${interaction?.commandName || "unknown"}: ${
+        error.message
+      }`,
+      {
+        errorId,
+        commandName: interaction?.commandName,
+        userId: interaction?.user?.id,
+        guildId: interaction?.guild?.id,
+        channelId: interaction?.channel?.id,
+        errorType,
+        stack: error.stack,
+      }
+    );
+
+    // Réponse à l'utilisateur avec message approprié
     if (interaction && !interaction.replied && !interaction.deferred) {
       const userMessage = this.getUserFriendlyMessage(errorType);
       await interaction.reply({
         content: userMessage,
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     } else if (interaction && (interaction.replied || interaction.deferred)) {
       const userMessage = this.getUserFriendlyMessage(errorType);
       await interaction.editReply({
-        content: userMessage
+        content: userMessage,
       });
     }
 
@@ -50,42 +156,50 @@ class Monitor {
   }
 
   /**
-   * Gère les erreurs API
+   * Gère les erreurs API avec métriques
    */
-  handleApiError (error, req, res) {
-    if (typeof res.status === 'function' && typeof res.json === 'function') {
-      // Cas normal : on répond via Express
+  handleApiError(error, req, res) {
+    this.updateMetric("apiErrors");
+
+    if (typeof res.status === "function" && typeof res.json === "function") {
       const errorId = this.generateErrorId();
       const errorType = this.categorizeError(error);
+
       this.logger.error(
-        `[${errorId}] Erreur API ${req?.method} ${req?.path}: ${error.message}`
+        `[${errorId}] Erreur API ${req?.method} ${req?.path}: ${error.message}`,
+        {
+          errorId,
+          method: req?.method,
+          path: req?.path,
+          userAgent: req?.headers?.["user-agent"],
+          ip: req?.ip,
+          errorType,
+        }
       );
+
       const statusCode = this.getHttpStatusCode(errorType);
       const response = {
         error: this.getUserFriendlyMessage(errorType),
         errorId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        path: req?.path,
       };
+
       res.status(statusCode).json(response);
     } else {
-      // Cas anormal : log, mais ne bloque pas
       this.logger.error(
-        'handleApiError: res is not a valid Express response object'
+        "handleApiError: res is not a valid Express response object"
       );
-      this.logger.error('req.url:', req?.url);
-      this.logger.error('res type:', typeof res, res);
-      this.logger.error(new Error().stack);
 
-      // Tente d'envoyer une réponse basique si res.writeHead existe (cas Node pur)
       if (
-        typeof res?.writeHead === 'function'
-        && typeof res?.end === 'function'
+        typeof res?.writeHead === "function" &&
+        typeof res?.end === "function"
       ) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.writeHead(500, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
-            error: 'Internal server error',
-            timestamp: new Date().toISOString()
+            error: "Internal server error",
+            timestamp: new Date().toISOString(),
           })
         );
       }
@@ -93,65 +207,130 @@ class Monitor {
   }
 
   /**
-   * Gère les erreurs critiques
+   * Gère les erreurs critiques avec alerting
    */
-  handleCriticalError (error, context = 'unknown') {
+  handleCriticalError(error, context = "unknown") {
     const errorId = this.generateErrorId();
 
     this.logger.error(
-      `[${errorId}] ERREUR CRITIQUE [${context}]: ${error.message}`
+      `[${errorId}] ERREUR CRITIQUE [${context}]: ${error.message}`,
+      {
+        errorId,
+        context,
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+      }
     );
-    this.logger.error(`Stack trace: ${error.stack}`);
 
     // Notification immédiate
     this.sendCriticalAlert(error, errorId, context);
 
     // Arrêt gracieux si nécessaire
     if (this.shouldShutdown(error)) {
+      this.logger.error("Erreur critique détectée, arrêt de l'application...");
       process.exit(1);
     }
   }
 
   /**
-   * Gère les erreurs de tâches planifiées ou asynchrones
+   * Gère les erreurs de tâches planifiées
    */
-  handleTaskError (error, context = 'TASK') {
+  handleTaskError(error, context = "TASK") {
     const errorId = this.generateErrorId();
     this.logger.error(
-      `[${errorId}] ERREUR TÂCHE [${context}]: ${error.message}`
+      `[${errorId}] ERREUR TÂCHE [${context}]: ${error.message}`,
+      {
+        errorId,
+        context,
+        stack: error.stack,
+      }
     );
-    if (this.shouldAlert('TASK')) {
-      this.sendAlert('TASK', errorId);
+
+    if (this.shouldAlert("TASK")) {
+      this.sendAlert("TASK", errorId);
     }
   }
 
   /**
-   * Catégorise les erreurs
+   * Gère les erreurs de base de données
    */
-  categorizeError (error) {
-    const msg = typeof error.message === 'string' ? error.message : '';
-    if (error.code === 'ECONNREFUSED') return 'NETWORK';
-    if (error.code === 'ENOTFOUND') return 'NETWORK';
-    if (msg.includes('permission')) return 'PERMISSION';
-    if (msg.includes('token')) return 'AUTH';
-    if (msg.includes('rate limit')) return 'RATE_LIMIT';
-    if (msg.includes('voice')) return 'VOICE';
-    if (msg.includes('database')) return 'DATABASE';
-    return 'UNKNOWN';
+  handleDatabaseError(error, operation = "unknown") {
+    this.updateMetric("databaseErrors");
+
+    const errorId = this.generateErrorId();
+    this.logger.error(
+      `[${errorId}] ERREUR BASE DE DONNÉES [${operation}]: ${error.message}`,
+      {
+        errorId,
+        operation,
+        stack: error.stack,
+      }
+    );
+
+    // Mettre à jour le statut de santé
+    this.healthStatus.database = false;
+
+    if (this.shouldAlert("DATABASE")) {
+      this.sendAlert("DATABASE", errorId);
+    }
   }
 
   /**
-   * Messages utilisateur-friendly
+   * Catégorise les erreurs avec plus de précision
    */
-  getUserFriendlyMessage (errorType) {
+  categorizeError(error) {
+    const msg =
+      typeof error.message === "string" ? error.message.toLowerCase() : "";
+    const code = error.code || "";
+
+    if (
+      code === "ECONNREFUSED" ||
+      code === "ENOTFOUND" ||
+      msg.includes("network")
+    )
+      return "NETWORK";
+    if (code === "EACCES" || code === "EPERM" || msg.includes("permission"))
+      return "PERMISSION";
+    if (
+      code === "EAUTH" ||
+      msg.includes("token") ||
+      msg.includes("authentication")
+    )
+      return "AUTH";
+    if (
+      code === "RATE_LIMIT" ||
+      msg.includes("rate limit") ||
+      msg.includes("too many requests")
+    )
+      return "RATE_LIMIT";
+    if (msg.includes("voice") || msg.includes("audio")) return "VOICE";
+    if (
+      msg.includes("database") ||
+      msg.includes("sql") ||
+      msg.includes("connection")
+    )
+      return "DATABASE";
+    if (msg.includes("discord") || msg.includes("api")) return "DISCORD_API";
+    if (msg.includes("timeout")) return "TIMEOUT";
+
+    return "UNKNOWN";
+  }
+
+  /**
+   * Messages utilisateur-friendly améliorés
+   */
+  getUserFriendlyMessage(errorType) {
     const messages = {
-      NETWORK: 'Problème de connexion. Réessayez dans quelques instants.',
-      PERMISSION: 'Permissions insuffisantes pour cette action.',
-      AUTH: 'Erreur d\'authentification. Contactez un administrateur.',
-      RATE_LIMIT: 'Trop de requêtes. Attendez un moment avant de réessayer.',
-      VOICE: 'Erreur audio. Vérifiez votre connexion vocale.',
-      DATABASE: 'Erreur de base de données. Réessayez plus tard.',
-      UNKNOWN: 'Une erreur inattendue s\'est produite. Réessayez plus tard.'
+      NETWORK:
+        "🌐 Problème de connexion réseau. Réessayez dans quelques instants.",
+      PERMISSION: "🔒 Permissions insuffisantes pour cette action.",
+      AUTH: "🔑 Erreur d'authentification. Contactez un administrateur.",
+      RATE_LIMIT: "⏱️ Trop de requêtes. Attendez un moment avant de réessayer.",
+      VOICE: "🎵 Erreur audio. Vérifiez votre connexion vocale.",
+      DATABASE: "💾 Erreur de base de données. Réessayez plus tard.",
+      DISCORD_API: "🤖 Erreur Discord API. Réessayez plus tard.",
+      TIMEOUT: "⏰ Délai d'attente dépassé. Réessayez plus tard.",
+      UNKNOWN: "❓ Une erreur inattendue s'est produite. Réessayez plus tard.",
     };
 
     return messages[errorType] || messages.UNKNOWN;
@@ -160,7 +339,7 @@ class Monitor {
   /**
    * Codes HTTP appropriés
    */
-  getHttpStatusCode (errorType) {
+  getHttpStatusCode(errorType) {
     const codes = {
       NETWORK: 503,
       PERMISSION: 403,
@@ -168,38 +347,32 @@ class Monitor {
       RATE_LIMIT: 429,
       VOICE: 400,
       DATABASE: 500,
-      UNKNOWN: 500
+      DISCORD_API: 502,
+      TIMEOUT: 408,
+      UNKNOWN: 500,
     };
 
     return codes[errorType] || 500;
   }
 
   /**
-   * Génère un ID d'erreur unique
-   */
-  generateErrorId () {
-    return `ERR-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
-
-  /**
    * Compteur d'erreurs par minute
    */
-  incrementErrorCount (errorType) {
+  incrementErrorCount(errorType) {
     const now = Date.now();
-    const minute = Math.floor(now / 60000);
+    const minuteKey = Math.floor(now / 60000);
 
-    if (!this.errorCounts.has(errorType)) {
-      this.errorCounts.set(errorType, new Map());
+    if (!this.errorCounts.has(minuteKey)) {
+      this.errorCounts.set(minuteKey, new Map());
     }
 
-    const typeCounts = this.errorCounts.get(errorType);
-    const currentCount = typeCounts.get(minute) || 0;
-    typeCounts.set(minute, currentCount + 1);
+    const minuteCounts = this.errorCounts.get(minuteKey);
+    minuteCounts.set(errorType, (minuteCounts.get(errorType) || 0) + 1);
 
     // Nettoyer les anciennes entrées (plus de 5 minutes)
-    for (const [time] of typeCounts.entries()) {
-      if (now - time * 60000 > 300000) {
-        typeCounts.delete(time);
+    for (const [key] of this.errorCounts) {
+      if (key < minuteKey - 5) {
+        this.errorCounts.delete(key);
       }
     }
   }
@@ -207,22 +380,22 @@ class Monitor {
   /**
    * Détermine si une alerte doit être envoyée
    */
-  shouldAlert (errorType) {
+  shouldAlert(errorType) {
     const now = Date.now();
-    const minute = Math.floor(now / 60000);
-    const typeCounts = this.errorCounts.get(errorType);
+    const minuteKey = Math.floor(now / 60000);
+    const minuteCounts = this.errorCounts.get(minuteKey);
 
-    if (!typeCounts) return false;
+    if (!minuteCounts) return false;
 
-    const currentCount = typeCounts.get(minute) || 0;
-    return currentCount >= this.maxErrorsPerMinute;
+    const count = minuteCounts.get(errorType) || 0;
+    return count >= this.maxErrorsPerMinute;
   }
 
   /**
    * Détermine si l'application doit s'arrêter
    */
-  shouldShutdown (error) {
-    const criticalErrors = ['AUTH', 'DATABASE'];
+  shouldShutdown(error) {
+    const criticalErrors = ["AUTH", "DATABASE"];
     const errorType = this.categorizeError(error);
     return criticalErrors.includes(errorType);
   }
@@ -230,7 +403,7 @@ class Monitor {
   /**
    * Envoie une alerte
    */
-  sendAlert (errorType, errorId) {
+  sendAlert(errorType, errorId) {
     this.logger.warn(`🚨 ALERTE: Trop d'erreurs ${errorType} (${errorId})`);
     // Ici on pourrait envoyer une notification Discord, email, etc.
   }
@@ -238,34 +411,44 @@ class Monitor {
   /**
    * Envoie une alerte critique
    */
-  sendCriticalAlert (error, errorId, context) {
+  sendCriticalAlert(error, errorId, context) {
     this.logger.error(`🚨 ALERTE CRITIQUE [${context}]: ${errorId}`);
     // Ici on pourrait envoyer une notification immédiate
   }
 
   /**
-   * Obtient les statistiques d'erreurs
+   * Génère un ID d'erreur unique
    */
-  getErrorStats () {
-    const stats = {};
-    for (const [errorType, typeCounts] of this.errorCounts.entries()) {
-      let total = 0;
-      for (const count of typeCounts.values()) {
-        total += count;
-      }
-      stats[errorType] = total;
-    }
-    return stats;
+  generateErrorId() {
+    return `ERR_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * Récupère les statistiques de performance
+   */
+  getPerformanceStats() {
+    const memUsage = process.memoryUsage();
+    return {
+      uptime: Date.now() - this.startTime,
+      memory: {
+        heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
+        heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
+        external: Math.round(memUsage.external / 1024 / 1024),
+        rss: Math.round(memUsage.rss / 1024 / 1024),
+      },
+      metrics: this.getMetrics(),
+      health: this.healthStatus,
+    };
   }
 }
 
 // Instance singleton
 const monitor = new Monitor();
 
-export default monitor;
-
 // Fonction utilitaire pour les messages d'erreur API
-export function getApiErrorMessage (error) {
-  const monitor = new Monitor();
+export function getApiErrorMessage(error) {
   return monitor.getUserFriendlyMessage(monitor.categorizeError(error));
 }
+
+export default monitor;
+

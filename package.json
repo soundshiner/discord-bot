@@ -82,6 +82,7 @@
     "test:performance": "vitest tests/performance/ --config config/vitest.config.js",
     "test:stress": "vitest tests/stress/ --config config/vitest.config.js",
     "test:all": "node scripts/dev/run-tests.js",
+    "test:optimizations": "node scripts/dev/test-optimizations.js",
     "lint": "eslint bot/ api/ core/ --config config/.eslintrc.js",
     "lint:fix": "eslint bot/ api/ core/ --config config/.eslintrc.js --fix",
     "format": "npm run lint:fix",
