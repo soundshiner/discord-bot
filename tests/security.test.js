@@ -142,11 +142,12 @@ describe("Security Tests", () => {
 
   describe("Secure Logging", () => {
     it("should mask unknown tokens", () => {
-      const message =
-        "Token: REMOVED_TOKEN";
+      const message = "Token: FAKE_TEST_TOKEN_123456789_ABCDEFGHIJKLMNOP";
       const masked = secureLogger.maskSensitiveData(message);
 
-      expect(masked).not.toContain("MTIzNDU2Nzg5MDEyMzQ1Njc4");
+      expect(masked).not.toContain(
+        "FAKE_TEST_TOKEN_123456789_ABCDEFGHIJKLMNOP"
+      );
     });
 
     it("should mask Discord IDs", () => {
@@ -238,8 +239,7 @@ describe("Security Tests", () => {
     it("should integrate logging and masking", () => {
       const userId = "123456789012345678";
       const sensitiveData = {
-        token:
-          "REMOVED_TOKEN",
+        token: "FAKE_TEST_TOKEN_123456789_ABCDEFGHIJKLMNOP",
         email: "test@example.com",
         userId: userId,
       };
@@ -297,7 +297,7 @@ describe("Security Tests", () => {
     it("should mask data efficiently", () => {
       const start = Date.now();
       const message =
-        "Token: MTIzNDU2Nzg5MDEyMzQ1Njc4, Email: test@example.com, User: 123456789012345678";
+        "Token: FAKE_TEST_TOKEN_123456789, Email: test@example.com, User: 123456789012345678";
 
       for (let i = 0; i < 1000; i++) {
         secureLogger.maskSensitiveData(message);

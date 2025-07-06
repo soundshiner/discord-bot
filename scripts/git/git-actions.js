@@ -3,7 +3,7 @@
 import { execSync } from "child_process";
 import { existsSync } from "fs";
 import chalk from "chalk";
-
+import { scanForSecrets } from "./checkSecrets.js";
 // Configuration des variables d'environnement de test (comme dans GitHub Actions)
 const testEnv = {
   NODE_ENV: "test",
@@ -158,6 +158,10 @@ async function runGitActions() {
     }
   }
 
+  // Étape 9: Vérification de secrets potentiels
+  if (!scanForSecrets()) {
+    allTestsPassed = false;
+  }
   // Résultats finaux
   const endTime = Date.now();
   const duration = ((endTime - startTime) / 1000).toFixed(2);
