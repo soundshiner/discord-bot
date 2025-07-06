@@ -2,10 +2,10 @@
 // core/utils/retry.js - Utilitaire de retry générique
 // ========================================
 
-import logger from "../../bot/logger.js";
+import logger from '../../bot/logger.js';
 
 class RetryManager {
-  constructor(options = {}) {
+  constructor (options = {}) {
     this.defaultOptions = {
       maxAttempts: 3,
       baseDelay: 1000, // 1 seconde
@@ -13,16 +13,16 @@ class RetryManager {
       backoffMultiplier: 2,
       jitter: true,
       jitterFactor: 0.1,
-      retryableErrors: ["ECONNRESET", "ENOTFOUND", "ETIMEDOUT", "ECONNREFUSED"],
+      retryableErrors: ['ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNREFUSED'],
       onRetry: null,
       onSuccess: null,
-      onFailure: null,
+      onFailure: null
     };
 
     this.options = { ...this.defaultOptions, ...options };
   }
 
-  async execute(operation, customOptions = {}) {
+  async execute (operation, customOptions = {}) {
     const options = { ...this.options, ...customOptions };
     let lastError;
 
@@ -65,13 +65,13 @@ class RetryManager {
     throw lastError;
   }
 
-  shouldRetry(error, attempt, options) {
+  shouldRetry (error, attempt, options) {
     // Vérifier si l'erreur est retryable
     const isRetryableError = options.retryableErrors.some(
       (retryableError) =>
-        error.code === retryableError ||
-        error.message.includes(retryableError) ||
-        error.name === retryableError
+        error.code === retryableError
+        || error.message.includes(retryableError)
+        || error.name === retryableError
     );
 
     // Vérifier si on a encore des tentatives
@@ -80,10 +80,10 @@ class RetryManager {
     return isRetryableError && hasAttemptsLeft;
   }
 
-  calculateDelay(attempt, options) {
+  calculateDelay (attempt, options) {
     // Backoff exponentiel
-    let delay =
-      options.baseDelay * Math.pow(options.backoffMultiplier, attempt - 1);
+    let delay
+      = options.baseDelay * Math.pow(options.backoffMultiplier, attempt - 1);
 
     // Limiter le délai maximum
     delay = Math.min(delay, options.maxDelay);
@@ -97,7 +97,7 @@ class RetryManager {
     return Math.round(delay);
   }
 
-  sleep(ms) {
+  sleep (ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
@@ -111,15 +111,15 @@ const discordRetryManager = new RetryManager({
   baseDelay: 2000,
   maxDelay: 60000,
   retryableErrors: [
-    "ECONNRESET",
-    "ENOTFOUND",
-    "ETIMEDOUT",
-    "ECONNREFUSED",
-    "RATE_LIMIT",
+    'ECONNRESET',
+    'ENOTFOUND',
+    'ETIMEDOUT',
+    'ECONNREFUSED',
+    'RATE_LIMIT'
   ],
   onRetry: (error, attempt, delay) => {
     logger.warn(`Discord API retry ${attempt}: ${error.message} (${delay}ms)`);
-  },
+  }
 });
 
 // Configuration pour base de données
@@ -127,10 +127,10 @@ const databaseRetryManager = new RetryManager({
   maxAttempts: 3,
   baseDelay: 500,
   maxDelay: 5000,
-  retryableErrors: ["SQLITE_BUSY", "SQLITE_LOCKED", "ECONNREFUSED"],
+  retryableErrors: ['SQLITE_BUSY', 'SQLITE_LOCKED', 'ECONNREFUSED'],
   onRetry: (error, attempt, delay) => {
     logger.warn(`Database retry ${attempt}: ${error.message} (${delay}ms)`);
-  },
+  }
 });
 
 // Configuration pour API externe
@@ -139,31 +139,31 @@ const apiRetryManager = new RetryManager({
   baseDelay: 1000,
   maxDelay: 10000,
   retryableErrors: [
-    "ECONNRESET",
-    "ENOTFOUND",
-    "ETIMEDOUT",
-    "ECONNREFUSED",
-    "429",
+    'ECONNRESET',
+    'ENOTFOUND',
+    'ETIMEDOUT',
+    'ECONNREFUSED',
+    '429'
   ],
   onRetry: (error, attempt, delay) => {
     logger.warn(`API retry ${attempt}: ${error.message} (${delay}ms)`);
-  },
+  }
 });
 
 // Fonctions utilitaires
-export async function retry(operation, options = {}) {
+export async function retry (operation, options = {}) {
   return retryManager.execute(operation, options);
 }
 
-export async function retryDiscord(operation, options = {}) {
+export async function retryDiscord (operation, options = {}) {
   return discordRetryManager.execute(operation, options);
 }
 
-export async function retryDatabase(operation, options = {}) {
+export async function retryDatabase (operation, options = {}) {
   return databaseRetryManager.execute(operation, options);
 }
 
-export async function retryApi(operation, options = {}) {
+export async function retryApi (operation, options = {}) {
   return apiRetryManager.execute(operation, options);
 }
 
@@ -172,6 +172,6 @@ export {
   retryManager,
   discordRetryManager,
   databaseRetryManager,
-  apiRetryManager,
+  apiRetryManager
 };
 export default retryManager;

@@ -2,7 +2,7 @@
 // core/services/AppState.js - Service d'état global sécurisé
 // ========================================
 
-import logger from "../../bot/logger.js";
+import logger from '../../bot/logger.js';
 
 class AppStateService {
   #state = {
@@ -13,7 +13,7 @@ class AppStateService {
       startTime: null,
       uptime: 0,
       commandsExecuted: 0,
-      commandsFailed: 0,
+      commandsFailed: 0
     },
 
     // État de la base de données
@@ -22,7 +22,7 @@ class AppStateService {
       isHealthy: false,
       lastCheck: null,
       queriesExecuted: 0,
-      queriesFailed: 0,
+      queriesFailed: 0
     },
 
     // État de l'API
@@ -31,7 +31,7 @@ class AppStateService {
       port: null,
       startTime: null,
       requestsHandled: 0,
-      requestsFailed: 0,
+      requestsFailed: 0
     },
 
     // Configuration
@@ -39,28 +39,28 @@ class AppStateService {
       isLoaded: false,
       environment: null,
       version: null,
-      lastReload: null,
+      lastReload: null
     },
 
     // Métriques système
     system: {
       memoryUsage: {},
       cpuUsage: {},
-      lastUpdate: null,
-    },
+      lastUpdate: null
+    }
   };
 
   #listeners = new Map();
   #isInitialized = false;
 
-  constructor() {
+  constructor () {
     if (AppStateService._instance) {
-      throw new Error("AppStateService: Utilisez getInstance() !");
+      throw new Error('AppStateService: Utilisez getInstance() !');
     }
     AppStateService._instance = this;
   }
 
-  static getInstance() {
+  static getInstance () {
     if (!AppStateService._instance) {
       AppStateService._instance = new AppStateService();
     }
@@ -69,128 +69,128 @@ class AppStateService {
 
   // === GETTERS SÉCURISÉS ===
 
-  getBotState() {
+  getBotState () {
     return { ...this.#state.bot };
   }
 
-  getDatabaseState() {
+  getDatabaseState () {
     return { ...this.#state.database };
   }
 
-  getApiState() {
+  getApiState () {
     return { ...this.#state.api };
   }
 
-  getConfigState() {
+  getConfigState () {
     return { ...this.#state.config };
   }
 
-  getSystemState() {
+  getSystemState () {
     return { ...this.#state.system };
   }
 
-  getFullState() {
+  getFullState () {
     return {
       bot: this.getBotState(),
       database: this.getDatabaseState(),
       api: this.getApiState(),
       config: this.getConfigState(),
-      system: this.getSystemState(),
+      system: this.getSystemState()
     };
   }
 
   // === SETTERS SÉCURISÉS ===
 
-  setBotReady(isReady) {
+  setBotReady (isReady) {
     this.#state.bot.isReady = isReady;
     if (isReady && !this.#state.bot.startTime) {
       this.#state.bot.startTime = Date.now();
     }
-    this.#notifyListeners("bot", this.getBotState());
+    this.#notifyListeners('bot', this.getBotState());
     logger.info(`Bot state updated: ready=${isReady}`);
   }
 
-  setBotConnected(isConnected) {
+  setBotConnected (isConnected) {
     this.#state.bot.isConnected = isConnected;
-    this.#notifyListeners("bot", this.getBotState());
+    this.#notifyListeners('bot', this.getBotState());
   }
 
-  incrementCommandsExecuted() {
+  incrementCommandsExecuted () {
     this.#state.bot.commandsExecuted++;
     this.#updateBotUptime();
   }
 
-  incrementCommandsFailed() {
+  incrementCommandsFailed () {
     this.#state.bot.commandsFailed++;
     this.#updateBotUptime();
   }
 
-  setDatabaseConnected(isConnected) {
+  setDatabaseConnected (isConnected) {
     this.#state.database.isConnected = isConnected;
     this.#state.database.lastCheck = Date.now();
-    this.#notifyListeners("database", this.getDatabaseState());
+    this.#notifyListeners('database', this.getDatabaseState());
   }
 
-  setDatabaseHealthy(isHealthy) {
+  setDatabaseHealthy (isHealthy) {
     this.#state.database.isHealthy = isHealthy;
     this.#state.database.lastCheck = Date.now();
-    this.#notifyListeners("database", this.getDatabaseState());
+    this.#notifyListeners('database', this.getDatabaseState());
   }
 
-  incrementQueriesExecuted() {
+  incrementQueriesExecuted () {
     this.#state.database.queriesExecuted++;
   }
 
-  incrementQueriesFailed() {
+  incrementQueriesFailed () {
     this.#state.database.queriesFailed++;
   }
 
-  setApiRunning(isRunning, port = null) {
+  setApiRunning (isRunning, port = null) {
     this.#state.api.isRunning = isRunning;
     if (isRunning && !this.#state.api.startTime) {
       this.#state.api.startTime = Date.now();
       this.#state.api.port = port;
     }
-    this.#notifyListeners("api", this.getApiState());
+    this.#notifyListeners('api', this.getApiState());
   }
 
-  incrementRequestsHandled() {
+  incrementRequestsHandled () {
     this.#state.api.requestsHandled++;
   }
 
-  incrementRequestsFailed() {
+  incrementRequestsFailed () {
     this.#state.api.requestsFailed++;
   }
 
-  setConfigLoaded(config) {
+  setConfigLoaded (config) {
     this.#state.config.isLoaded = true;
     this.#state.config.environment = config.NODE_ENV;
-    this.#state.config.version = process.env.npm_package_version || "2.0.0";
+    this.#state.config.version = process.env.npm_package_version || '2.0.0';
     this.#state.config.lastReload = Date.now();
-    this.#notifyListeners("config", this.getConfigState());
+    this.#notifyListeners('config', this.getConfigState());
   }
 
-  updateSystemMetrics() {
+  updateSystemMetrics () {
     const memUsage = process.memoryUsage();
     this.#state.system.memoryUsage = {
       heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
       heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
       external: Math.round(memUsage.external / 1024 / 1024),
-      rss: Math.round(memUsage.rss / 1024 / 1024),
+      rss: Math.round(memUsage.rss / 1024 / 1024)
     };
     this.#state.system.lastUpdate = Date.now();
-    this.#notifyListeners("system", this.getSystemState());
+    this.#notifyListeners('system', this.getSystemState());
   }
 
   // === MÉTHODES UTILITAIRES ===
 
-  #updateBotUptime() {
+  #updateBotUptime () {
     if (this.#state.bot.startTime) {
       this.#state.bot.uptime = Date.now() - this.#state.bot.startTime;
     }
   }
 
-  #notifyListeners(component, state) {
+  #notifyListeners (component, state) {
     if (this.#listeners.has(component)) {
       this.#listeners.get(component).forEach((listener) => {
         try {
@@ -204,7 +204,7 @@ class AppStateService {
 
   // === OBSERVATEURS ===
 
-  onStateChange(component, callback) {
+  onStateChange (component, callback) {
     if (!this.#listeners.has(component)) {
       this.#listeners.set(component, []);
     }
@@ -222,11 +222,11 @@ class AppStateService {
 
   // === VALIDATION ET HEALTH CHECK ===
 
-  isHealthy() {
+  isHealthy () {
     const health = {
       overall: true,
       components: {},
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     };
 
     // Vérifier le bot
@@ -235,8 +235,8 @@ class AppStateService {
       details: {
         connected: this.#state.bot.isConnected,
         ready: this.#state.bot.isReady,
-        uptime: this.#state.bot.uptime,
-      },
+        uptime: this.#state.bot.uptime
+      }
     };
 
     // Vérifier la base de données
@@ -246,8 +246,8 @@ class AppStateService {
       details: {
         connected: this.#state.database.isConnected,
         healthy: this.#state.database.isHealthy,
-        lastCheck: this.#state.database.lastCheck,
-      },
+        lastCheck: this.#state.database.lastCheck
+      }
     };
 
     // Vérifier l'API
@@ -256,8 +256,8 @@ class AppStateService {
       details: {
         running: this.#state.api.isRunning,
         port: this.#state.api.port,
-        startTime: this.#state.api.startTime,
-      },
+        startTime: this.#state.api.startTime
+      }
     };
 
     // Vérifier la configuration
@@ -266,8 +266,8 @@ class AppStateService {
       details: {
         loaded: this.#state.config.isLoaded,
         environment: this.#state.config.environment,
-        version: this.#state.config.version,
-      },
+        version: this.#state.config.version
+      }
     };
 
     // Déterminer l'état global
@@ -278,7 +278,7 @@ class AppStateService {
 
   // === RÉINITIALISATION (TESTS UNIQUEMENT) ===
 
-  _resetForTests() {
+  _resetForTests () {
     this.#state = {
       bot: {
         isReady: false,
@@ -286,29 +286,29 @@ class AppStateService {
         startTime: null,
         uptime: 0,
         commandsExecuted: 0,
-        commandsFailed: 0,
+        commandsFailed: 0
       },
       database: {
         isConnected: false,
         isHealthy: false,
         lastCheck: null,
         queriesExecuted: 0,
-        queriesFailed: 0,
+        queriesFailed: 0
       },
       api: {
         isRunning: false,
         port: null,
         startTime: null,
         requestsHandled: 0,
-        requestsFailed: 0,
+        requestsFailed: 0
       },
       config: {
         isLoaded: false,
         environment: null,
         version: null,
-        lastReload: null,
+        lastReload: null
       },
-      system: { memoryUsage: {}, cpuUsage: {}, lastUpdate: null },
+      system: { memoryUsage: {}, cpuUsage: {}, lastUpdate: null }
     };
     this.#listeners.clear();
     this.#isInitialized = false;
@@ -316,9 +316,9 @@ class AppStateService {
 
   // === DÉMARRAGE ===
 
-  initialize() {
+  initialize () {
     if (this.#isInitialized) {
-      logger.warn("AppState déjà initialisé");
+      logger.warn('AppState déjà initialisé');
       return;
     }
 
@@ -330,7 +330,7 @@ class AppStateService {
       this.updateSystemMetrics();
     }, 30000); // Toutes les 30 secondes
 
-    logger.success("AppState service initialisé");
+    logger.success('AppState service initialisé');
   }
 }
 
@@ -338,27 +338,27 @@ class AppStateService {
 const appState = AppStateService.getInstance();
 
 // Exports pour compatibilité
-export function getAppState() {
+export function getAppState () {
   return appState;
 }
 
-export function getBotState() {
+export function getBotState () {
   return appState.getBotState();
 }
 
-export function getDatabaseState() {
+export function getDatabaseState () {
   return appState.getDatabaseState();
 }
 
-export function getApiState() {
+export function getApiState () {
   return appState.getApiState();
 }
 
-export function getFullState() {
+export function getFullState () {
   return appState.getFullState();
 }
 
-export function isAppHealthy() {
+export function isAppHealthy () {
   return appState.isHealthy();
 }
 
