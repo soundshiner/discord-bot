@@ -1,339 +1,296 @@
 // ========================================
-// bot/utils/database.js - Gestionnaire de base de données optimisé
+// bot/utils/database.js - DatabasePool générique (async/await, pool-ready)
 // ========================================
 
-import Database from "better-sqlite3";
 import path from "path";
 import { fileURLToPath } from "url";
 import logger from "../logger.js";
+import appState from "../../core/services/AppState.js";
+import { retryDatabase } from "../../core/utils/retry.js";
+
+// Fallback: better-sqlite3 (synchrone, mutex JS)
+import Database from "better-sqlite3";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-class DatabaseManager {
+// Mutex JS simple pour accès concurrent
+class Mutex {
   constructor() {
-    this.db = null;
-    this.isConnected = false;
-    this.dbPath = path.join(__dirname, "../../databases/suggestions.sqlite");
-    this.preparedStatements = new Map();
+    this._locked = false;
+    this._waiting = [];
+  }
+  async lock() {
+    while (this._locked) {
+      await new Promise((resolve) => this._waiting.push(resolve));
+    }
+    this._locked = true;
+  }
+  unlock() {
+    this._locked = false;
+    if (this._waiting.length > 0) {
+      const next = this._waiting.shift();
+      next();
+    }
+  }
+}
+
+class DatabasePool {
+  #db = null;
+  #mutex = new Mutex();
+  #isConnected = false;
+  #dbPath = null;
+
+  constructor(options = {}) {
+    this.#dbPath =
+      options.dbPath ||
+      path.join(__dirname, "../../databases/suggestions.sqlite");
   }
 
-  /**
-   * Initialise la connexion à la base de données
-   */
   async connect() {
-    try {
-      if (this.isConnected && this.db) {
-        logger.warn("Base de données déjà connectée");
-        return this.db;
-      }
+    if (this.#isConnected && this.#db) return;
 
+    try {
       // Créer le répertoire si nécessaire
-      const dbDir = path.dirname(this.dbPath);
+      const dbDir = path.dirname(this.#dbPath);
       await import("fs").then((fs) => {
         if (!fs.existsSync(dbDir)) {
           fs.mkdirSync(dbDir, { recursive: true });
         }
       });
 
-      this.db = new Database(this.dbPath, {
+      this.#db = new Database(this.#dbPath, {
         verbose: process.env.NODE_ENV === "dev" ? console.log : null,
-        // Optimisations de performance
         pragma: {
           journal_mode: "WAL",
           synchronous: "NORMAL",
-          cache_size: -64000, // 64MB
+          cache_size: -64000,
           temp_store: "MEMORY",
-          mmap_size: 268435456, // 256MB
+          mmap_size: 268435456,
           page_size: 4096,
         },
       });
 
-      // Vérifier la connexion
-      this.db.prepare("SELECT 1").get();
+      this.#isConnected = true;
 
-      this.isConnected = true;
-      logger.success("Base de données SQLite connectée avec succès");
+      // Mettre à jour AppState
+      appState.setDatabaseConnected(true);
+      appState.setDatabaseHealthy(true);
 
-      // Initialiser les tables
+      logger.success("Base de données SQLite connectée (mode pool-ready)");
+
+      // Initialiser les tables si nécessaire
       await this.initializeTables();
-
-      return this.db;
     } catch (error) {
-      this.isConnected = false;
-      logger.error(
-        "Erreur critique lors de la connexion à la base de données:",
-        error
-      );
-      throw new Error(
-        `Échec de la connexion à la base de données: ${error.message}`
-      );
+      appState.setDatabaseConnected(false);
+      appState.setDatabaseHealthy(false);
+      throw error;
     }
   }
 
-  /**
-   * Initialise les tables de la base de données
-   */
   async initializeTables() {
     try {
-      // Table des suggestions avec index optimisés
-      this.db
-        .prepare(
-          `
+      // Table des suggestions
+      this.#db.exec(`
         CREATE TABLE IF NOT EXISTS suggestions (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          userId TEXT NOT NULL,
+          user_id TEXT NOT NULL,
           username TEXT NOT NULL,
-          titre TEXT NOT NULL,
-          artiste TEXT NOT NULL,
-          lien TEXT,
-          genre TEXT,
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+          suggestion TEXT NOT NULL,
+          status TEXT DEFAULT 'pending',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
-      `
-        )
-        .run();
+      `);
 
-      // Table pour le DJ actif
-      this.db
-        .prepare(
-          `
+      // Table du statut DJ
+      this.#db.exec(`
         CREATE TABLE IF NOT EXISTS dj_status (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          userId TEXT NOT NULL UNIQUE,
+          user_id TEXT UNIQUE NOT NULL,
           username TEXT NOT NULL,
-          activatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+          is_dj BOOLEAN DEFAULT FALSE,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
-      `
-        )
-        .run();
+      `);
 
-      // Créer les index pour optimiser les performances
-      this.db
-        .prepare(
-          "CREATE INDEX IF NOT EXISTS idx_suggestions_userId ON suggestions(userId)"
-        )
-        .run();
-      this.db
-        .prepare(
-          "CREATE INDEX IF NOT EXISTS idx_suggestions_createdAt ON suggestions(createdAt)"
-        )
-        .run();
-      this.db
-        .prepare(
-          "CREATE INDEX IF NOT EXISTS idx_dj_status_userId ON dj_status(userId)"
-        )
-        .run();
-
-      // Préparer les requêtes fréquemment utilisées
-      this.prepareStatements();
-
-      logger.info("Tables et index de la base de données initialisés");
+      logger.info("Tables de base de données initialisées");
     } catch (error) {
       logger.error("Erreur lors de l'initialisation des tables:", error);
       throw error;
     }
   }
 
-  /**
-   * Prépare les requêtes fréquemment utilisées
-   */
-  prepareStatements() {
-    try {
-      this.preparedStatements.set(
-        "insertSuggestion",
-        this.db.prepare(`
-          INSERT INTO suggestions (userId, username, titre, artiste, lien, genre)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `)
-      );
+  async acquire() {
+    await this.#mutex.lock();
+    return this.#db;
+  }
 
-      this.preparedStatements.set(
-        "getSuggestionsByUser",
-        this.db.prepare(`
-          SELECT * FROM suggestions 
-          WHERE userId = ? 
-          ORDER BY createdAt DESC 
-          LIMIT ?
-        `)
-      );
+  async release() {
+    this.#mutex.unlock();
+  }
 
-      this.preparedStatements.set(
-        "getAllSuggestions",
-        this.db.prepare(`
-          SELECT * FROM suggestions 
-          ORDER BY createdAt DESC 
-          LIMIT ?
-        `)
-      );
+  async query(sql, params = []) {
+    return await retryDatabase(
+      async () => {
+        await this.connect();
+        await this.acquire();
 
-      this.preparedStatements.set(
-        "updateDjStatus",
-        this.db.prepare(`
-          INSERT OR REPLACE INTO dj_status (userId, username, updatedAt)
-          VALUES (?, ?, CURRENT_TIMESTAMP)
-        `)
-      );
+        try {
+          let result;
+          if (/^select/i.test(sql.trim())) {
+            result = this.#db.prepare(sql).all(params);
+          } else {
+            result = this.#db.prepare(sql).run(params);
+          }
 
-      this.preparedStatements.set(
-        "getCurrentDj",
-        this.db.prepare(`
-          SELECT * FROM dj_status 
-          ORDER BY updatedAt DESC 
-          LIMIT 1
-        `)
-      );
+          // Mettre à jour les métriques
+          appState.incrementQueriesExecuted();
 
-      logger.debug("Requêtes préparées initialisées");
-    } catch (error) {
-      logger.error("Erreur lors de la préparation des requêtes:", error);
-      throw error;
+          return result;
+        } catch (error) {
+          appState.incrementQueriesFailed();
+          appState.setDatabaseHealthy(false);
+          throw error;
+        } finally {
+          await this.release();
+        }
+      },
+      {
+        onRetry: (error, attempt) => {
+          logger.warn(`Tentative de requête DB ${attempt}: ${error.message}`);
+        },
+      }
+    );
+  }
+
+  async transaction(fn) {
+    return await retryDatabase(async () => {
+      await this.connect();
+      await this.acquire();
+
+      try {
+        const tx = this.#db.transaction(fn);
+        const result = tx();
+
+        // Mettre à jour les métriques
+        appState.incrementQueriesExecuted();
+
+        return result;
+      } catch (error) {
+        appState.incrementQueriesFailed();
+        appState.setDatabaseHealthy(false);
+        throw error;
+      } finally {
+        await this.release();
+      }
+    });
+  }
+
+  async close() {
+    if (this.#db && this.#isConnected) {
+      this.#db.close();
+      this.#db = null;
+      this.#isConnected = false;
+
+      // Mettre à jour AppState
+      appState.setDatabaseConnected(false);
+      appState.setDatabaseHealthy(false);
+
+      logger.success("Connexion à la base de données fermée");
     }
   }
 
-  /**
-   * Exécute une requête avec gestion d'erreur
-   */
-  executeQuery(statementName, params = []) {
-    try {
-      if (!this.isConnected || !this.db) {
-        throw new Error("Base de données non connectée");
-      }
-
-      const statement = this.preparedStatements.get(statementName);
-      if (!statement) {
-        throw new Error(`Requête préparée '${statementName}' non trouvée`);
-      }
-
-      return statement.run(params);
-    } catch (error) {
-      logger.error(
-        `Erreur lors de l'exécution de la requête ${statementName}:`,
-        error
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Récupère des données avec gestion d'erreur
-   */
-  getData(statementName, params = []) {
-    try {
-      if (!this.isConnected || !this.db) {
-        throw new Error("Base de données non connectée");
-      }
-
-      const statement = this.preparedStatements.get(statementName);
-      if (!statement) {
-        throw new Error(`Requête préparée '${statementName}' non trouvée`);
-      }
-
-      return statement.all(params);
-    } catch (error) {
-      logger.error(
-        `Erreur lors de la récupération de données ${statementName}:`,
-        error
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Ferme proprement la connexion à la base de données
-   */
-  async disconnect() {
-    try {
-      if (this.db && this.isConnected) {
-        // Fermer les requêtes préparées
-        this.preparedStatements.clear();
-
-        // Fermer la connexion
-        this.db.close();
-        this.db = null;
-        this.isConnected = false;
-
-        logger.success("Connexion à la base de données fermée proprement");
-      }
-    } catch (error) {
-      logger.error("Erreur lors de la fermeture de la base de données:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Vérifie l'état de la connexion
-   */
   isHealthy() {
     try {
-      if (!this.db || !this.isConnected) {
-        return false;
-      }
-
-      // Test de connexion
-      this.db.prepare("SELECT 1").get();
+      if (!this.#db || !this.#isConnected) return false;
+      this.#db.prepare("SELECT 1").get();
       return true;
-    } catch (error) {
-      logger.warn("Base de données non saine:", error.message);
-      this.isConnected = false;
+    } catch (e) {
       return false;
     }
   }
 
-  /**
-   * Récupère les statistiques de la base de données
-   */
   getStats() {
+    if (!this.#db || !this.#isConnected) return null;
     try {
-      if (!this.db || !this.isConnected) {
-        return null;
-      }
-
-      const suggestionsCount = this.db
+      const suggestions = this.#db
         .prepare("SELECT COUNT(*) as count FROM suggestions")
         .get();
-      const djCount = this.db
+      const dj = this.#db
         .prepare("SELECT COUNT(*) as count FROM dj_status")
         .get();
-
       return {
-        suggestions: suggestionsCount.count,
-        djStatus: djCount.count,
-        connected: this.isConnected,
-        path: this.dbPath,
+        suggestions: suggestions.count,
+        djStatus: dj.count,
+        connected: this.#isConnected,
+        path: this.#dbPath,
       };
-    } catch (error) {
-      logger.error("Erreur lors de la récupération des statistiques:", error);
+    } catch (e) {
       return null;
     }
   }
-}
 
-// Instance singleton
-const databaseManager = new DatabaseManager();
-
-// Fonctions d'export pour compatibilité
-export async function getDatabase() {
-  if (!databaseManager.isConnected) {
-    await databaseManager.connect();
+  // Méthodes utilitaires pour les opérations courantes
+  async addSuggestion(userId, username, suggestion) {
+    return await this.query(
+      "INSERT INTO suggestions (user_id, username, suggestion) VALUES (?, ?, ?)",
+      [userId, username, suggestion]
+    );
   }
-  return databaseManager.db;
+
+  async getSuggestions(status = null) {
+    const sql = status
+      ? "SELECT * FROM suggestions WHERE status = ? ORDER BY created_at DESC"
+      : "SELECT * FROM suggestions ORDER BY created_at DESC";
+    const params = status ? [status] : [];
+    return await this.query(sql, params);
+  }
+
+  async updateSuggestionStatus(id, status) {
+    return await this.query(
+      "UPDATE suggestions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      [status, id]
+    );
+  }
+
+  async setDjStatus(userId, username, isDj) {
+    return await this.query(
+      `INSERT OR REPLACE INTO dj_status (user_id, username, is_dj, updated_at) 
+       VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+      [userId, username, isDj ? 1 : 0]
+    );
+  }
+
+  async getDjStatus(userId) {
+    const result = await this.query(
+      "SELECT is_dj FROM dj_status WHERE user_id = ?",
+      [userId]
+    );
+    return result.length > 0 ? result[0].is_dj === 1 : false;
+  }
+
+  async getAllDjStatus() {
+    return await this.query("SELECT * FROM dj_status ORDER BY updated_at DESC");
+  }
 }
 
+// Singleton instance
+const dbPool = new DatabasePool();
+
+export async function getDatabase() {
+  await dbPool.connect();
+  return dbPool;
+}
 export async function disconnectDatabase() {
-  return databaseManager.disconnect();
+  return dbPool.close();
 }
-
 export function isDatabaseHealthy() {
-  return databaseManager.isHealthy();
+  return dbPool.isHealthy();
 }
-
 export function getDatabaseStats() {
-  return databaseManager.getStats();
+  return dbPool.getStats();
 }
-
-// Export pour compatibilité avec l'ancien code
-export { databaseManager as db };
+export default dbPool;
 

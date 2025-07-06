@@ -6,6 +6,7 @@ import { MessageFlags } from "discord.js";
 import logger from "../bot/logger.js";
 import { isDatabaseHealthy, getDatabaseStats } from "../bot/utils/database.js";
 import { isClientReady } from "../bot/client.js";
+import appState from "./services/AppState.js";
 
 class Monitor {
   constructor(loggerInstance = logger) {
@@ -13,99 +14,68 @@ class Monitor {
     this.errorCounts = new Map();
     this.maxErrorsPerMinute = 10;
     this.startTime = Date.now();
-    this.metrics = {
-      commandsExecuted: 0,
-      commandsFailed: 0,
-      apiRequests: 0,
-      apiErrors: 0,
-      databaseQueries: 0,
-      databaseErrors: 0,
-      uptime: 0,
-    };
-    this.healthStatus = {
-      database: true,
-      discord: true,
-      api: true,
-      lastCheck: Date.now(),
-    };
   }
 
   /**
-   * Met à jour les métriques
+   * Met à jour les métriques via AppState
    */
   updateMetric(metricName, increment = 1) {
-    if (this.metrics.hasOwnProperty(metricName)) {
-      this.metrics[metricName] += increment;
+    switch (metricName) {
+      case "commandsExecuted":
+        appState.incrementCommandsExecuted();
+        break;
+      case "commandsFailed":
+        appState.incrementCommandsFailed();
+        break;
+      case "apiRequests":
+        appState.incrementRequestsHandled();
+        break;
+      case "apiErrors":
+        appState.incrementRequestsFailed();
+        break;
+      case "databaseQueries":
+        appState.incrementQueriesExecuted();
+        break;
+      case "databaseErrors":
+        appState.incrementQueriesFailed();
+        break;
     }
   }
 
   /**
-   * Récupère les métriques actuelles
+   * Récupère les métriques depuis AppState
    */
   getMetrics() {
-    this.metrics.uptime = Date.now() - this.startTime;
+    const fullState = appState.getFullState();
     return {
-      ...this.metrics,
+      commandsExecuted: fullState.bot.commandsExecuted,
+      commandsFailed: fullState.bot.commandsFailed,
+      apiRequests: fullState.api.requestsHandled,
+      apiErrors: fullState.api.requestsFailed,
+      databaseQueries: fullState.database.queriesExecuted,
+      databaseErrors: fullState.database.queriesFailed,
+      uptime: fullState.bot.uptime,
       errorCounts: Object.fromEntries(this.errorCounts),
-      healthStatus: this.healthStatus,
+      healthStatus: {
+        database: fullState.database.isHealthy,
+        discord: fullState.bot.isReady,
+        api: fullState.api.isRunning,
+      },
     };
   }
 
   /**
-   * Vérifie l'état de santé du système
+   * Vérifie l'état de santé du système via AppState
    */
   async checkHealth() {
-    const health = {
-      status: "healthy",
+    const appHealth = appState.isHealthy();
+
+    return {
+      status: appHealth.overall ? "healthy" : "degraded",
       timestamp: new Date().toISOString(),
-      services: {},
-      uptime: Date.now() - this.startTime,
+      services: appHealth.components,
+      uptime: appHealth.components.bot.details.uptime,
     };
-
-    try {
-      // Vérifier la base de données
-      const dbHealthy = isDatabaseHealthy();
-      health.services.database = {
-        status: dbHealthy ? "healthy" : "unhealthy",
-        details: dbHealthy ? "Connected" : "Connection failed",
-      };
-
-      // Vérifier Discord
-      const discordHealthy = isClientReady();
-      health.services.discord = {
-        status: discordHealthy ? "healthy" : "unhealthy",
-        details: discordHealthy ? "Connected" : "Connection failed",
-      };
-
-      // Vérifier l'API (basique)
-      health.services.api = {
-        status: "healthy",
-        details: "Server running",
-      };
-
-      // Déterminer le statut global
-      const allHealthy = Object.values(health.services).every(
-        (service) => service.status === "healthy"
-      );
-      health.status = allHealthy ? "healthy" : "degraded";
-
-      this.healthStatus = {
-        database: dbHealthy,
-        discord: discordHealthy,
-        api: true,
-        lastCheck: Date.now(),
-      };
-
-      return health;
-    } catch (error) {
-      logger.error("Erreur lors du health check:", error);
-      return {
-        status: "unhealthy",
-        timestamp: new Date().toISOString(),
-        error: error.message,
-        uptime: Date.now() - this.startTime,
-      };
-    }
   }
 
   /**
@@ -115,7 +85,7 @@ class Monitor {
     const errorId = this.generateErrorId();
     const errorType = this.categorizeError(error);
 
-    // Mettre à jour les métriques
+    // Mettre à jour les métriques via AppState
     this.updateMetric("commandsFailed");
     this.incrementErrorCount(errorType);
 
@@ -267,8 +237,8 @@ class Monitor {
       }
     );
 
-    // Mettre à jour le statut de santé
-    this.healthStatus.database = false;
+    // Mettre à jour le statut de santé via AppState
+    appState.setDatabaseHealthy(false);
 
     if (this.shouldAlert("DATABASE")) {
       this.sendAlert("DATABASE", errorId);
@@ -424,20 +394,19 @@ class Monitor {
   }
 
   /**
-   * Récupère les statistiques de performance
+   * Récupère les statistiques de performance depuis AppState
    */
   getPerformanceStats() {
-    const memUsage = process.memoryUsage();
+    const fullState = appState.getFullState();
     return {
-      uptime: Date.now() - this.startTime,
-      memory: {
-        heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
-        heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
-        external: Math.round(memUsage.external / 1024 / 1024),
-        rss: Math.round(memUsage.rss / 1024 / 1024),
-      },
+      uptime: fullState.bot.uptime,
+      memory: fullState.system.memoryUsage,
       metrics: this.getMetrics(),
-      health: this.healthStatus,
+      health: {
+        database: fullState.database.isHealthy,
+        discord: fullState.bot.isReady,
+        api: fullState.api.isRunning,
+      },
     };
   }
 }

@@ -9,12 +9,18 @@ import WebServer from "./api/index.js";
 import logger from "./bot/logger.js";
 import { getGlobalConfig } from "./bot/utils/globalConfig.js";
 import { disconnectDatabase } from "./bot/utils/database.js";
+import appState from "./core/services/AppState.js";
+import { retryDiscord, retry } from "./core/utils/retry.js";
 
 // Configuration globale avec validation
 let config;
 try {
   config = getGlobalConfig();
   logger.info(`Configuration chargée pour l'environnement: ${config.NODE_ENV}`);
+
+  // Initialiser l'état global
+  appState.initialize();
+  appState.setConfigLoaded(config);
 } catch (error) {
   logger.error(
     "Erreur critique lors du chargement de la configuration:",
@@ -43,6 +49,7 @@ async function gracefulShutdown(signal) {
     if (apiServer) {
       logger.info("Arrêt du serveur API...");
       await apiServer.stop();
+      appState.setApiRunning(false);
       logger.success("Serveur API arrêté");
     }
 
@@ -50,12 +57,16 @@ async function gracefulShutdown(signal) {
     if (botClient) {
       logger.info("Arrêt du bot Discord...");
       await stopBot();
+      appState.setBotConnected(false);
+      appState.setBotReady(false);
       logger.success("Bot Discord arrêté");
     }
 
     // Fermer la base de données
     logger.info("Fermeture de la base de données...");
     await disconnectDatabase();
+    appState.setDatabaseConnected(false);
+    appState.setDatabaseHealthy(false);
     logger.success("Base de données fermée");
 
     logger.success("Fermeture gracieuse terminée");
@@ -66,7 +77,7 @@ async function gracefulShutdown(signal) {
   }
 }
 
-// Fonction de démarrage principale
+// Fonction de démarrage principale avec retry
 async function startApplication() {
   try {
     logger.sectionStart("Démarrage de soundSHINE Bot");
@@ -74,16 +85,42 @@ async function startApplication() {
     logger.info(`Node.js: ${process.version}`);
     logger.info(`Environnement: ${config.NODE_ENV}`);
 
-    // 🚀 Lancement du bot Discord
+    // 🚀 Lancement du bot Discord avec retry
     logger.info("Initialisation du bot Discord...");
-    botClient = await startBot();
+    botClient = await retryDiscord(
+      async () => {
+        const client = await startBot();
+        appState.setBotConnected(true);
+        appState.setBotReady(true);
+        return client;
+      },
+      {
+        onRetry: (error, attempt) => {
+          logger.warn(
+            `Tentative de connexion Discord ${attempt}: ${error.message}`
+          );
+        },
+      }
+    );
     logger.success("Bot Discord démarré avec succès");
 
-    // 🌐 Lancement du serveur API
+    // 🌐 Lancement du serveur API avec retry
     logger.info("Initialisation du serveur API...");
     apiServer = new WebServer(botClient, logger);
-    apiServer.start(config.apiPort);
-    logger.success(`Serveur API démarré sur le port ${config.apiPort}`);
+    await retry(
+      async () => {
+        apiServer.start(config.api.port);
+        appState.setApiRunning(true, config.api.port);
+      },
+      {
+        onRetry: (error, attempt) => {
+          logger.warn(
+            `Tentative de démarrage API ${attempt}: ${error.message}`
+          );
+        },
+      }
+    );
+    logger.success(`Serveur API démarré sur le port ${config.api.port}`);
 
     // 🧼 Gestion du cycle de vie
     registerProcessHandlers();
