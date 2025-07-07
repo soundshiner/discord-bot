@@ -3,8 +3,8 @@
 // ========================================
 
 import { Events } from 'discord.js';
-import { AppState } from '../../core/services/AppState.js';
-import { RetryManager } from '../../core/utils/RetryManager.js';
+import AppState from '../../core/services/AppState.js';
+import { RetryManager } from '../../core/utils/retry.js';
 import { checkRateLimit, recordCommand } from '../../core/utils/rateLimiter.js';
 import {
   validateSuggestion,

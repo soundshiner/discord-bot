@@ -491,4 +491,4 @@ export function removeKnownToken (token) {
   return secureLogger.removeKnownToken(token);
 }
 
-export default secureLogger;
+export { secureLogger };
