@@ -34,7 +34,7 @@ config({ path: resolve(projectRoot, ".env") });
 // Importer les modules de sécurité
 import validator from "../core/utils/validation.js";
 import rateLimiter from "../core/utils/rateLimiter.js";
-import secureLogger from "../core/utils/secureLogger.js";
+import { secureLogger } from "../core/utils/secureLogger.js";
 import { securityMiddleware } from "../core/middleware/security.js";
 
 describe("Security Tests", () => {
@@ -354,3 +354,4 @@ describe("Security Tests", () => {
     });
   });
 });
+

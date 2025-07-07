@@ -63,6 +63,7 @@
     "@eslint/js": "^9.30.0",
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
+    "dotenv-cli": "^8.0.0",
     "globals": "^16.2.0",
     "husky": "^9.1.7",
     "nodemon": "^3.0.2",
@@ -71,9 +72,10 @@
   },
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js",
-    "prestart": "npm run security:check",
-    "migrate:logs": "node scripts/dev/loggerMigrate.js",
+    "dev": "dotenv -e .env.dev -- node index.js",
+    "prod": "dotenv -e .env.prod -- node index.js",
+    "deploy:dev": "dotenv -e .env.dev -- node scripts/bot/deploy-commands.js --dev",
+    "deploy:prod": "dotenv -e .env.prod -- node scripts/bot/deploy-commands.js --global",
     "test": "vitest --config config/vitest.config.js",
     "test:watch": "vitest --watch --config config/vitest.config.js",
     "test:ui": "vitest --ui --config config/vitest.config.js",
@@ -82,17 +84,12 @@
     "test:performance": "vitest tests/performance/ --config config/vitest.config.js",
     "test:stress": "vitest tests/stress/ --config config/vitest.config.js",
     "test:all": "node scripts/dev/run-tests.js",
-    "test:optimizations": "node scripts/dev/test-optimizations.js",
     "lint": "eslint bot/ api/ core/ --config config/.eslintrc.js",
     "lint:fix": "eslint bot/ api/ core/ --config config/.eslintrc.js --fix",
-    "format": "npm run lint:fix",
     "fix:all": "npm run lint:fix",
     "check:all": "npm run lint",
-    "fix:ephemeral": "node scripts/bot/fix-ephemeral.js",
     "pre-push": "node scripts/dev/pre-commit.js",
     "security:check": "node scripts/infra/security-check.js",
-    "deploy:dev": "node scripts/bot/deploy-commands.js --dev",
-    "deploy:prod": "node scripts/bot/deploy-commands.js --global",
     "deploy:staging": "bash scripts/infra/deploy.sh staging",
     "deploy:production": "bash scripts/infra/deploy.sh production",
     "docker:build": "docker build -t soundshine-bot ./docker",
@@ -102,7 +99,9 @@
     "db:deploy": "node bot/utils/database.js",
     "prepare": "husky install",
     "postinstall": "husky install",
-    "tree": "node scripts/dev/tree.js"
+    "tree": "node scripts/dev/tree.js",
+    "context": "node scripts/tools/projectContext.js",
+    "context:md": "node scripts/tools/projectContext.js --md"
   },
   "eslintConfig": {
     "extends": [
@@ -146,4 +145,3 @@
     }
   }
 }
-

@@ -3,9 +3,9 @@ import { REST, Routes } from 'discord.js';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import process from 'process';
 import chalk from 'chalk';
-
 dotenv.config();
 
 const args = process.argv.slice(2);
@@ -13,29 +13,31 @@ const isDev = args.includes('--dev');
 const isGlobal = args.includes('--global');
 const shouldClear = args.includes('--clear');
 
-const GUILD_ID = process.env.TEST_GUILD_ID;
+const GUILD_ID = process.env.DEV_GUILD_ID;
 const { CLIENT_ID } = process.env;
-const TOKEN = process.env.BOT_TOKEN;
+const TOKEN = process.env.DISCORD_TOKEN;
 
 if (!TOKEN || !CLIENT_ID) {
-  console.error(chalk.red('❌ BOT_TOKEN ou CLIENT_ID manquant dans le fichier .env'));
+  console.error(chalk.red('❌ DISCORD_TOKEN ou CLIENT_ID manquant dans le fichier .env'));
   process.exit(1);
 }
 
 const rest = new REST({ version: '10' }).setToken(TOKEN);
 
-// Chargement des commandes
-const commands = [];
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+const commands = []; // initialisation AVANT la boucle
+const commandsDir = path.resolve('./bot/commands');
+const commandFiles = fs.readdirSync(commandsDir).filter(file => file.endsWith('.js'));
 
 for (const file of commandFiles) {
-  const filePath = path.resolve('./commands', file);
-  const command = (await import(filePath)).default;
+  const filePath = path.join(commandsDir, file);
+  const fileUrl = pathToFileURL(filePath).href;
+
+  const command = (await import(fileUrl)).default;
 
   if (command?.data) {
     commands.push(command.data.toJSON());
   } else {
-    console.warn(chalk.yellow(`⚠️  La commande ${file} n'a pas de propriété 'data'`));
+    console.warn(`⚠️ La commande ${file} n'a pas de propriété 'data'`);
   }
 }
 
