@@ -280,17 +280,17 @@ class DatabasePool {
 const db = new DatabasePool();
 
 export async function getDatabase () {
-  await dbPool.connect();
-  return dbPool;
+  await db.connect();
+  return db;
 }
 export async function disconnectDatabase () {
-  return dbPool.close();
+  return db.close();
 }
 export function isDatabaseHealthy () {
-  return dbPool.isHealthy();
+  return db.isHealthy();
 }
 export function getDatabaseStats () {
-  return dbPool.getStats();
+  return db.getStats();
 }
 export { db };
 
