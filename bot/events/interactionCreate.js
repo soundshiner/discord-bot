@@ -22,7 +22,7 @@ export default {
   name: Events.InteractionCreate,
   async execute (interaction) {
     const startTime = Date.now();
-    const { client, db, config } = AppState.getInstance();
+    const { client, db, config } = AppState;
 
     try {
       // Validation de base de l'interaction
