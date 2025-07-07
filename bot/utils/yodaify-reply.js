@@ -2,6 +2,7 @@
 import { isYodaEnabled } from './yoda-config.js';
 import { yodaify } from './yoda.js';
 import { CommandInteraction } from 'discord.js';
+import logger from '../logger.js';
 
 export function enableYodaReplyPatch () {
   const originalReply = CommandInteraction.prototype.reply;
@@ -20,8 +21,9 @@ export function enableYodaReplyPatch () {
 
       return originalReply.call(this, options);
     } catch (err) {
-      console.error('💥 Yoda reply patch error:', err);
+      logger.error('💥 Yoda reply patch error:', err);
       return originalReply.call(this, options);
     }
   };
 }
+
