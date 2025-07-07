@@ -4,7 +4,7 @@
 
 import logger from '../../bot/logger.js';
 
-class RetryManager {
+export class RetryManager {
   constructor (options = {}) {
     this.defaultOptions = {
       maxAttempts: 3,

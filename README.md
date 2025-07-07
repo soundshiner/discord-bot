@@ -110,5 +110,3 @@ Les contributions sont les bienvenues ! Voir [CONTRIBUTING.md](CONTRIBUTING.md) 
 ## 📄 Licence
 
 Ce projet est sous licence ISC. Voir [LICENSE](LICENSE) pour plus de détails.
-
-just a test.
