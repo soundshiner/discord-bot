@@ -294,9 +294,31 @@ class SecureLogger {
     const maskedMessage = this.maskSensitiveData(message, this.currentLevel, {
       maskIds: true
     });
-    const maskedError = error
-      ? this.maskObject(error, this.currentLevel, { maskIds: true })
-      : null;
+
+    // Traitement spécial pour les objets Error
+    let maskedError = null;
+    if (error) {
+      if (error instanceof Error) {
+        // Préserver les propriétés importantes de l'Error
+        maskedError = {
+          name: error.name,
+          message: this.maskSensitiveData(error.message, this.currentLevel, {
+            maskIds: true
+          }),
+          stack: this.maskSensitiveData(error.stack, this.currentLevel, {
+            maskIds: true
+          }),
+          // Masquer les autres propriétés
+          ...this.maskObject(error, this.currentLevel, { maskIds: true })
+        };
+      } else {
+        // Pour les objets non-Error, utiliser le masquage normal
+        maskedError = this.maskObject(error, this.currentLevel, {
+          maskIds: true
+        });
+      }
+    }
+
     const maskedContext = context
       ? this.maskObject(context, this.currentLevel, { maskIds: true })
       : null;
@@ -492,3 +514,4 @@ export function removeKnownToken (token) {
 }
 
 export { secureLogger };
+
