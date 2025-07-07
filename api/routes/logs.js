@@ -3,9 +3,9 @@
 // ========================================
 
 import express from 'express';
-import logger from '../../utils/logger.js';
+import logger from '../../bot/logger.js';
 import { z } from 'zod';
-import { getApiErrorMessage } from '../../utils/errorHandler.js';
+import { getApiErrorMessage } from '../../core/monitor.js';
 
 const router = express.Router();
 

@@ -1,41 +1,43 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import pingCommand from '../../commands/ping.js';
-import playCommand from '../../commands/play.js';
-import stopCommand from '../../commands/stop.js';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import pingCommand from "../../bot/commands/ping.js";
+import playCommand from "../../bot/commands/play.js";
+import stopCommand from "../../bot/commands/stop.js";
 
-vi.mock('path', () => ({
+vi.mock("path", () => ({
   default: {
-    resolve: vi.fn((...args) => args.join('/')),
-    join: vi.fn((...args) => args.join('/'))
+    resolve: vi.fn((...args) => args.join("/")),
+    join: vi.fn((...args) => args.join("/")),
+    dirname: vi.fn((path) => path.split("/").slice(0, -1).join("/")),
   },
-  resolve: vi.fn((...args) => args.join('/')),
-  join: vi.fn((...args) => args.join('/'))
+  resolve: vi.fn((...args) => args.join("/")),
+  join: vi.fn((...args) => args.join("/")),
+  dirname: vi.fn((path) => path.split("/").slice(0, -1).join("/")),
 }));
 
-vi.mock('fs', () => ({
+vi.mock("fs", () => ({
   default: {
     existsSync: vi.fn(() => true),
-    mkdirSync: vi.fn()
+    mkdirSync: vi.fn(),
   },
   existsSync: vi.fn(() => true),
-  mkdirSync: vi.fn()
+  mkdirSync: vi.fn(),
 }));
 
-describe('Discord Commands Integration', () => {
+describe("Discord Commands Integration", () => {
   let mockInteraction;
   let mockClient;
 
   beforeEach(() => {
     // Mock Discord.js interaction
     mockInteraction = {
-      commandName: 'test',
-      user: { id: '123456789', username: 'testuser' },
-      guild: { id: '987654321', name: 'Test Guild' },
-      channel: { id: '111222333', name: 'test-channel' },
+      commandName: "test",
+      user: { id: "123456789", username: "testuser" },
+      guild: { id: "987654321", name: "Test Guild" },
+      channel: { id: "111222333", name: "test-channel" },
       createdTimestamp: Date.now(),
       reply: vi.fn().mockResolvedValue({
         createdTimestamp: Date.now() + 50, // Simulate 50ms latency
-        editReply: vi.fn().mockResolvedValue(true)
+        editReply: vi.fn().mockResolvedValue(true),
       }),
       editReply: vi.fn().mockResolvedValue(true),
       deferReply: vi.fn().mockResolvedValue(true),
@@ -46,84 +48,93 @@ describe('Discord Commands Integration', () => {
         getString: vi.fn(),
         getInteger: vi.fn(),
         getBoolean: vi.fn(),
-        getSubcommand: vi.fn()
+        getSubcommand: vi.fn(),
       },
       member: {
         voice: {
           channel: {
-            id: '555555555',
-            name: 'Voice Channel'
-          }
-        }
-      }
+            id: "555555555",
+            name: "Voice Channel",
+          },
+        },
+      },
     };
 
     // Mock Discord.js client
     mockClient = {
       ws: {
-        ping: 25 // Simulate 25ms API latency
+        ping: 25, // Simulate 25ms API latency
       },
       user: {
-        id: 'bot123',
-        username: 'TestBot',
-        tag: 'TestBot#1234'
+        id: "bot123",
+        username: "TestBot",
+        tag: "TestBot#1234",
       },
       guilds: {
         cache: new Map([
-          ['987654321', { id: '987654321', name: 'Test Guild' }]
-        ])
-      }
+          ["987654321", { id: "987654321", name: "Test Guild" }],
+        ]),
+      },
     };
 
     // Attach client to interaction
     mockInteraction.client = mockClient;
   });
 
-  describe('Ping Command', () => {
-    it('should execute ping command successfully', async () => {
+  describe("Ping Command", () => {
+    it("should execute ping command successfully", async () => {
       await pingCommand.execute(mockInteraction);
 
       expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content: 'Ping...',
-        fetchReply: true
+        content: "Ping...",
+        fetchReply: true,
       });
 
       expect(mockInteraction.editReply).toHaveBeenCalledWith(
-        expect.stringContaining('🏓 Pong !')
+        expect.stringContaining("🏓 Pong !")
       );
       expect(mockInteraction.editReply).toHaveBeenCalledWith(
-        expect.stringContaining('Latence bot:')
+        expect.stringContaining("Latence bot:")
       );
       expect(mockInteraction.editReply).toHaveBeenCalledWith(
-        expect.stringContaining('Latence API:')
+        expect.stringContaining("Latence API:")
       );
     });
 
-    it('should handle ping command errors gracefully', async () => {
+    it("should handle ping command errors gracefully", async () => {
       // Mock a failure
-      mockInteraction.reply.mockRejectedValueOnce(new Error('Network error'));
+      mockInteraction.reply.mockRejectedValueOnce(new Error("Network error"));
 
-      await pingCommand.execute(mockInteraction);
+      // Mock logger to prevent console output during test
+      const originalError = console.error;
+      console.error = vi.fn();
 
-      expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content: '❌ Erreur lors de la vérification de la latence.',
-        flags: expect.any(Number)
-      });
+      try {
+        await pingCommand.execute(mockInteraction);
+
+        expect(mockInteraction.reply).toHaveBeenCalledWith({
+          content: "❌ Erreur lors de la vérification de la latence.",
+          flags: expect.any(Number),
+        });
+      } finally {
+        // Restore console.error
+        console.error = originalError;
+      }
     });
   });
 
-  describe('Play Command', () => {
-    it('should have correct command data structure', () => {
-      expect(playCommand).toHaveProperty('data');
-      expect(playCommand).toHaveProperty('execute');
-      expect(playCommand.data.name).toBe('play');
+  describe("Play Command", () => {
+    it("should have correct command data structure", () => {
+      expect(playCommand).toHaveProperty("data");
+      expect(playCommand).toHaveProperty("execute");
+      expect(playCommand.data.name).toBe("play");
       expect(playCommand.data.description).toBeDefined();
     });
 
-    it('should handle play command with valid URL', async () => {
+    it("should handle play command with valid URL", async () => {
       // Mock successful play scenario
       mockInteraction.options.getString.mockReturnValue(
-        'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
       );
 
       try {
@@ -136,15 +147,15 @@ describe('Discord Commands Integration', () => {
       }
     });
 
-    it('should handle play command with search query', async () => {
+    it("should handle play command with search query", async () => {
       const playCommand = {
         execute: vi.fn().mockResolvedValue({
           success: true,
-          message: 'Searching for: test song'
-        })
+          message: "Searching for: test song",
+        }),
       };
 
-      mockInteraction.options.getString.mockReturnValue('test song');
+      mockInteraction.options.getString.mockReturnValue("test song");
 
       await playCommand.execute(mockInteraction, mockClient);
 
@@ -155,35 +166,35 @@ describe('Discord Commands Integration', () => {
     });
   });
 
-  describe('Stop Command', () => {
-    it('should have correct command data structure', () => {
-      expect(stopCommand).toHaveProperty('data');
-      expect(stopCommand).toHaveProperty('execute');
-      expect(stopCommand.data.name).toBe('stop');
+  describe("Stop Command", () => {
+    it("should have correct command data structure", () => {
+      expect(stopCommand).toHaveProperty("data");
+      expect(stopCommand).toHaveProperty("execute");
+      expect(stopCommand.data.name).toBe("stop");
       expect(stopCommand.data.description).toBeDefined();
     });
 
-    it('should handle stop command', async () => {
+    it("should handle stop command", async () => {
       // Mock voice connection
-      mockInteraction.guildId = 'guild123';
+      mockInteraction.guildId = "guild123";
       mockInteraction.client = {
         ...mockClient,
         voice: {
           adapters: new Map([
             [
-              'guild123',
+              "guild123",
               {
-                destroy: vi.fn().mockResolvedValue(true)
-              }
-            ]
-          ])
-        }
+                destroy: vi.fn().mockResolvedValue(true),
+              },
+            ],
+          ]),
+        },
       };
 
       try {
         await stopCommand.execute(mockInteraction);
         expect(mockInteraction.reply).toHaveBeenCalledWith(
-          expect.stringContaining('⏹️')
+          expect.stringContaining("⏹️")
         );
       } catch (error) {
         // Expected to fail in test environment
@@ -192,40 +203,40 @@ describe('Discord Commands Integration', () => {
     });
   });
 
-  describe('Command Structure Validation', () => {
-    it('should validate all commands have required properties', () => {
+  describe("Command Structure Validation", () => {
+    it("should validate all commands have required properties", () => {
       const commands = [pingCommand, playCommand, stopCommand];
 
       commands.forEach((command) => {
-        expect(command).toHaveProperty('data');
-        expect(command).toHaveProperty('execute');
-        expect(typeof command.execute).toBe('function');
-        expect(command.data).toHaveProperty('name');
-        expect(command.data).toHaveProperty('description');
+        expect(command).toHaveProperty("data");
+        expect(command).toHaveProperty("execute");
+        expect(typeof command.execute).toBe("function");
+        expect(command.data).toHaveProperty("name");
+        expect(command.data).toHaveProperty("description");
       });
     });
 
-    it('should validate command data types', () => {
-      expect(pingCommand.data.name).toBe('ping');
-      expect(playCommand.data.name).toBe('play');
-      expect(stopCommand.data.name).toBe('stop');
+    it("should validate command data types", () => {
+      expect(pingCommand.data.name).toBe("ping");
+      expect(playCommand.data.name).toBe("play");
+      expect(stopCommand.data.name).toBe("stop");
 
-      expect(typeof pingCommand.data.description).toBe('string');
-      expect(typeof playCommand.data.description).toBe('string');
-      expect(typeof stopCommand.data.description).toBe('string');
+      expect(typeof pingCommand.data.description).toBe("string");
+      expect(typeof playCommand.data.description).toBe("string");
+      expect(typeof stopCommand.data.description).toBe("string");
     });
   });
 
-  describe('Error Handling', () => {
-    it('should handle command execution errors', async () => {
+  describe("Error Handling", () => {
+    it("should handle command execution errors", async () => {
       const errorCommand = {
-        execute: vi.fn().mockRejectedValue(new Error('Test error'))
+        execute: vi.fn().mockRejectedValue(new Error("Test error")),
       };
 
       try {
         await errorCommand.execute(mockInteraction, mockClient);
       } catch (error) {
-        expect(error.message).toBe('Test error');
+        expect(error.message).toBe("Test error");
       }
 
       expect(errorCommand.execute).toHaveBeenCalledWith(
@@ -234,19 +245,19 @@ describe('Discord Commands Integration', () => {
       );
     });
 
-    it('should handle missing voice channel', async () => {
+    it("should handle missing voice channel", async () => {
       const mockInteractionNoVoice = {
         ...mockInteraction,
         member: {
-          voice: null
-        }
+          voice: null,
+        },
       };
 
       const playCommand = {
         execute: vi.fn().mockResolvedValue({
           success: false,
-          message: 'You must be in a voice channel to use this command'
-        })
+          message: "You must be in a voice channel to use this command",
+        }),
       };
 
       await playCommand.execute(mockInteractionNoVoice, mockClient);

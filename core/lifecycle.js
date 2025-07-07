@@ -2,26 +2,26 @@
 // core/lifecycle.js (ESM)
 // ========================================
 
-import logger from '../utils/logger.js';
-import alertManager from '../utils/alerts.js';
-import errorHandler from '../utils/errorHandler.js';
-import { stop } from './startup.js';
+import logger from '../bot/logger.js';
+import alertManager from '../bot/utils/alerts.js';
+import errorHandler from '../core/monitor.js';
+import { stopBot } from '../bot/startup.js';
 
 export function registerProcessHandlers () {
   process.on('SIGINT', async () => {
     logger.warn('Signal SIGINT reçu. Arrêt du bot...');
-    await stop();
+    await stopBot();
   });
 
   process.on('SIGTERM', async () => {
     logger.warn('Signal SIGTERM reçu. Arrêt du bot...');
-    await stop();
+    await stopBot();
   });
 
   process.on('unhandledRejection', (reason) => {
     if (reason?.message?.includes('Shard 0 not found')) {
       logger.warn(
-        'Shard non trouvé à la fermeture, c’est probablement normal.'
+        'Shard non trouvé à la fermeture, c\'est probablement normal.'
       );
     } else {
       errorHandler.handleCriticalError(reason, 'UNHANDLED_REJECTION');
@@ -44,7 +44,6 @@ export function registerProcessHandlers () {
       { context: 'process' }
     );
     logger.error(`Exception non capturée : ${error.message}`);
-    await stop();
+    await stopBot();
   });
 }
-

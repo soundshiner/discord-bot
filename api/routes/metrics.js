@@ -4,7 +4,7 @@
 
 import { Router } from 'express';
 import os from 'os';
-import metricsCollector from '../../utils/metrics.js';
+import metricsCollector from '../../bot/utils/metrics.js';
 
 export default (client, logger) => {
   const router = Router();
@@ -70,7 +70,11 @@ export default (client, logger) => {
       };
 
       // Log de l'accès aux métriques
-      logger.custom('METRICS', `Métriques JSON demandées par ${req.ip}`, 'cyan');
+      logger.custom(
+        'METRICS',
+        `Métriques JSON demandées par ${req.ip}`,
+        'cyan'
+      );
 
       res.json(metrics);
     } catch (error) {
@@ -98,10 +102,16 @@ export default (client, logger) => {
       res.set('Content-Type', 'text/plain');
       res.send(prometheusMetrics);
 
-      logger.custom('METRICS', `Métriques Prometheus demandées par ${req.ip}`, 'cyan');
+      logger.custom(
+        'METRICS',
+        `Métriques Prometheus demandées par ${req.ip}`,
+        'cyan'
+      );
     } catch (error) {
       logger.error('Erreur route metrics Prometheus:', error);
-      res.status(500).send('# Erreur lors de la récupération des métriques Prometheus\n');
+      res
+        .status(500)
+        .send('# Erreur lors de la récupération des métriques Prometheus\n');
     }
   });
 
@@ -125,7 +135,11 @@ export default (client, logger) => {
         }
       });
 
-      logger.custom('METRICS', `Métriques JSON structurées demandées par ${req.ip}`, 'cyan');
+      logger.custom(
+        'METRICS',
+        `Métriques JSON structurées demandées par ${req.ip}`,
+        'cyan'
+      );
     } catch (error) {
       logger.error('Erreur route metrics JSON:', error);
       res.status(500).json({
@@ -168,7 +182,11 @@ export default (client, logger) => {
         data: summary
       });
 
-      logger.custom('METRICS', `Résumé des métriques demandé par ${req.ip}`, 'cyan');
+      logger.custom(
+        'METRICS',
+        `Résumé des métriques demandé par ${req.ip}`,
+        'cyan'
+      );
     } catch (error) {
       logger.error('Erreur route metrics summary:', error);
       res.status(500).json({

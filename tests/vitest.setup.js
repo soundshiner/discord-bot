@@ -1,37 +1,62 @@
-import { vi } from 'vitest';
+import { vi } from "vitest";
+
+// Variables d'environnement pour les tests
+process.env.DISCORD_TOKEN = "test-token";
+process.env.CLIENT_ID = "test-client-id";
+process.env.GUILD_ID = "test-guild-id";
+process.env.VOICE_CHANNEL_ID = "test-voice-channel";
+process.env.PLAYLIST_CHANNEL_ID = "test-playlist-channel";
+process.env.API_TOKEN = "test-api-token";
+process.env.API_PORT = "3000";
+process.env.LOG_LEVEL = "info";
+process.env.UNSPLASH_ACCESS_KEY = "test-unsplash-key";
+process.env.STREAM_URL = "http://test-stream-url.com";
+process.env.JSON_URL = "http://test-json-url.com";
+process.env.ADMIN_ROLE_ID = "test-admin-role-id";
+process.env.NODE_ENV = "test";
+
+// Mock global pour fetch si nécessaire
+global.fetch =
+  global.fetch ||
+  (() =>
+    Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({}),
+    }));
 
 // Mock Discord.js
-vi.mock('discord.js', () => ({
+vi.mock("discord.js", () => ({
   Client: vi.fn().mockImplementation(() => ({
     login: vi.fn(),
     on: vi.fn(),
     once: vi.fn(),
     user: {
       setActivity: vi.fn(),
-      setPresence: vi.fn()
+      setPresence: vi.fn(),
     },
     guilds: {
-      cache: new Map()
-    }
+      cache: new Map(),
+    },
   })),
   GatewayIntentBits: {
     Guilds: 1,
     GuildMessages: 2,
-    MessageContent: 4
+    MessageContent: 4,
   },
   ActivityType: {
     Playing: 0,
     Streaming: 1,
     Listening: 2,
     Watching: 3,
-    Competing: 5
+    Competing: 5,
   },
   MessageFlags: {
-    Ephemeral: 64
+    Ephemeral: 64,
   },
   SlashCommandBuilder: vi.fn().mockImplementation(() => {
-    let _name = '';
-    let _description = '';
+    let _name = "";
+    let _description = "";
     const builder = {};
     builder.setName = vi.fn((name) => {
       _name = name;
@@ -52,13 +77,13 @@ vi.mock('discord.js', () => ({
     builder.setDMPermission = vi.fn(() => builder);
     builder.setDefaultMemberPermissions = vi.fn(() => builder);
     builder.toJSON = vi.fn(() => ({ name: _name, description: _description }));
-    Object.defineProperty(builder, 'name', {
+    Object.defineProperty(builder, "name", {
       get: () => _name,
-      configurable: true
+      configurable: true,
     });
-    Object.defineProperty(builder, 'description', {
+    Object.defineProperty(builder, "description", {
       get: () => _description,
-      configurable: true
+      configurable: true,
     });
     return builder;
   }),
@@ -69,55 +94,55 @@ vi.mock('discord.js', () => ({
     addFields: vi.fn().mockReturnThis(),
     setTimestamp: vi.fn().mockReturnThis(),
     setFooter: vi.fn().mockReturnThis(),
-    toJSON: vi.fn().mockReturnValue({})
+    toJSON: vi.fn().mockReturnValue({}),
   })),
   ActionRowBuilder: vi.fn().mockImplementation(() => ({
     addComponents: vi.fn().mockReturnThis(),
-    toJSON: vi.fn().mockReturnValue({})
+    toJSON: vi.fn().mockReturnValue({}),
   })),
   StringSelectMenuBuilder: vi.fn().mockImplementation(() => ({
     setCustomId: vi.fn().mockReturnThis(),
     setPlaceholder: vi.fn().mockReturnThis(),
     addOptions: vi.fn().mockReturnThis(),
-    toJSON: vi.fn().mockReturnValue({})
+    toJSON: vi.fn().mockReturnValue({}),
   })),
   ButtonBuilder: vi.fn().mockImplementation(() => ({
     setCustomId: vi.fn().mockReturnThis(),
     setLabel: vi.fn().mockReturnThis(),
     setStyle: vi.fn().mockReturnThis(),
     setURL: vi.fn().mockReturnThis(),
-    toJSON: vi.fn().mockReturnValue({})
+    toJSON: vi.fn().mockReturnValue({}),
   })),
   ButtonStyle: {
     Primary: 1,
     Secondary: 2,
     Success: 3,
     Danger: 4,
-    Link: 5
-  }
+    Link: 5,
+  },
 }));
 
 // Mock Node modules
-vi.mock('fs', () => ({
+vi.mock("fs", () => ({
   readdirSync: vi.fn(),
   statSync: vi.fn(),
   existsSync: vi.fn(),
   default: {
     readdirSync: vi.fn(),
     statSync: vi.fn(),
-    existsSync: vi.fn()
-  }
+    existsSync: vi.fn(),
+  },
 }));
 
-vi.mock('path', () => ({
+vi.mock("path", () => ({
   join: vi.fn(),
   extname: vi.fn(),
-  dirname: vi.fn(),
+  dirname: vi.fn((path) => path.split("/").slice(0, -1).join("/")),
   default: {
     join: vi.fn(),
     extname: vi.fn(),
-    dirname: vi.fn()
-  }
+    dirname: vi.fn((path) => path.split("/").slice(0, -1).join("/")),
+  },
 }));
 
 // Mock utils/errorHandler
@@ -137,45 +162,45 @@ vi.mock('path', () => ({
 // }));
 
 // Mock utils modules
-vi.mock('../utils/validateURL.js', () => ({
+vi.mock("../utils/validateURL.js", () => ({
   validateURL: vi.fn().mockImplementation((url) => {
     if (!url) return false;
-    if (typeof url !== 'string') return false;
+    if (typeof url !== "string") return false;
 
     // URLs YouTube valides
-    if (url.includes('youtube.com/watch') || url.includes('youtu.be/'))
+    if (url.includes("youtube.com/watch") || url.includes("youtu.be/"))
       return true;
 
     // URLs Spotify valides (corriger pour inclure open.spotify.com)
     if (
-      url.includes('open.spotify.com/track')
-      || url.includes('open.spotify.com/playlist')
-      || url.includes('open.spotify.com/album')
+      url.includes("open.spotify.com/track") ||
+      url.includes("open.spotify.com/playlist") ||
+      url.includes("open.spotify.com/album")
     )
       return true;
 
     // URLs Twitch valides
-    if (url.includes('twitch.tv/')) return true;
+    if (url.includes("twitch.tv/")) return true;
 
     // Cas spéciaux pour les tests
-    if (url === 'https://youtube.com') return false; // Test edge case
-    if (url === 'invalid-url') return false;
-    if (url === 'not-a-url') return false;
-    if (url === 'http://invalid-domain.com') return false;
-    if (url === 'https://youtube.com/invalid') return false;
-    if (url === 'https://spotify.com/invalid') return false;
-    if (url === 'ftp://example.com/file.mp3') return false;
+    if (url === "https://youtube.com") return false; // Test edge case
+    if (url === "invalid-url") return false;
+    if (url === "not-a-url") return false;
+    if (url === "http://invalid-domain.com") return false;
+    if (url === "https://youtube.com/invalid") return false;
+    if (url === "https://spotify.com/invalid") return false;
+    if (url === "ftp://example.com/file.mp3") return false;
 
     return false;
-  })
+  }),
 }));
 
-vi.mock('../utils/checkStreamOnline.js', () => ({
+vi.mock("../utils/checkStreamOnline.js", () => ({
   checkStreamOnline: vi.fn().mockImplementation(async (url) => {
     if (!url) return false;
 
     // Cas spéciaux pour les tests
-    if (url === 'https://twitch.tv/testuser') {
+    if (url === "https://twitch.tv/testuser") {
       // Vérifier si fetch est mocké pour simuler différents comportements
       if (global.fetch) {
         try {
@@ -189,31 +214,31 @@ vi.mock('../utils/checkStreamOnline.js', () => ({
       return true; // Comportement par défaut
     }
 
-    if (url === 'invalid-url') return false;
+    if (url === "invalid-url") return false;
 
     // Comportement par défaut
-    if (url.includes('twitch.tv/')) return true;
+    if (url.includes("twitch.tv/")) return true;
     return false;
-  })
+  }),
 }));
 
-vi.mock('../utils/genres.js', () => ({
+vi.mock("../utils/genres.js", () => ({
   genres: [
-    { name: 'Pop', emoji: '🎵' },
-    { name: 'Rock', emoji: '🎸' },
-    { name: 'Jazz', emoji: '🎷' },
-    { name: 'Classical', emoji: '🎻' },
-    { name: 'Electronic', emoji: '🎧' },
-    { name: 'Hip-Hop', emoji: '🎤' },
-    { name: 'Country', emoji: '🤠' },
-    { name: 'Blues', emoji: '🎼' },
-    { name: 'Folk', emoji: '🪕' },
-    { name: 'R&B', emoji: '🎹' },
-    { name: 'Metal', emoji: '🤘' }
-  ]
+    { name: "Pop", emoji: "🎵" },
+    { name: "Rock", emoji: "🎸" },
+    { name: "Jazz", emoji: "🎷" },
+    { name: "Classical", emoji: "🎻" },
+    { name: "Electronic", emoji: "🎧" },
+    { name: "Hip-Hop", emoji: "🎤" },
+    { name: "Country", emoji: "🤠" },
+    { name: "Blues", emoji: "🎼" },
+    { name: "Folk", emoji: "🪕" },
+    { name: "R&B", emoji: "🎹" },
+    { name: "Metal", emoji: "🤘" },
+  ],
 }));
 
-vi.mock('../utils/cache.js', () => {
+vi.mock("../utils/cache.js", () => {
   const storage = {};
   const expirations = {};
 
@@ -242,43 +267,43 @@ vi.mock('../utils/cache.js', () => {
         size: Object.keys(storage).length,
         hits: 0,
         misses: 0,
-        hitRate: 0
-      })
-    }
+        hitRate: 0,
+      }),
+    },
   };
 });
 
-vi.mock('../utils/database.js', () => ({
+vi.mock("../utils/database.js", () => ({
   database: {
     query: vi.fn().mockResolvedValue([]),
     connect: vi.fn().mockResolvedValue(true),
-    disconnect: vi.fn().mockResolvedValue(true)
-  }
+    disconnect: vi.fn().mockResolvedValue(true),
+  },
 }));
 
 // Mock core/config
-vi.mock('../core/config.js', () => ({
+vi.mock("../core/config.js", () => ({
   default: {
-    DISCORD_TOKEN: 'test-token',
-    CLIENT_ID: 'test-client-id',
+    DISCORD_TOKEN: "test-token",
+    CLIENT_ID: "test-client-id",
     API_PORT: 3000,
-    BOT_TOKEN: 'test-bot-token',
-    UNSPLASH_ACCESS_KEY: 'test-unsplash-key',
-    STREAM_URL: 'test-stream-url',
-    JSON_URL: 'test-json-url',
-    ICECAST_HISTORY_URL: 'test-icecast-url',
-    ADMIN_ROLE_ID: 'test-admin-role',
-    VOICE_CHANNEL_ID: 'test-voice-channel',
-    PLAYLIST_CHANNEL_ID: 'test-playlist-channel',
-    API_TOKEN: 'test-api-token',
-    BOT_ROLE_NAME: 'soundSHINE',
-    DEV_GUILD_ID: 'test-dev-guild',
-    NODE_ENV: 'test',
+    BOT_TOKEN: "test-bot-token",
+    UNSPLASH_ACCESS_KEY: "test-unsplash-key",
+    STREAM_URL: "test-stream-url",
+    JSON_URL: "test-json-url",
+    ICECAST_HISTORY_URL: "test-icecast-url",
+    ADMIN_ROLE_ID: "test-admin-role",
+    VOICE_CHANNEL_ID: "test-voice-channel",
+    PLAYLIST_CHANNEL_ID: "test-playlist-channel",
+    API_TOKEN: "test-api-token",
+    BOT_ROLE_NAME: "soundSHINE",
+    DEV_GUILD_ID: "test-dev-guild",
+    NODE_ENV: "test",
     isDev: false,
     isProd: false,
-    roleId: '1292528573881651372',
-    channelId: '1383977293579419769'
-  }
+    roleId: "1292528573881651372",
+    channelId: "1383977293579419769",
+  },
 }));
 
 // Mock environment variables
