@@ -1,6 +1,8 @@
 import { execSync } from "child_process";
 import inquirer from "inquirer";
 import { Octokit } from "octokit";
+import dotenv from "dotenv";
+dotenv.config();
 
 async function run() {
   try {
