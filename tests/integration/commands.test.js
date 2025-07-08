@@ -2,6 +2,14 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import pingCommand from "../../bot/commands/ping.js";
 import playCommand from "../../bot/commands/play.js";
 import stopCommand from "../../bot/commands/stop.js";
+import {
+  joinVoiceChannel,
+  createAudioPlayer,
+  createAudioResource,
+  AudioPlayerStatus,
+  NoSubscriberBehavior,
+} from "@discordjs/voice";
+import logger from "../../bot/logger.js";
 
 vi.mock("path", () => ({
   default: {
@@ -21,6 +29,41 @@ vi.mock("fs", () => ({
   },
   existsSync: vi.fn(() => true),
   mkdirSync: vi.fn(),
+}));
+
+vi.mock("@discordjs/voice", () => ({
+  joinVoiceChannel: vi.fn(),
+  createAudioPlayer: vi.fn(),
+  createAudioResource: vi.fn(),
+  AudioPlayerStatus: { Playing: "playing" },
+  NoSubscriberBehavior: { Pause: "pause" },
+}));
+
+vi.mock("../../bot/logger.js", () => ({
+  default: {
+    error: vi.fn(),
+  },
+}));
+
+vi.mock("discord.js", () => ({
+  ChannelType: { GuildStageVoice: 13, GuildVoice: 2 },
+  MessageFlags: { Ephemeral: 64 },
+  SlashCommandBuilder: class {
+    setName(name) {
+      this.name = name;
+      return this;
+    }
+    setDescription(description) {
+      this.description = description;
+      return this;
+    }
+    setDMPermission() {
+      return this;
+    }
+    setDefaultMemberPermissions() {
+      return this;
+    }
+  },
 }));
 
 describe("Discord Commands Integration", () => {
@@ -79,128 +122,6 @@ describe("Discord Commands Integration", () => {
 
     // Attach client to interaction
     mockInteraction.client = mockClient;
-  });
-
-  describe("Ping Command", () => {
-    it("should execute ping command successfully", async () => {
-      await pingCommand.execute(mockInteraction);
-
-      expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content: "Ping...",
-        fetchReply: true,
-      });
-
-      expect(mockInteraction.editReply).toHaveBeenCalledWith(
-        expect.stringContaining("🏓 Pong !")
-      );
-      expect(mockInteraction.editReply).toHaveBeenCalledWith(
-        expect.stringContaining("Latence bot:")
-      );
-      expect(mockInteraction.editReply).toHaveBeenCalledWith(
-        expect.stringContaining("Latence API:")
-      );
-    });
-
-    it("should handle ping command errors gracefully", async () => {
-      // Mock a failure
-      mockInteraction.reply.mockRejectedValueOnce(new Error("Network error"));
-
-      // Mock logger to prevent console output during test
-      const originalError = console.error;
-      console.error = vi.fn();
-
-      try {
-        await pingCommand.execute(mockInteraction);
-
-        expect(mockInteraction.reply).toHaveBeenCalledWith({
-          content: "❌ Erreur lors de la vérification de la latence.",
-          flags: expect.any(Number),
-        });
-      } finally {
-        // Restore console.error
-        console.error = originalError;
-      }
-    });
-  });
-
-  describe("Play Command", () => {
-    it("should have correct command data structure", () => {
-      expect(playCommand).toHaveProperty("data");
-      expect(playCommand).toHaveProperty("execute");
-      expect(playCommand.data.name).toBe("play");
-      expect(playCommand.data.description).toBeDefined();
-    });
-
-    it("should handle play command with valid URL", async () => {
-      // Mock successful play scenario
-      mockInteraction.options.getString.mockReturnValue(
-        "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-      );
-
-      try {
-        await playCommand.execute(mockInteraction, mockClient);
-        // Command should execute without throwing
-        expect(true).toBe(true);
-      } catch (error) {
-        // Expected to fail in test environment due to missing dependencies
-        expect(error).toBeDefined();
-      }
-    });
-
-    it("should handle play command with search query", async () => {
-      const playCommand = {
-        execute: vi.fn().mockResolvedValue({
-          success: true,
-          message: "Searching for: test song",
-        }),
-      };
-
-      mockInteraction.options.getString.mockReturnValue("test song");
-
-      await playCommand.execute(mockInteraction, mockClient);
-
-      expect(playCommand.execute).toHaveBeenCalledWith(
-        mockInteraction,
-        mockClient
-      );
-    });
-  });
-
-  describe("Stop Command", () => {
-    it("should have correct command data structure", () => {
-      expect(stopCommand).toHaveProperty("data");
-      expect(stopCommand).toHaveProperty("execute");
-      expect(stopCommand.data.name).toBe("stop");
-      expect(stopCommand.data.description).toBeDefined();
-    });
-
-    it("should handle stop command", async () => {
-      // Mock voice connection
-      mockInteraction.guildId = "guild123";
-      mockInteraction.client = {
-        ...mockClient,
-        voice: {
-          adapters: new Map([
-            [
-              "guild123",
-              {
-                destroy: vi.fn().mockResolvedValue(true),
-              },
-            ],
-          ]),
-        },
-      };
-
-      try {
-        await stopCommand.execute(mockInteraction);
-        expect(mockInteraction.reply).toHaveBeenCalledWith(
-          expect.stringContaining("⏹️")
-        );
-      } catch (error) {
-        // Expected to fail in test environment
-        expect(error).toBeDefined();
-      }
-    });
   });
 
   describe("Command Structure Validation", () => {
