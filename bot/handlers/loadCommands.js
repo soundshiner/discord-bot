@@ -2,26 +2,26 @@
 // bot/handlers/loadCommands.js (ESM)
 // ========================================
 
-import fs from "node:fs";
-import path from "node:path";
-import { pathToFileURL, fileURLToPath } from "node:url";
-import logger from "../logger.js";
+import fs from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+import logger from '../logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export async function loadCommands(client, importFn = (src) => import(src)) {
+export async function loadCommands (client, importFn = (src) => import(src)) {
   try {
-    const commandsPath = path.join(__dirname, "../commands");
+    const commandsPath = path.join(__dirname, '../commands');
 
     if (!fs.existsSync(commandsPath)) {
-      logger.warn("Dossier commands introuvable.");
+      logger.warn('Dossier commands introuvable.');
       return { loaded: [], failed: [], total: 0 };
     }
 
-    const files = fs.readdirSync(commandsPath).filter((f) => f.endsWith(".js"));
+    const files = fs.readdirSync(commandsPath).filter((f) => f.endsWith('.js'));
 
     if (files.length) {
-      logger.section("Commandes");
+      logger.section('Commandes');
     }
 
     const loadedCommands = [];
@@ -29,18 +29,18 @@ export async function loadCommands(client, importFn = (src) => import(src)) {
 
     for (const file of files) {
       const filePath = path.join(commandsPath, file);
-      logger.debug("loadCommands: importing", filePath);
+      logger.debug('loadCommands: importing', filePath);
 
       try {
         const fileModule = await importFn(pathToFileURL(filePath).href);
 
         if (
-          fileModule.default?.data?.name &&
-          typeof fileModule.default.execute === "function"
+          fileModule.default?.data?.name
+          && typeof fileModule.default.execute === 'function'
         ) {
           client.commands.set(fileModule.default.data.name, fileModule.default);
           logger.custom(
-            "CMD",
+            'CMD',
             `Commande chargée : ${fileModule.default.data.name}`
           );
           loadedCommands.push(fileModule.default.data.name);
@@ -62,7 +62,7 @@ export async function loadCommands(client, importFn = (src) => import(src)) {
     return {
       loaded: loadedCommands,
       failed: failedCommands,
-      total: files.length,
+      total: files.length
     };
   } catch (err) {
     logger.error(`Erreur lors du chargement des commandes : ${err.message}`);
