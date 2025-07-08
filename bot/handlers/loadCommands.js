@@ -9,7 +9,7 @@ import logger from '../logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export async function loadCommands (client) {
+export async function loadCommands (client, importFn = (src) => import(src)) {
   try {
     const commandsPath = path.join(__dirname, '../commands');
 
@@ -32,7 +32,7 @@ export async function loadCommands (client) {
       logger.debug('loadCommands: importing', filePath);
 
       try {
-        const fileModule = await import(pathToFileURL(filePath).href);
+        const fileModule = await importFn(pathToFileURL(filePath).href);
 
         if (
           fileModule.default?.data?.name
@@ -69,3 +69,4 @@ export async function loadCommands (client) {
     return { loaded: [], failed: [], total: 0 };
   }
 }
+

@@ -9,7 +9,7 @@ import logger from '../logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export async function loadEvents (client) {
+export async function loadEvents (client, importFn = (src) => import(src)) {
   try {
     const eventsPath = path.join(__dirname, '../events');
 
@@ -32,7 +32,7 @@ export async function loadEvents (client) {
       logger.debug('loadEvents: importing', filePath);
 
       try {
-        const fileModule = await import(pathToFileURL(filePath).href);
+        const fileModule = await importFn(pathToFileURL(filePath).href);
 
         if (
           fileModule.default?.name
@@ -77,3 +77,4 @@ export async function loadEvents (client) {
     return { loaded: [], failed: [], total: 0 };
   }
 }
+
