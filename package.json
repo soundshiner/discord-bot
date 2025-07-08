@@ -71,27 +71,14 @@
     "vitest": "^3.2.4"
   },
   "scripts": {
-    "start": "node index.js",
     "dev": "dotenv -e .env.dev -- node index.js",
     "prod": "dotenv -e .env.prod -- node index.js",
     "deploy:dev": "dotenv -e .env.dev -- node scripts/bot/deploy-commands.js --dev",
     "deploy:prod": "dotenv -e .env.prod -- node scripts/bot/deploy-commands.js --global",
     "test": "vitest --config config/vitest.config.js",
-    "test:watch": "vitest --watch --config config/vitest.config.js",
-    "test:ui": "vitest --ui --config config/vitest.config.js",
-    "test:coverage": "vitest --coverage --config config/vitest.config.js",
-    "test:integration": "vitest tests/integration/ --config config/vitest.config.js",
-    "test:performance": "vitest tests/performance/ --config config/vitest.config.js",
     "test:stress": "vitest tests/stress/ --config config/vitest.config.js",
-    "test:all": "node scripts/dev/run-tests.js",
     "lint": "eslint bot/ api/ core/ --config config/.eslintrc.js",
     "lint:fix": "eslint bot/ api/ core/ --config config/.eslintrc.js --fix",
-    "fix:all": "npm run lint:fix",
-    "check:all": "npm run lint",
-    "pre-push": "node scripts/dev/pre-commit.js",
-    "security:check": "node scripts/infra/security-check.js",
-    "deploy:staging": "bash scripts/infra/deploy.sh staging",
-    "deploy:production": "bash scripts/infra/deploy.sh production",
     "docker:build": "docker build -t soundshine-bot ./docker",
     "docker:run": "docker run -p 3000:3000 soundshine-bot",
     "docker:compose": "docker-compose -f docker/docker-compose.yml up -d",
@@ -99,9 +86,8 @@
     "db:deploy": "node bot/utils/database.js",
     "prepare": "husky install",
     "postinstall": "husky install",
-    "tree": "node scripts/dev/tree.js",
-    "context": "node scripts/tools/projectContext.js",
-    "context:md": "node scripts/tools/projectContext.js --md"
+    "context:md": "node scripts/tools/projectContext.js --md",
+    "deploy:git": "node scripts/dev/deploy-git.js"
   },
   "eslintConfig": {
     "extends": [
@@ -145,3 +131,4 @@
     }
   }
 }
+

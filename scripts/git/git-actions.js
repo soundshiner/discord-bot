@@ -105,14 +105,19 @@ async function runGitActions() {
   }
 
   // Étape 3: Linting
-  if (!runCommand("npm run lint", "Vérification du linting")) {
+  if (
+    !runCommand(
+      "eslint bot/ api/ core/ --config config/.eslintrc.js",
+      "Vérification du linting"
+    )
+  ) {
     allTestsPassed = false;
   }
 
   // Étape 4: Tests avec couverture
   if (
     !runCommand(
-      "npm run test:coverage",
+      "vitest --coverage --config config/vitest.config.js",
       "Exécution des tests avec couverture",
       testEnv
     )
@@ -121,18 +126,33 @@ async function runGitActions() {
   }
 
   // Étape 5: Vérification du formatage
-  if (!runCommand("npm run fix:all", "Vérification du formatage du code")) {
+  if (
+    !runCommand(
+      "eslint bot/ api/ core/ --config config/.eslintrc.js --fix",
+      "Vérification du formatage du code"
+    )
+  ) {
     allTestsPassed = false;
   }
 
   // Étape 6: Tests d'intégration
-  if (!runCommand("npm run test:integration", "Tests d'intégration", testEnv)) {
+  if (
+    !runCommand(
+      "vitest tests/integration/ --config config/vitest.config.js",
+      "Tests d'intégration",
+      testEnv
+    )
+  ) {
     allTestsPassed = false;
   }
 
   // Étape 7: Tests de performance
   if (
-    !runCommand("npm run test:performance", "Tests de performance", testEnv)
+    !runCommand(
+      "vitest tests/performance/ --config config/vitest.config.js",
+      "Tests de performance",
+      testEnv
+    )
   ) {
     allTestsPassed = false;
   }
