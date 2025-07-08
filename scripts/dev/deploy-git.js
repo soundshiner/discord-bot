@@ -114,24 +114,39 @@ async function run() {
 
       const octokit = new Octokit({ auth: token });
 
-      // Récup owner/repo
+      // Récupération de l'URL remote
       const remoteUrl = execSync("git config --get remote.origin.url")
         .toString()
         .trim();
-      // Exemple format: git@github.com:owner/repo.git
-      const repoMatch = remoteUrl.match(/[:/]([^/]+)\/(.+)\.git$/);
+      console.log("remoteUrl:", remoteUrl);
+
+      // Regex plus permissif, accepte .git optionnel
+      const repoMatch = remoteUrl.match(/[:/]([^/]+)\/([^/]+)(?:\.git)?$/);
+
       if (!repoMatch) {
         console.error(
           "❌ Impossible de détecter owner/repo depuis l'URL remote origin."
         );
         process.exit(1);
       }
+
       const owner = repoMatch[1];
       const repo = repoMatch[2];
+
+      console.log(`Parsed owner: ${owner}, repo: ${repo}`);
+
+      // Vérification branche source différente de branche cible
+      if (currentBranch === baseBranch) {
+        console.error(
+          "❌ La branche source et la branche cible sont identiques. Impossible de créer une PR."
+        );
+        process.exit(1);
+      }
 
       console.log(
         `📦 Création PR ${currentBranch} -> ${baseBranch} sur ${owner}/${repo}...`
       );
+
       const { data: pr } = await octokit.rest.pulls.create({
         owner,
         repo,
@@ -150,5 +165,4 @@ async function run() {
 }
 
 run();
-// non mais ca va pas la trconche la dedans!
 
