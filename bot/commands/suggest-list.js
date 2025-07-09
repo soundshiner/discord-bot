@@ -10,7 +10,7 @@ import logger from '../logger.js';
 
 export default {
   data: new SlashCommandBuilder()
-    .setName('list_suggestions')
+    .setName('suggest-list')
     .setDescription('Voir toutes les suggestions de morceaux')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
   async execute (interaction) {
