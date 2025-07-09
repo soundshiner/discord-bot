@@ -8,7 +8,7 @@ const { UNSPLASH_ACCESS_KEY } = config;
 export default {
   data: new SlashCommandBuilder()
     .setName('getwallpaper')
-    .setDescription('📷 Récupère une photo aléatoire depuis Unsplash')
+    .setDescription('Récupère une photo aléatoire depuis Unsplash')
     .setDMPermission(false),
   async execute (interaction) {
     try {

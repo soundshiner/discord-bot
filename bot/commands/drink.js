@@ -16,7 +16,7 @@ const drinks = [
 export default {
   data: new SlashCommandBuilder()
     .setName('drink')
-    .setDescription('Offre un drink à quelqu’un 🍹')
+    .setDescription('Offre un drink à quelqu’un')
     .addUserOption(option =>
       option.setName('user')
         .setDescription('La personne à qui offrir un verre')

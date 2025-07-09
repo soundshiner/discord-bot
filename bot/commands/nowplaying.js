@@ -8,7 +8,7 @@ const { JSON_URL } = config;
 export default {
   data: new SlashCommandBuilder()
     .setName('nowplaying')
-    .setDescription('🎵 Affiche la chanson en cours de lecture')
+    .setDescription('Affiche la chanson en cours de lecture')
     .setDMPermission(false),
   async execute (interaction) {
     try {

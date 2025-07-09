@@ -14,7 +14,7 @@ const { STREAM_URL } = config;
 export default {
   data: new SlashCommandBuilder()
     .setName('play')
-    .setDescription('▶️ Lance le stream dans un Stage Channel')
+    .setDescription('Lance le stream dans un Stage Channel')
     .setDMPermission(false),
 
   async execute (interaction) {
