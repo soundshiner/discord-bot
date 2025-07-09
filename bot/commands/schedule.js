@@ -17,7 +17,7 @@ const __dirname = path.dirname(__filename);
 export default {
   data: new SlashCommandBuilder()
     .setName('schedule')
-    .setDescription('📅 Affiche l\'horaire des programmes')
+    .setDescription('Affiche l\'horaire des programmes')
     .setDMPermission(false),
   async execute (interaction) {
     try {
