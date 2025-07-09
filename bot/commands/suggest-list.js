@@ -24,9 +24,9 @@ export default {
       }
 
       // Retrieve from SQLite
-      const suggestions = db
-        .prepare('SELECT * FROM suggestions ORDER BY createdAt DESC LIMIT 20')
-        .all();
+      const suggestions = await db.query(
+        'SELECT * FROM suggestions ORDER BY createdAt DESC LIMIT 20'
+      );
 
       if (suggestions.length === 0) {
         return await interaction.reply({
@@ -59,3 +59,4 @@ export default {
     }
   }
 };
+

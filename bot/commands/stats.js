@@ -1,4 +1,10 @@
-import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import {
+  SlashCommandBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  MessageFlags
+} from 'discord.js';
 import axios from 'axios';
 import config from '../config.js';
 import logger from '../logger.js';
@@ -33,32 +39,13 @@ async function execute (interaction) {
     );
 
     await interaction.reply({ content: statsMessage, components: [row] });
-
-    const collector = interaction.channel.createMessageComponentCollector({
-      filter: i => i.user.id === interaction.user.id,
-      time: 15_000
-    });
-
-    collector.on('collect', async i => {
-      if (i.customId === 'show_full_stats') {
-        try {
-          await i.update({
-            content: `📊 **Stats complètes Icecast**\n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``,
-            components: []
-          });
-        } catch (err) {
-          logger.error('Erreur stats complètes:', err);
-          await i.update({
-            content: '❌ Impossible de récupérer les stats complètes.',
-            components: []
-          });
-        }
-      }
-    });
   } catch (err) {
     logger.error('Erreur récupération stats:', err);
-    return await interaction.reply('❌ Impossible de récupérer les stats du stream.');
+    return await interaction.reply(
+      '❌ Impossible de récupérer les stats du stream.'
+    );
   }
 }
 
 export default { data, execute };
+

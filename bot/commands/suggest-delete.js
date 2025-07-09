@@ -24,9 +24,10 @@ export default {
     }
 
     try {
-      const suggestion = db
-        .prepare('SELECT * FROM suggestions WHERE id = ?')
-        .get(suggestionId);
+      const [suggestion] = await db.query(
+        'SELECT * FROM suggestions WHERE id = ?',
+        [suggestionId]
+      );
 
       if (!suggestion) {
         return interaction.reply({
@@ -35,7 +36,7 @@ export default {
         });
       }
 
-      db.prepare('DELETE FROM suggestions WHERE id = ?').run(suggestionId);
+      await db.query('DELETE FROM suggestions WHERE id = ?', [suggestionId]);
 
       return await interaction.reply(
         `✅ Suggestion **${suggestion.titre}** supprimée avec succès.`
@@ -49,3 +50,4 @@ export default {
     }
   }
 };
+

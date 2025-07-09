@@ -60,9 +60,10 @@ export default {
       }
 
       // Store in SQLite
-      db.prepare(
-        'INSERT INTO suggestions (userId, username, titre, artiste, lien, genre) VALUES (?, ?, ?, ?, ?, ?)'
-      ).run(userId, username, titre, artiste, lien, genre);
+      await db.query(
+        'INSERT INTO suggestions (userId, username, titre, artiste, lien, genre) VALUES (?, ?, ?, ?, ?, ?)',
+        [userId, username, titre, artiste, lien, genre]
+      );
 
       // Send to private discord channel
       const privateChannel = interaction.client.channels.cache.get(
@@ -90,3 +91,4 @@ export default {
     }
   }
 };
+

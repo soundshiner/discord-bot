@@ -33,9 +33,10 @@ export default {
     }
 
     try {
-      const suggestion = db
-        .prepare('SELECT * FROM suggestions WHERE id = ?')
-        .get(suggestionId);
+      const [suggestion] = await db.query(
+        'SELECT * FROM suggestions WHERE id = ?',
+        [suggestionId]
+      );
 
       if (!suggestion) {
         return interaction.reply({
@@ -44,9 +45,10 @@ export default {
         });
       }
 
-      db.prepare(
-        'UPDATE suggestions SET titre = ?, artiste = ? WHERE id = ?'
-      ).run(newTitre, newArtiste, suggestionId);
+      await db.query(
+        'UPDATE suggestions SET titre = ?, artiste = ? WHERE id = ?',
+        [newTitre, newArtiste, suggestionId]
+      );
 
       return await interaction.reply(
         `✅ Suggestion **${newTitre}** modifiée avec succès.`
@@ -60,3 +62,4 @@ export default {
     }
   }
 };
+

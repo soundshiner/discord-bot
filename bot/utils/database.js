@@ -94,12 +94,15 @@ class DatabasePool {
       this.#db.exec(`
         CREATE TABLE IF NOT EXISTS suggestions (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id TEXT NOT NULL,
+          userId TEXT NOT NULL,
           username TEXT NOT NULL,
-          suggestion TEXT NOT NULL,
+          titre TEXT NOT NULL,
+          artiste TEXT NOT NULL,
+          lien TEXT,
+          genre TEXT,
           status TEXT DEFAULT 'pending',
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);
 
@@ -233,24 +236,31 @@ class DatabasePool {
   }
 
   // Méthodes utilitaires pour les opérations courantes
-  async addSuggestion (userId, username, suggestion) {
+  async addSuggestion (
+    userId,
+    username,
+    titre,
+    artiste,
+    lien = null,
+    genre = null
+  ) {
     return await this.query(
-      'INSERT INTO suggestions (user_id, username, suggestion) VALUES (?, ?, ?)',
-      [userId, username, suggestion]
+      'INSERT INTO suggestions (userId, username, titre, artiste, lien, genre) VALUES (?, ?, ?, ?, ?, ?)',
+      [userId, username, titre, artiste, lien, genre]
     );
   }
 
   async getSuggestions (status = null) {
     const sql = status
-      ? 'SELECT * FROM suggestions WHERE status = ? ORDER BY created_at DESC'
-      : 'SELECT * FROM suggestions ORDER BY created_at DESC';
+      ? 'SELECT * FROM suggestions WHERE status = ? ORDER BY createdAt DESC'
+      : 'SELECT * FROM suggestions ORDER BY createdAt DESC';
     const params = status ? [status] : [];
     return await this.query(sql, params);
   }
 
   async updateSuggestionStatus (id, status) {
     return await this.query(
-      'UPDATE suggestions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      'UPDATE suggestions SET status = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
       [status, id]
     );
   }

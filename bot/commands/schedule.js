@@ -21,7 +21,7 @@ export default {
     .setDMPermission(false),
   async execute (interaction) {
     try {
-      const schedulePath = path.join(__dirname, '../data/', 'schedule.txt');
+      const schedulePath = path.join(__dirname, '../../data/', 'schedule.txt');
       const scheduleContent = fs.readFileSync(schedulePath, 'utf-8');
 
       const sections = scheduleContent.split('🗓');
@@ -37,8 +37,14 @@ export default {
         .setDescription('Clique sur un des boutons pour afficher l\'horaire.');
 
       const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('schedule_fr').setLabel('Français').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('schedule_en').setLabel('English').setStyle(ButtonStyle.Secondary)
+        new ButtonBuilder()
+          .setCustomId('schedule_fr')
+          .setLabel('Français')
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId('schedule_en')
+          .setLabel('English')
+          .setStyle(ButtonStyle.Secondary)
       );
 
       await interaction.reply({
@@ -48,11 +54,11 @@ export default {
       });
 
       const collector = interaction.channel.createMessageComponentCollector({
-        filter: i => i.user.id === interaction.user.id,
+        filter: (i) => i.user.id === interaction.user.id,
         time: 15_000
       });
 
-      collector.on('collect', async i => {
+      collector.on('collect', async (i) => {
         if (i.customId === 'schedule_fr') {
           await i.update({
             embeds: [
@@ -84,3 +90,4 @@ export default {
     }
   }
 };
+

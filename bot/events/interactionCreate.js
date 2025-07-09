@@ -18,11 +18,51 @@ import {
 } from '../../core/utils/secureLogger.js';
 import logger from '../logger.js';
 
+// Ajout de la fonction safeStringify pour éviter l'erreur BigInt
+function safeStringify (obj) {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (key, value) => {
+    // Gérer les BigInt
+    if (typeof value === 'bigint') {
+      return value.toString();
+    }
+
+    // Gérer les références circulaires
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return '[Circular Reference]';
+      }
+      seen.add(value);
+    }
+
+    return value;
+  });
+}
+
+// Instance de RetryManager pour les interactions Discord
+const interactionRetryManager = new RetryManager({
+  maxAttempts: 3,
+  baseDelay: 1000,
+  maxDelay: 5000,
+  retryableErrors: ['ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNREFUSED'],
+  onRetry: (error, attempt, delay) => {
+    logger.warn(`Interaction retry ${attempt}: ${error.message} (${delay}ms)`);
+  }
+});
+
 export default {
   name: Events.InteractionCreate,
   async execute (interaction) {
     const startTime = Date.now();
-    const { client, db, config } = AppState;
+    const { client, db } = AppState;
+
+    logger.info(
+      `AppState - client: ${client ? 'défini' : 'undefined'}, db: ${db ? 'défini' : 'undefined'}`
+    );
+
+    // Utiliser interaction.client comme fallback si AppState.client est undefined
+    const discordClient = client || interaction.client;
+    const discordConfig = (await import('../config.js')).default;
 
     try {
       // Validation de base de l'interaction
@@ -71,7 +111,7 @@ export default {
 
         await interaction.reply({
           content: `⚠️ ${errorMessage}`,
-          ephemeral: true
+          flags: 64 // MessageFlags.Ephemeral
         });
         return;
       }
@@ -92,25 +132,69 @@ export default {
 
         await interaction.reply({
           content: `❌ ${validationResult.error}`,
-          ephemeral: true
+          flags: 64 // MessageFlags.Ephemeral
         });
         return;
       }
+
+      logger.info(`Validation réussie pour la commande ${commandName}`);
 
       // Enregistrer l'exécution de la commande
       recordCommand(userId, commandType);
 
       // Traitement de l'interaction avec retry
-      const result = await RetryManager.executeWithRetry(
-        async () => {
-          return await handleInteraction(interaction, client, db, config);
-        },
-        {
-          operation: `Interaction ${commandName}`,
-          maxRetries: 3,
-          baseDelay: 1000,
-          context: { userId, commandName, interactionType }
-        }
+      let result;
+      try {
+        result = await interactionRetryManager.execute(
+          async () => {
+            logger.info(`Début du traitement de l'interaction ${commandName}`);
+
+            // Pour les interactions de boutons, on traite directement sans retour d'objet
+            if (interaction.isButton()) {
+              logger.info('Traitement d\'un bouton');
+              const buttonResult = await handleButtonInteraction(
+                interaction,
+                discordClient,
+                db,
+                discordConfig
+              );
+              logger.info(`Résultat du bouton: ${safeStringify(buttonResult)}`);
+              return buttonResult;
+            }
+
+            logger.info('Traitement d\'une commande normale');
+            const interactionResult = await handleInteraction(
+              interaction,
+              discordClient,
+              db,
+              discordConfig
+            );
+            logger.info(
+              `Résultat de l'interaction: ${safeStringify(interactionResult)}`
+            );
+            return interactionResult;
+          },
+          {
+            maxAttempts: 3,
+            baseDelay: 1000,
+            context: { userId, commandName, interactionType }
+          }
+        );
+      } catch (error) {
+        logger.error(
+          `Erreur dans RetryManager.execute: ${error.message}`,
+          error
+        );
+        await interaction.reply({
+          content:
+            '❌ Une erreur est survenue lors du traitement de votre demande.',
+          flags: 64 // MessageFlags.Ephemeral
+        });
+        return;
+      }
+
+      logger.info(
+        `Résultat final après RetryManager: ${safeStringify(result)}`
       );
 
       // Log de performance
@@ -123,15 +207,48 @@ export default {
 
       // Réponse à l'utilisateur
       if (result && result.success) {
-        await interaction.reply({
-          content: result.message,
-          ephemeral: result.ephemeral !== false
-        });
+        logger.info(
+          `Résultat de commande: ${result.message}, deferReply: ${result.deferReply}`
+        );
+
+        // Pour les boutons, on ne fait rien car ils sont déjà traités
+        if (result.message === 'BUTTON_HANDLED') {
+          logger.info('Bouton traité avec succès');
+          return;
+        }
+
+        // Gestion spéciale pour les commandes qui nécessitent deferReply
+        if (result.deferReply) {
+          logger.info(
+            'Commande nécessite deferReply, appel de interaction.deferReply()'
+          );
+          await interaction.deferReply();
+
+          // Traitement spécial pour la commande play
+          if (result.message === 'PLAY_COMMAND') {
+            logger.info('Traitement de la commande PLAY_COMMAND');
+            await handlePlayCommand(interaction, discordClient);
+            return;
+          }
+
+          // Traitement spécial pour la commande schedule
+          if (result.message === 'SCHEDULE_COMMAND') {
+            logger.info('Traitement de la commande SCHEDULE_COMMAND');
+            await handleScheduleCommand(interaction, result);
+          }
+        } else {
+          logger.info('Réponse normale avec interaction.reply()');
+          await interaction.reply({
+            content: result.message,
+            flags: result.ephemeral !== false ? 64 : 0 // 64 = MessageFlags.Ephemeral
+          });
+        }
       } else {
+        logger.warn('Résultat de commande échoué ou null');
         await interaction.reply({
           content:
             '❌ Une erreur est survenue lors du traitement de votre demande.',
-          ephemeral: true
+          flags: 64 // MessageFlags.Ephemeral
         });
       }
     } catch (error) {
@@ -158,7 +275,7 @@ export default {
 
         await interaction.reply({
           content: errorMessage,
-          ephemeral: true
+          flags: 64 // MessageFlags.Ephemeral
         });
       } catch (replyError) {
         logger.error('Impossible d\'envoyer la réponse d\'erreur', replyError);
@@ -248,19 +365,35 @@ async function validateChatInputCommand (interaction) {
   try {
     // Validation spécifique par commande
     switch (commandName) {
-    case 'suggestion': {
-      const suggestionText = options.getString('text');
-      if (!suggestionText) {
-        return { valid: false, error: 'Le texte de suggestion est requis' };
+    case 'suggestion':
+    case 'suggest': {
+      const titre = options.getString('titre');
+      const artiste = options.getString('artiste');
+
+      if (!titre) {
+        return { valid: false, error: 'Le titre est requis' };
       }
 
-      const validatedSuggestion = validateSuggestion(
-        suggestionText,
+      if (!artiste) {
+        return { valid: false, error: 'L\'artiste est requis' };
+      }
+
+      const validatedTitre = validateSuggestion(titre, interaction.user.id);
+      const validatedArtiste = validateSuggestion(
+        artiste,
         interaction.user.id
       );
-        // Mettre à jour l'option avec la valeur validée
-      options._hoistedOptions = options._hoistedOptions.map((opt) =>
-        opt.name === 'text' ? { ...opt, value: validatedSuggestion } : opt);
+
+      // Mettre à jour les options avec les valeurs validées
+      options._hoistedOptions = options._hoistedOptions.map((opt) => {
+        if (opt.name === 'titre') {
+          return { ...opt, value: validatedTitre };
+        }
+        if (opt.name === 'artiste') {
+          return { ...opt, value: validatedArtiste };
+        }
+        return opt;
+      });
       break;
     }
 
@@ -300,6 +433,48 @@ async function validateChatInputCommand (interaction) {
         options._hoistedOptions = options._hoistedOptions.map((opt) =>
           opt.name === 'value' ? { ...opt, value: sanitizedValue } : opt);
       }
+      break;
+    }
+
+    case 'suggest-delete': {
+      const suggestionId = options.getInteger('id');
+      if (!suggestionId || suggestionId <= 0) {
+        return { valid: false, error: 'ID de suggestion invalide' };
+      }
+      break;
+    }
+
+    case 'suggest-edit': {
+      const suggestionId = options.getInteger('id');
+      if (!suggestionId || suggestionId <= 0) {
+        return { valid: false, error: 'ID de suggestion invalide' };
+      }
+
+      const newTitre = options.getString('titre');
+      const newArtiste = options.getString('artiste');
+
+      if (newTitre) {
+        const validatedTitre = validateSuggestion(
+          newTitre,
+          interaction.user.id
+        );
+        options._hoistedOptions = options._hoistedOptions.map((opt) =>
+          opt.name === 'titre' ? { ...opt, value: validatedTitre } : opt);
+      }
+
+      if (newArtiste) {
+        const validatedArtiste = validateSuggestion(
+          newArtiste,
+          interaction.user.id
+        );
+        options._hoistedOptions = options._hoistedOptions.map((opt) =>
+          opt.name === 'artiste' ? { ...opt, value: validatedArtiste } : opt);
+      }
+      break;
+    }
+
+    case 'list_suggestions': {
+      // Pas de validation spéciale nécessaire pour cette commande
       break;
     }
 
@@ -450,32 +625,63 @@ async function handleInteraction (interaction, client, db, config) {
 /**
  * Traiter une commande slash
  */
-async function handleChatInputCommand (interaction, client, _db, _config) {
+async function handleChatInputCommand (interaction, _client, _db, _config) {
   const { commandName } = interaction;
 
+  // Liste des commandes qui ont des fichiers dédiés
+  const commandsWithFiles = [
+    'ping',
+    'drink',
+    'force',
+    'play',
+    'stop',
+    'nowplaying',
+    'stats',
+    'getwallpaper',
+    'schedule',
+    'suggest',
+    'suggest-delete',
+    'suggest-edit',
+    'list_suggestions'
+  ];
+
+  // Si la commande a un fichier dédié, l'utiliser
+  if (commandsWithFiles.includes(commandName)) {
+    try {
+      const commandFile = await import(
+        `../commands/${commandName === 'list_suggestions' ? 'suggest-list' : commandName}.js`
+      );
+      return await commandFile.default.execute(interaction);
+    } catch (error) {
+      logger.error(`Erreur dans la commande ${commandName}:`, error);
+      return {
+        success: false,
+        message: `❌ Erreur lors de l'exécution de la commande ${commandName}.`,
+        ephemeral: true
+      };
+    }
+  }
+
+  // Commandes qui n'ont pas de fichiers dédiés (à traiter ici)
   switch (commandName) {
-  case 'ping':
-    return {
-      success: true,
-      message: `🏓 Pong! Latence: ${client.ws.ping}ms`,
-      ephemeral: false
-    };
-
-  case 'suggestion':
-    // Traitement de la suggestion...
-    return {
-      success: true,
-      message: '✅ Votre suggestion a été enregistrée avec succès!',
-      ephemeral: true
-    };
-
   case 'help':
     return {
       success: true,
       message:
           '📚 **Commandes disponibles:**\n'
           + '• `/ping` - Vérifier la latence\n'
-          + '• `/suggestion <texte>` - Proposer une suggestion\n'
+          + '• `/drink <utilisateur>` - Offrir un verre à quelqu\'un\n'
+          + '• `/force <on/off>` - Activer/désactiver la Force\n'
+          + '• `/play` - Lancer le stream dans un Stage Channel\n'
+          + '• `/stop` - Arrêter le stream\n'
+          + '• `/nowplaying` - Voir le statut actuel\n'
+          + '• `/stats` - Voir les statistiques du bot\n'
+          + '• `/suggest <titre> <artiste>` - Proposer une suggestion\n'
+          + '• `/suggest-delete <id>` - Supprimer une suggestion\n'
+          + '• `/suggest-edit <id>` - Modifier une suggestion\n'
+          + '• `/list_suggestions` - Voir toutes les suggestions\n'
+          + '• `/getwallpaper` - Récupérer un wallpaper aléatoire\n'
+          + '• `/schedule` - Afficher l\'horaire des programmes\n'
           + '• `/help` - Afficher cette aide',
       ephemeral: false
     };
@@ -494,19 +700,83 @@ async function handleChatInputCommand (interaction, client, _db, _config) {
 async function handleButtonInteraction (interaction, _client, _db, _config) {
   const { customId } = interaction;
 
-  if (customId.startsWith('suggestion_')) {
-    // Traitement des boutons de suggestion...
-    return {
-      success: true,
-      message: '✅ Action effectuée avec succès!',
-      ephemeral: true
-    };
-  }
+  try {
+    if (customId.startsWith('suggestion_')) {
+      // Traitement des boutons de suggestion...
+      await interaction.reply({
+        content: '✅ Action effectuée avec succès!',
+        flags: 64 // MessageFlags.Ephemeral
+      });
+      return { success: true, message: 'BUTTON_HANDLED', ephemeral: false };
+    }
 
-  return {
-    success: false,
-    message: 'Bouton non reconnu'
-  };
+    if (customId === 'schedule_fr' || customId === 'schedule_en') {
+      // Traitement des boutons de schedule
+      const scheduleService = (
+        await import('../../core/services/ScheduleService.js')
+      ).default;
+      const { EmbedBuilder } = await import('discord.js');
+
+      const language = customId === 'schedule_fr' ? 'fr' : 'en';
+      const schedule = await scheduleService.getFormattedSchedule(language);
+
+      await interaction.update({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(language === 'fr' ? 0xf1c40f : 0x2ecc71)
+            .setTitle(schedule.title)
+            .setDescription(schedule.content)
+        ],
+        components: []
+      });
+
+      return { success: true, message: 'BUTTON_HANDLED', ephemeral: false };
+    }
+
+    if (customId === 'show_full_stats') {
+      // Traitement du bouton stats complètes Icecast
+      try {
+        const axios = (await import('axios')).default;
+        const config = (await import('../config.js')).default;
+
+        const { data } = await axios.get(config.JSON_URL);
+
+        await interaction.update({
+          content: `📊 **Stats complètes Icecast**\n\`\`\`json\n${safeStringify(data)}\n\`\`\``,
+          components: []
+        });
+      } catch (error) {
+        logger.error('Erreur stats complètes:', error);
+        await interaction.update({
+          content: '❌ Impossible de récupérer les stats complètes.',
+          components: []
+        });
+      }
+
+      return { success: true, message: 'BUTTON_HANDLED', ephemeral: false };
+    }
+
+    // Bouton non reconnu
+    await interaction.reply({
+      content: '❌ Bouton non reconnu',
+      flags: 64 // MessageFlags.Ephemeral
+    });
+    return { success: true, message: 'BUTTON_HANDLED', ephemeral: false };
+  } catch (error) {
+    logger.error('Erreur lors du traitement du bouton:', error);
+    try {
+      await interaction.reply({
+        content: '❌ Une erreur est survenue lors du traitement du bouton.',
+        flags: 64 // MessageFlags.Ephemeral
+      });
+    } catch (replyError) {
+      logger.error(
+        'Impossible d\'envoyer la réponse d\'erreur pour le bouton:',
+        replyError
+      );
+    }
+    return { success: true, message: 'BUTTON_HANDLED', ephemeral: false };
+  }
 }
 
 /**
@@ -540,5 +810,39 @@ async function handleSelectMenu (_interaction, _client, _db, _config) {
     message: '✅ Sélection effectuée avec succès!',
     ephemeral: true
   };
+}
+
+/**
+ * Traiter la commande play (fonction manquante)
+ */
+async function handlePlayCommand (interaction, _client) {
+  try {
+    // Import dynamique de la commande play
+    const playCommand = await import('../commands/play.js');
+    return await playCommand.default.execute(interaction);
+  } catch (error) {
+    logger.error('Erreur lors du traitement de la commande play:', error);
+    await interaction.followUp({
+      content: '❌ Erreur lors de l\'exécution de la commande play.',
+      flags: 64
+    });
+  }
+}
+
+/**
+ * Traiter la commande schedule (fonction manquante)
+ */
+async function handleScheduleCommand (interaction, _result) {
+  try {
+    // Import dynamique de la commande schedule
+    const scheduleCommand = await import('../commands/schedule.js');
+    return await scheduleCommand.default.execute(interaction);
+  } catch (error) {
+    logger.error('Erreur lors du traitement de la commande schedule:', error);
+    await interaction.followUp({
+      content: '❌ Erreur lors de l\'exécution de la commande schedule.',
+      flags: 64
+    });
+  }
 }
 
