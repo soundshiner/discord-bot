@@ -738,6 +738,29 @@ async function handleButtonInteraction(interaction, _client, _db, _config) {
       return { success: true, message: "BUTTON_HANDLED", ephemeral: false };
     }
 
+    if (customId === "show_full_stats") {
+      // Traitement du bouton stats complètes Icecast
+      try {
+        const axios = (await import("axios")).default;
+        const config = (await import("../config.js")).default;
+
+        const { data } = await axios.get(config.JSON_URL);
+
+        await interaction.update({
+          content: `📊 **Stats complètes Icecast**\n\`\`\`json\n${safeStringify(data)}\n\`\`\``,
+          components: [],
+        });
+      } catch (error) {
+        logger.error("Erreur stats complètes:", error);
+        await interaction.update({
+          content: "❌ Impossible de récupérer les stats complètes.",
+          components: [],
+        });
+      }
+
+      return { success: true, message: "BUTTON_HANDLED", ephemeral: false };
+    }
+
     // Bouton non reconnu
     await interaction.reply({
       content: "❌ Bouton non reconnu",
