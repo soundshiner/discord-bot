@@ -19,22 +19,7 @@ cp .env.example .env
 # Éditer .env avec vos tokens Discord
 
 # 4. Démarrer le bot
-npm start
-```
-
-### Option 2 : Avec Docker
-
-```bash
-# 1. Cloner le repo
-git clone https://github.com/votre-username/soundshine-bot.git
-cd soundshine-bot
-
-# 2. Configurer .env
-cp .env.example .env
-# Éditer .env avec vos tokens
-
-# 3. Démarrer avec Docker Compose
-docker-compose up -d
+npm run dev / prod
 ```
 
 ## ⚙️ Configuration
@@ -66,19 +51,6 @@ npm start          # Démarrer en production
 npm run dev        # Démarrer en développement
 npm test           # Lancer les tests
 npm run lint       # Vérifier le code
-```
-
-## 🐳 Docker
-
-```bash
-# Build de l'image
-docker build -t soundshine-bot .
-
-# Démarrer le conteneur
-docker run -p 3000:3000 --env-file .env soundshine-bot
-
-# Ou avec Docker Compose
-docker-compose up -d
 ```
 
 ## 🔧 Développement
