@@ -12,7 +12,7 @@ git clone https://github.com/votre-username/soundshine-bot.git
 cd soundshine-bot
 
 # 2. Installer les dépendances
-npm i
+npm install
 
 # 3. Configurer les variables d'environnement
 cp .env.example .env
