@@ -8,7 +8,7 @@ Bot Discord pour la gestion de playlists et de musique.
 
 ```bash
 # 1. Cloner le repo
-git clone https://github.com/votre-username/soundshine-bot.git
+git clone https://github.com/n3m01726/soundshine-bot.git
 cd soundshine-bot
 
 # 2. Installer les dépendances
