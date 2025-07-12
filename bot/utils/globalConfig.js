@@ -73,7 +73,25 @@ const envSchema = z.object({
 
   // Variables de cache
   CACHE_TTL: z.string().regex(/^\d+$/).transform(Number).default('300000'),
-  CACHE_MAX_SIZE: z.string().regex(/^\d+$/).transform(Number).default('1000')
+  CACHE_MAX_SIZE: z.string().regex(/^\d+$/).transform(Number).default('1000'),
+
+  // Variables du détecteur de silence
+  SILENCE_THRESHOLD: z
+    .string()
+    .regex(/^\d+$/)
+    .transform(Number)
+    .default('5000'),
+  SILENCE_CHECK_INTERVAL: z
+    .string()
+    .regex(/^\d+$/)
+    .transform(Number)
+    .default('10000'),
+  SILENCE_ALERTS_ENABLED: z
+    .string()
+    .transform((val) => val !== 'false')
+    .default('true'),
+  SILENCE_ALERT_CHANNEL_ID: z.string().optional(),
+  ADMIN_USER_ID: z.string().optional()
 });
 
 // Fonction de chargement des variables d'environnement

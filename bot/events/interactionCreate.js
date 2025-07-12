@@ -57,7 +57,9 @@ export default {
     const { client, db } = AppState;
 
     logger.info(
-      `AppState - client: ${client ? 'défini' : 'undefined'}, db: ${db ? 'défini' : 'undefined'}`
+      `AppState - client: ${client ? 'défini' : 'undefined'}, db: ${
+        db ? 'défini' : 'undefined'
+      }`
     );
 
     // Utiliser interaction.client comme fallback si AppState.client est undefined
@@ -273,10 +275,19 @@ export default {
             ? '❌ Une erreur est survenue lors du traitement de votre demande.'
             : '❌ Une erreur inattendue s\'est produite.';
 
-        await interaction.reply({
-          content: errorMessage,
-          flags: 64 // MessageFlags.Ephemeral
-        });
+        // Vérifier si l'interaction a déjà été répondue avant d'essayer de répondre
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction.reply({
+            content: errorMessage,
+            flags: 64 // MessageFlags.Ephemeral
+          });
+        } else if (interaction.deferred) {
+          // Si l'interaction a été différée, utiliser editReply
+          await interaction.editReply({
+            content: errorMessage
+          });
+        }
+        // Si interaction.replied est true, ne rien faire car la réponse a déjà été envoyée
       } catch (replyError) {
         logger.error('Impossible d\'envoyer la réponse d\'erreur', replyError);
       }
@@ -642,14 +653,17 @@ async function handleChatInputCommand (interaction, _client, _db, _config) {
     'suggest',
     'suggest-delete',
     'suggest-edit',
-    'list_suggestions'
+    'list_suggestions',
+    'silence'
   ];
 
   // Si la commande a un fichier dédié, l'utiliser
   if (commandsWithFiles.includes(commandName)) {
     try {
       const commandFile = await import(
-        `../commands/${commandName === 'list_suggestions' ? 'suggest-list' : commandName}.js`
+        `../commands/${
+          commandName === 'list_suggestions' ? 'suggest-list' : commandName
+        }.js`
       );
       return await commandFile.default.execute(interaction);
     } catch (error) {
@@ -742,7 +756,9 @@ async function handleButtonInteraction (interaction, _client, _db, _config) {
         const { data } = await axios.get(config.JSON_URL);
 
         await interaction.update({
-          content: `📊 **Stats complètes Icecast**\n\`\`\`json\n${safeStringify(data)}\n\`\`\``,
+          content: `📊 **Stats complètes Icecast**\n\`\`\`json\n${safeStringify(
+            data
+          )}\n\`\`\``,
           components: []
         });
       } catch (error) {
