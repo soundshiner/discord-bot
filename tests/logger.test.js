@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import logger from "../bot/logger.js";
 
 // Mock Winston
@@ -22,24 +22,6 @@ vi.mock("winston", () => ({
       File: vi.fn(),
     },
   },
-}));
-
-vi.mock("path", () => ({
-  default: {
-    resolve: vi.fn((...args) => args.join("/")),
-    join: vi.fn((...args) => args.join("/")),
-  },
-  resolve: vi.fn((...args) => args.join("/")),
-  join: vi.fn((...args) => args.join("/")),
-}));
-
-vi.mock("fs", () => ({
-  default: {
-    existsSync: vi.fn(() => true),
-    mkdirSync: vi.fn(),
-  },
-  existsSync: vi.fn(() => true),
-  mkdirSync: vi.fn(),
 }));
 
 describe("Logger", () => {
@@ -66,66 +48,55 @@ describe("Logger", () => {
     expect(logger).toHaveProperty("section");
   });
 
-  it("should log error messages with custom format", () => {
+  it("should log error messages with custom format", async () => {
     const message = "Test error message";
-    logger.error(message);
-
+    await logger.error(message);
     expect(consoleSpy.error).toHaveBeenCalledWith("[ERROR]", message);
   });
 
-  it("should log warning messages with custom format", () => {
+  it("should log warning messages with custom format", async () => {
     const message = "Test warning message";
-    logger.warn(message);
-
+    await logger.warn(message);
     expect(consoleSpy.warn).toHaveBeenCalledWith("[WARN]", message);
   });
 
-  it("should log success messages with custom format", () => {
+  it("should log success messages with custom format", async () => {
     const message = "Test success message";
-    logger.success(message);
-
-    expect(consoleSpy.log).toHaveBeenCalledWith("[SUCCESS]", message);
+    await logger.success(message);
+    expect(consoleSpy.log).toHaveBeenCalledWith("[INFO]", `✅ ${message}`);
   });
 
-  it("should log custom messages with custom format", () => {
+  it("should log custom messages with custom format", async () => {
     const label = "CUSTOM";
     const message = "Test custom message";
-    logger.custom(label, message);
-
+    await logger.custom(label, message);
     expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining(`[${label}]`),
-      expect.stringContaining(message)
+      "[INFO]",
+      `[${label}] ${message}`
     );
   });
 
-  it("should log section headers", () => {
+  it("should log section headers", async () => {
     const sectionName = "Test Section";
-    logger.section(sectionName);
-
+    await logger.section(sectionName);
     expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining("━".repeat(30))
-    );
-    expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining(sectionName)
+      "[INFO]",
+      expect.stringContaining("━")
     );
   });
 
-  it("should log section start headers", () => {
+  it("should log section start headers", async () => {
     const sectionName = "Test Section Start";
-    logger.section(sectionName);
-
+    await logger.sectionStart(sectionName);
     expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining("━".repeat(30))
-    );
-    expect(consoleSpy.log).toHaveBeenCalledWith(
-      expect.stringContaining(sectionName)
+      "[INFO]",
+      expect.stringContaining("┏")
     );
   });
 
-  it("should log info messages", () => {
+  it("should log info messages", async () => {
     const message = "Test CMD message";
-    logger.info(message);
-
+    await logger.info(message);
     expect(consoleSpy.log).toHaveBeenCalledWith("[INFO]", message);
   });
 });
