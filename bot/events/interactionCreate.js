@@ -300,6 +300,21 @@ export default {
         }
         // Si interaction.replied est true, ne rien faire car la réponse a déjà été envoyée
       } catch (replyError) {
+        // Log spécifique pour l'erreur InteractionAlreadyReplied
+        if (
+          replyError.message &&
+          replyError.message.includes("InteractionAlreadyReplied")
+        ) {
+          logger.error("🚨 ERREUR InteractionAlreadyReplied détectée:", {
+            error: replyError.message,
+            interactionState: {
+              replied: interaction.replied,
+              deferred: interaction.deferred,
+              commandName: interaction.commandName,
+              userId: interaction.user?.id,
+            },
+          });
+        }
         logger.error("Impossible d'envoyer la réponse d'erreur", replyError);
       }
     }
@@ -849,10 +864,19 @@ async function handleSelectMenu(_interaction, _client, _db, _config) {
  */
 async function handlePlayCommand(interaction, _client) {
   try {
+    logger.info("🚀 Début de handlePlayCommand");
+
     const { voice } = interaction.member;
     const channel = voice && voice.channel;
 
+    logger.info("📡 Vérification du canal vocal:", {
+      hasVoice: !!voice,
+      hasChannel: !!channel,
+      channelType: channel?.type,
+    });
+
     // Import des modules nécessaires
+    logger.info("📦 Import des modules audio...");
     const {
       joinVoiceChannel,
       createAudioPlayer,
@@ -860,51 +884,67 @@ async function handlePlayCommand(interaction, _client) {
       AudioPlayerStatus,
       NoSubscriberBehavior,
     } = await import("@discordjs/voice");
+    logger.info("✅ Modules audio importés avec succès");
 
     const config = (await import("../config.js")).default;
     const { STREAM_URL } = config;
+    logger.info("🔗 URL du stream récupérée:", STREAM_URL ? "OK" : "MANQUANTE");
 
+    logger.info("🔌 Connexion au canal vocal...");
     const connection = joinVoiceChannel({
       channelId: channel.id,
       guildId: channel.guild.id,
       adapterCreator: channel.guild.voiceAdapterCreator,
       selfDeaf: false,
     });
+    logger.info("✅ Connexion établie");
 
+    logger.info("🎵 Création du player audio...");
     const player = createAudioPlayer({
       behaviors: {
         noSubscriber: NoSubscriberBehavior.Pause,
       },
     });
+    logger.info("✅ Player créé");
 
+    logger.info("🎼 Création de la ressource audio...");
     const resource = createAudioResource(STREAM_URL, {
       inlineVolume: true,
     });
+    logger.info("✅ Ressource audio créée");
 
+    logger.info("▶️ Lancement de la lecture...");
     player.play(resource);
     connection.subscribe(player);
+    logger.info("✅ Lecture lancée");
 
     interaction.client.audio = { connection, player };
+    logger.info("💾 Audio sauvegardé dans client.audio");
 
     // 🔁 Sécurité si le stream prend trop de temps
     const timeout = setTimeout(() => {
+      logger.warn("⏰ Timeout de 5s atteint");
       interaction.editReply("⚠️ Aucun son détecté après 5s. Lecture échouée ?");
     }, 5000);
 
     player.once(AudioPlayerStatus.Playing, async () => {
+      logger.info("🎵 Événement Playing détecté");
       clearTimeout(timeout);
       await interaction.editReply("▶️ Stream lancé dans le stage channel.");
+      logger.info("✅ Message de succès envoyé");
     });
 
     player.on("error", async (error) => {
-      clearTimeout(timeout);
       logger.error("❌ Erreur du player:", error);
+      clearTimeout(timeout);
       return await interaction.editReply(
         "❌ Erreur pendant la lecture du stream."
       );
     });
+
+    logger.info("✅ handlePlayCommand terminé avec succès");
   } catch (error) {
-    logger.error("Erreur lors du traitement de la commande play:", error);
+    logger.error("❌ Erreur lors du traitement de la commande play:", error);
     // L'interaction est déjà différée par le code principal, donc on utilise editReply
     await interaction.editReply({
       content: "❌ Erreur lors de l'exécution de la commande play.",
