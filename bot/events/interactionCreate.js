@@ -833,15 +833,72 @@ async function handleSelectMenu (_interaction, _client, _db, _config) {
  */
 async function handlePlayCommand (interaction, _client) {
   try {
-    // Import dynamique de la commande play
-    const playCommand = await import('../commands/play.js');
-    return await playCommand.default.execute(interaction);
+    const { voice } = interaction.member;
+    const channel = voice && voice.channel;
+
+    // Import des modules nécessaires
+    const {
+      joinVoiceChannel,
+      createAudioPlayer,
+      createAudioResource,
+      AudioPlayerStatus,
+      NoSubscriberBehavior
+    } = await import('@discordjs/voice');
+
+    const config = (await import('../config.js')).default;
+    const { STREAM_URL } = config;
+
+    const connection = joinVoiceChannel({
+      channelId: channel.id,
+      guildId: channel.guild.id,
+      adapterCreator: channel.guild.voiceAdapterCreator,
+      selfDeaf: false
+    });
+
+    const player = createAudioPlayer({
+      behaviors: {
+        noSubscriber: NoSubscriberBehavior.Pause
+      }
+    });
+
+    const resource = createAudioResource(STREAM_URL, {
+      inlineVolume: true
+    });
+
+    player.play(resource);
+    connection.subscribe(player);
+
+    interaction.client.audio = { connection, player };
+
+    // 🔁 Sécurité si le stream prend trop de temps
+    const timeout = setTimeout(() => {
+      interaction.editReply('⚠️ Aucun son détecté après 5s. Lecture échouée ?');
+    }, 5000);
+
+    player.once(AudioPlayerStatus.Playing, async () => {
+      clearTimeout(timeout);
+      await interaction.editReply('▶️ Stream lancé dans le stage channel.');
+    });
+
+    player.on('error', async (error) => {
+      clearTimeout(timeout);
+      logger.error('❌ Erreur du player:', error);
+      return await interaction.editReply(
+        '❌ Erreur pendant la lecture du stream.'
+      );
+    });
   } catch (error) {
     logger.error('Erreur lors du traitement de la commande play:', error);
-    await interaction.followUp({
-      content: '❌ Erreur lors de l\'exécution de la commande play.',
-      flags: 64
-    });
+    if (interaction.deferred) {
+      await interaction.editReply({
+        content: '❌ Erreur lors de l\'exécution de la commande play.'
+      });
+    } else {
+      await interaction.reply({
+        content: '❌ Erreur lors de l\'exécution de la commande play.',
+        flags: 64
+      });
+    }
   }
 }
 
