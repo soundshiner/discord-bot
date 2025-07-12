@@ -105,19 +105,14 @@ async function runGitActions() {
   }
 
   // Étape 3: Linting
-  if (
-    !runCommand(
-      "eslint bot/ api/ core/ --config config/.eslintrc.js",
-      "Vérification du linting"
-    )
-  ) {
+  if (!runCommand("npm run lint", "Vérification du linting")) {
     allTestsPassed = false;
   }
 
   // Étape 4: Tests avec couverture
   if (
     !runCommand(
-      "vitest --coverage --config config/vitest.config.js",
+      "npm run test:coverage",
       "Exécution des tests avec couverture",
       testEnv
     )
@@ -126,56 +121,28 @@ async function runGitActions() {
   }
 
   // Étape 5: Vérification du formatage
-  if (
-    !runCommand(
-      "eslint bot/ api/ core/ --config config/.eslintrc.js --fix",
-      "Vérification du formatage du code"
-    )
-  ) {
+  if (!runCommand("npm run format", "Vérification du formatage du code")) {
     allTestsPassed = false;
   }
 
   // Étape 6: Tests d'intégration
-  if (
-    !runCommand(
-      "vitest tests/integration/ --config config/vitest.config.js",
-      "Tests d'intégration",
-      testEnv
-    )
-  ) {
+  if (!runCommand("npm run test:integration", "Tests d'intégration", testEnv)) {
     allTestsPassed = false;
   }
 
   // Étape 7: Tests de performance
   if (
-    !runCommand(
-      "vitest tests/performance/ --config config/vitest.config.js",
-      "Tests de performance",
-      testEnv
-    )
+    !runCommand("npm run test:performance", "Tests de performance", testEnv)
   ) {
     allTestsPassed = false;
   }
 
   // Étape 8: Vérification de la syntaxe Node.js
   console.log(chalk.blue("\n🔍 Vérification de la syntaxe Node.js..."));
-  const jsFiles = [
-    "index.js",
-    "api/server.js",
-    "core/config.js",
-    "core/loadFiles.js",
-    "utils/logger.js",
-    "utils/errorHandler.js",
-  ];
-
-  for (const file of jsFiles) {
-    if (existsSync(file)) {
-      if (
-        !runCommand(`node --check ${file}`, `Vérification syntaxe: ${file}`)
-      ) {
-        allTestsPassed = false;
-      }
-    }
+  if (
+    !runCommand("npm run check-syntax", "Vérification de la syntaxe Node.js")
+  ) {
+    allTestsPassed = false;
   }
 
   // Étape 9: Vérification de secrets potentiels
