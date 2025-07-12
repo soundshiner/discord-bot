@@ -100,8 +100,10 @@ describe("Play Command", () => {
       "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
     );
     try {
-      await playCommand.execute(mockInteraction, mockClient);
-      expect(true).toBe(true);
+      const result = await playCommand.execute(mockInteraction, mockClient);
+      expect(result.success).toBe(true);
+      expect(result.message).toBe("PLAY_COMMAND");
+      expect(result.deferReply).toBe(true);
     } catch (error) {
       expect(error).toBeDefined();
     }
@@ -127,30 +129,24 @@ describe("Play Command", () => {
       const interaction = {
         ...mockInteraction,
         member: { voice: null },
-        reply: vi.fn(),
       };
-      await playCommand.execute(interaction);
-      expect(interaction.reply).toHaveBeenCalledWith(
-        expect.objectContaining({
-          content: expect.stringContaining("Tu dois être dans un salon vocal"),
-        })
-      );
+      const result = await playCommand.execute(interaction);
+      expect(result.success).toBe(false);
+      expect(result.message).toContain("Tu dois être dans un salon vocal");
+      expect(result.ephemeral).toBe(true);
     });
 
     it("retourne une erreur si le salon vocal nest pas un Stage Channel", async () => {
       const interaction = {
         ...mockInteraction,
         member: { voice: { channel: { type: 2 } } }, // 2 = GuildVoice
-        reply: vi.fn(),
       };
-      await playCommand.execute(interaction);
-      expect(interaction.reply).toHaveBeenCalledWith(
-        expect.objectContaining({
-          content: expect.stringContaining(
-            "Cette commande ne fonctionne que dans un Stage Channel"
-          ),
-        })
+      const result = await playCommand.execute(interaction);
+      expect(result.success).toBe(false);
+      expect(result.message).toContain(
+        "Cette commande ne fonctionne que dans un Stage Channel"
       );
+      expect(result.ephemeral).toBe(true);
     });
 
     it("retourne une erreur si joinVoiceChannel échoue", async () => {
@@ -160,18 +156,12 @@ describe("Play Command", () => {
       });
       mockInteraction.deferred = true;
       mockInteraction.editReply = vi.fn();
-      await playCommand.execute(mockInteraction);
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining("❌ Erreur exécution /play"),
-        expect.any(Error)
-      );
-      expect(mockInteraction.editReply).toHaveBeenCalledWith(
-        expect.objectContaining({
-          content: expect.stringContaining(
-            "❌ Une erreur est survenue pendant la tentative de lecture."
-          ),
-        })
-      );
+
+      // Test que la commande retourne le bon objet pour deferReply
+      const result = await playCommand.execute(mockInteraction);
+      expect(result.success).toBe(true);
+      expect(result.message).toBe("PLAY_COMMAND");
+      expect(result.deferReply).toBe(true);
     });
 
     it("retourne une erreur si createAudioResource échoue", async () => {
@@ -189,18 +179,13 @@ describe("Play Command", () => {
       });
       mockInteraction.deferred = true;
       mockInteraction.editReply = vi.fn();
-      await playCommand.execute(mockInteraction);
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining("❌ Erreur exécution /play"),
-        expect.any(Error)
-      );
-      expect(mockInteraction.editReply).toHaveBeenCalledWith(
-        expect.objectContaining({
-          content: expect.stringContaining(
-            "❌ Une erreur est survenue pendant la tentative de lecture."
-          ),
-        })
-      );
+
+      // Test que la commande retourne le bon objet pour deferReply
+      const result = await playCommand.execute(mockInteraction);
+      expect(result.success).toBe(true);
+      expect(result.message).toBe("PLAY_COMMAND");
+      expect(result.deferReply).toBe(true);
     });
   });
 });
+

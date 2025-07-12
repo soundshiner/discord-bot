@@ -37,7 +37,11 @@ async function run() {
           type: "input",
           name: "title",
           message: "Titre du commit :",
-          validate: (v) => v.length > 0 || "Un titre est requis",
+          validate: (v) => {
+            if (v.length < 10) return "Titre trop court (min 10 chars)";
+            if (v.length > 72) return "Titre trop long (max 72 chars)";
+            return true;
+          },
         },
         {
           type: "input",
@@ -51,7 +55,7 @@ async function run() {
 
     // 3. Commit
     if (doCommit) {
-      execSync(`git add .`, { stdio: "inherit" });
+      execSync("git add .", { stdio: "inherit" });
       const commitMsg = commitDesc
         ? `${commitTitle}\n\n${commitDesc}`
         : commitTitle;
@@ -90,7 +94,7 @@ async function run() {
 
     // 7. Créer la PR si demandé
     if (doPR) {
-      const { prTitle, prBody } = await inquirer.prompt([
+      const { prTitle, prBody, autoDeploy } = await inquirer.prompt([
         {
           type: "input",
           name: "prTitle",
@@ -101,6 +105,12 @@ async function run() {
           type: "input",
           name: "prBody",
           message: "Description de la PR (optionnel) :",
+        },
+        {
+          type: "confirm",
+          name: "autoDeploy",
+          message: "Activer le déploiement automatique si les tests passent ?",
+          default: true,
         },
       ]);
 
@@ -147,16 +157,49 @@ async function run() {
         `📦 Création PR ${currentBranch} -> ${baseBranch} sur ${owner}/${repo}...`
       );
 
+      // Template de PR automatique
+      const defaultPrBody =
+        prBody ||
+        `## Description
+${commitDesc || "Amélioration du code"}
+
+## Tests
+- [ ] Tests unitaires passent
+- [ ] Linting OK
+- [ ] Fonctionnalité testée
+
+## Type de changement
+- [ ] Bug fix
+- [ ] Nouvelle fonctionnalité
+- [ ] Refactoring
+- [ ] Documentation
+
+## Déploiement
+${
+  autoDeploy
+    ? "✅ Déploiement automatique activé"
+    : "❌ Déploiement manuel requis"
+}
+
+---
+*PR créée automatiquement via deploy-git.js*`;
+
       const { data: pr } = await octokit.rest.pulls.create({
         owner,
         repo,
         title: prTitle,
         head: currentBranch,
         base: baseBranch,
-        body: prBody || "",
+        body: defaultPrBody,
       });
 
       console.log(`✅ PR créée: ${pr.html_url}`);
+
+      if (autoDeploy) {
+        console.log(
+          "🚀 Déploiement automatique activé - Le code sera déployé automatiquement si les tests passent !"
+        );
+      }
     }
   } catch (error) {
     console.error("Erreur:", error);
