@@ -205,4 +205,3 @@ jobs:
             **Auteur:** ${{ github.event.pull_request.user.login }}
 
             Vérifiez les logs GitHub Actions.
-

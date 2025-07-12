@@ -89,6 +89,7 @@
     "prepare": "husky install",
     "postinstall": "husky install",
     "context:md": "node scripts/tools/projectContext.js --md",
-    "deploy:git": "node scripts/dev/deploy-git.js"
+    "deploy:git": "node scripts/dev/deploy-git.js",
+    "pre-push":"node scripts/dev/pre-commit.js"
   }
 }
