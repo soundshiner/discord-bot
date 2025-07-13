@@ -88,7 +88,9 @@
     "format": "eslint bot/ api/ core/ --config config/.eslintrc.js --fix",
     "check-syntax": "node --check index.js api/server.js core/config.js core/loadFiles.js utils/logger.js utils/errorHandler.js",
     "security:audit": "node scripts/security/audit.js",
-    "security:check": "npm run security:audit && npm run test:security",
+    "security:fix": "node scripts/security/fix-permissions.js",
+    "security:check": "npm run security:fix && npm run security:audit && npm run test:security",
+    "deploy:secure": "NODE_ENV=production node scripts/security/deploy-secure.js",
     "docker:build": "docker build -t soundshine-bot ./docker",
     "docker:run": "docker run -p 3000:3000 soundshine-bot",
     "docker:compose": "docker-compose -f docker/docker-compose.yml up -d",
@@ -98,7 +100,10 @@
     "postinstall": "husky install",
     "context:md": "node scripts/tools/projectContext.js --md",
     "deploy:git": "node scripts/dev/deploy-git.js",
-    "pre-push": "node scripts/dev/pre-commit.js"
+    "pre-push": "node scripts/dev/pre-commit.js",
+    "cleanup": "node scripts/dev/cleanup.js",
+    "cleanup:dry": "node scripts/dev/cleanup.js --dry-run",
+    "clean": "npm run cleanup"
   }
 }
 
