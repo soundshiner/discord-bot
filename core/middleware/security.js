@@ -4,7 +4,11 @@
 
 import rateLimiter from '../utils/rateLimiter.js';
 import validator from '../utils/validation.js';
-import secureLogger from '../utils/secureLogger.js';
+import {
+  secureLog,
+  secureError,
+  secureSecurityAlert
+} from '../utils/secureLogger.js';
 
 /**
  * Middleware de validation des entrées
@@ -42,7 +46,7 @@ export function validateInput (req, res, next) {
 
     next();
   } catch (error) {
-    secureLogger.secureError('Erreur de validation des entrées', error, {
+    secureError('Erreur de validation des entrées', error, {
       url: req.url,
       method: req.method,
       ip: req.ip
@@ -59,7 +63,7 @@ export function apiRateLimit (req, res, next) {
   const result = rateLimiter.canExecute(clientId, 'api');
 
   if (!result.allowed) {
-    secureLogger.secureSecurityAlert('Rate limit API dépassé', {
+    secureSecurityAlert('Rate limit API dépassé', {
       clientId,
       url: req.url,
       method: req.method,
@@ -118,7 +122,7 @@ export function xssProtection (req, res, next) {
     || checkForXSS(req.query)
     || checkForXSS(req.params)
   ) {
-    secureLogger.secureSecurityAlert('Tentative XSS détectée', {
+    secureSecurityAlert('Tentative XSS détectée', {
       url: req.url,
       method: req.method,
       ip: req.ip,
@@ -158,7 +162,7 @@ export function sqlInjectionProtection (req, res, next) {
     || checkForSQLInjection(req.query)
     || checkForSQLInjection(req.params)
   ) {
-    secureLogger.secureSecurityAlert('Tentative d\'injection SQL détectée', {
+    secureSecurityAlert('Tentative d\'injection SQL détectée', {
       url: req.url,
       method: req.method,
       ip: req.ip,
@@ -172,58 +176,148 @@ export function sqlInjectionProtection (req, res, next) {
 }
 
 /**
- * Middleware de validation des headers
+ * Middleware de protection contre les attaques par déni de service
  */
-export function validateHeaders (req, res, next) {
-  // Vérifier le Content-Type pour les requêtes POST/PUT
-  if ((req.method === 'POST' || req.method === 'PUT') && req.body) {
-    const contentType = req.get('Content-Type');
-    if (!contentType || !contentType.includes('application/json')) {
-      return res.status(400).json({ error: 'Content-Type invalide' });
+export function dosProtection (req, res, next) {
+  const clientIP = req.ip;
+  const now = Date.now();
+  const windowMs = 60000; // 1 minute
+  const maxRequests = 50; // Limite par IP
+
+  // Nettoyer les anciennes entrées
+  if (!req.app.locals.dosTracker) {
+    req.app.locals.dosTracker = new Map();
+  }
+
+  const tracker = req.app.locals.dosTracker;
+  const windowStart = now - windowMs;
+
+  // Nettoyer les anciennes entrées
+  for (const [ip, requests] of tracker.entries()) {
+    const recentRequests = requests.filter(
+      (timestamp) => timestamp > windowStart
+    );
+    if (recentRequests.length === 0) {
+      tracker.delete(ip);
+    } else {
+      tracker.set(ip, recentRequests);
     }
   }
 
-  // Vérifier la taille du body
-  const contentLength = parseInt(req.get('Content-Length') || '0', 10);
-  if (contentLength > 1024 * 1024) {
-    // 1MB max
-    return res.status(413).json({ error: 'Payload trop volumineux' });
+  // Vérifier les requêtes pour cette IP
+  const clientRequests = tracker.get(clientIP) || [];
+  const recentClientRequests = clientRequests.filter(
+    (timestamp) => timestamp > windowStart
+  );
+
+  if (recentClientRequests.length >= maxRequests) {
+    secureSecurityAlert('Attaque DoS détectée', {
+      ip: clientIP,
+      requests: recentClientRequests.length,
+      userAgent: req.get('User-Agent')
+    });
+
+    return res.status(429).json({
+      error: 'Trop de requêtes',
+      retryAfter: Math.ceil(windowMs / 1000),
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // Ajouter la requête actuelle
+  recentClientRequests.push(now);
+  tracker.set(clientIP, recentClientRequests);
+
+  next();
+}
+
+/**
+ * Middleware de validation des timeouts
+ */
+export function timeoutProtection (timeoutMs = 30000) {
+  return (req, res, next) => {
+    const timeout = setTimeout(() => {
+      if (!res.headersSent) {
+        secureSecurityAlert('Timeout de requête', {
+          url: req.url,
+          method: req.method,
+          ip: req.ip,
+          timeout: timeoutMs
+        });
+
+        res.status(408).json({
+          error: 'Timeout de la requête',
+          timestamp: new Date().toISOString()
+        });
+      }
+    }, timeoutMs);
+
+    // Nettoyer le timeout si la requête se termine normalement
+    res.on('finish', () => clearTimeout(timeout));
+    res.on('close', () => clearTimeout(timeout));
+
+    next();
+  };
+}
+
+/**
+ * Middleware de validation des headers de sécurité
+ */
+export function validateHeaders (req, res, next) {
+  const suspiciousHeaders = [
+    'x-forwarded-for',
+    'x-real-ip',
+    'x-forwarded-proto',
+    'x-forwarded-host'
+  ];
+
+  const hasSuspiciousHeaders = suspiciousHeaders.some(
+    (header) =>
+      req.headers[header] && !req.headers[header].match(/^[\w\-.,:]+$/)
+  );
+
+  if (hasSuspiciousHeaders) {
+    secureSecurityAlert('Headers suspects détectés', {
+      url: req.url,
+      method: req.method,
+      ip: req.ip,
+      headers: Object.keys(req.headers)
+    });
+
+    return res.status(400).json({
+      error: 'Headers invalides',
+      timestamp: new Date().toISOString()
+    });
   }
 
   next();
 }
 
 /**
- * Middleware de logging sécurisé
+ * Middleware de logging sécurisé des requêtes
  */
 export function secureRequestLogging (req, res, next) {
   const startTime = Date.now();
 
-  // Log de la requête entrante
-  secureLogger.secureLog('info', `Requête ${req.method} ${req.url}`, {
-    method: req.method,
-    url: req.url,
-    ip: req.ip,
-    userAgent: req.get('User-Agent'),
-    timestamp: new Date().toISOString()
-  });
-
-  // Intercepter la réponse
-  const originalSend = res.send;
-  res.send = function (data) {
+  res.on('finish', () => {
     const duration = Date.now() - startTime;
-
-    // Log de la réponse
-    secureLogger.secureLog('info', `Réponse ${req.method} ${req.url}`, {
+    const logData = {
       method: req.method,
       url: req.url,
       statusCode: res.statusCode,
-      duration: `${duration}ms`,
-      timestamp: new Date().toISOString()
-    });
+      duration,
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      contentLength: req.get('content-length') || 0
+    };
 
-    originalSend.call(this, data);
-  };
+    // Log selon le statut de la réponse
+    if (res.statusCode >= 400) {
+      secureError('Requête échouée', null, logData);
+    } else {
+      secureLog('info', 'Requête traitée', logData);
+    }
+  });
 
   next();
 }
@@ -246,16 +340,12 @@ export function validatePermissions (requiredPermissions = []) {
           userPermissions.includes(permission));
 
         if (!hasPermission) {
-          secureLogger.secureAudit(
-            'Tentative d\'accès non autorisé',
-            req.user.id,
-            {
-              url: req.url,
-              method: req.method,
-              requiredPermissions,
-              userPermissions
-            }
-          );
+          secureSecurityAlert('Tentative d\'accès non autorisé', req.user.id, {
+            url: req.url,
+            method: req.method,
+            requiredPermissions,
+            userPermissions
+          });
 
           return res.status(403).json({ error: 'Permissions insuffisantes' });
         }
@@ -263,7 +353,7 @@ export function validatePermissions (requiredPermissions = []) {
 
       next();
     } catch (error) {
-      secureLogger.secureError('Erreur de validation des permissions', error, {
+      secureError('Erreur de validation des permissions', error, {
         url: req.url,
         method: req.method,
         userId: req.user?.id
@@ -286,7 +376,7 @@ export function validateDiscordToken (req, res, next) {
 
     // Valider le format du token
     if (!token.startsWith('MTA') && !token.startsWith('OTk')) {
-      secureLogger.secureSecurityAlert('Token Discord invalide', {
+      secureSecurityAlert('Token Discord invalide', {
         url: req.url,
         method: req.method,
         ip: req.ip
@@ -299,39 +389,13 @@ export function validateDiscordToken (req, res, next) {
     req.discordToken = token;
     next();
   } catch (error) {
-    secureLogger.secureError('Erreur de validation du token Discord', error, {
+    secureError('Erreur de validation du token Discord', error, {
       url: req.url,
       method: req.method,
       ip: req.ip
     });
     res.status(500).json({ error: 'Erreur de validation du token' });
   }
-}
-
-/**
- * Middleware de protection contre les attaques par déni de service
- */
-export function dosProtection (req, res, next) {
-  const clientId = req.ip || req.connection.remoteAddress;
-  const result = rateLimiter.canExecute(clientId, 'critical');
-
-  if (!result.allowed) {
-    secureLogger.secureSecurityAlert('Attaque DoS potentielle détectée', {
-      clientId,
-      url: req.url,
-      method: req.method,
-      userAgent: req.get('User-Agent'),
-      remainingTime: result.remainingTime
-    });
-
-    return res.status(429).json({
-      error: 'Trop de requêtes critiques',
-      retryAfter: Math.ceil(result.remainingTime / 1000)
-    });
-  }
-
-  rateLimiter.recordExecution(clientId, 'critical');
-  next();
 }
 
 /**
@@ -366,7 +430,7 @@ export function validateFileUpload (req, res, next) {
       ];
 
       if (!allowedTypes.includes(file.mimetype)) {
-        secureLogger.secureSecurityAlert('Type de fichier non autorisé', {
+        secureSecurityAlert('Type de fichier non autorisé', {
           filename: sanitizedFilename,
           mimetype: file.mimetype,
           size: file.size,
@@ -382,7 +446,7 @@ export function validateFileUpload (req, res, next) {
 
     next();
   } catch (error) {
-    secureLogger.secureError('Erreur de validation de fichier', error, {
+    secureError('Erreur de validation de fichier', error, {
       url: req.url,
       method: req.method,
       ip: req.ip
@@ -437,3 +501,4 @@ export const adminSecurityMiddleware = [
   dosProtection,
   validatePermissions(['ManageGuild', 'ManageRoles'])
 ];
+

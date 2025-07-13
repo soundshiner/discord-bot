@@ -101,6 +101,11 @@ export function validateApiKey (req, res, next) {
       || req.headers.authorization?.replace('Bearer ', '');
 
     if (!apiKey) {
+      logger.warn('Tentative d\'accès API sans clé', {
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        path: req.path
+      });
       return res.status(401).json({
         error: 'Clé API manquante',
         timestamp: new Date().toISOString()
@@ -112,15 +117,47 @@ export function validateApiKey (req, res, next) {
       'x-api-key': apiKey
     });
 
-    // Ici vous pouvez ajouter une validation contre une base de données
-    // ou une liste de clés autorisées
+    // Liste des clés API autorisées (à déplacer dans .env en production)
+    const validApiKeys = new Set(
+      [
+        process.env.ADMIN_API_KEY,
+        process.env.BOT_API_KEY,
+        process.env.API_TOKEN
+      ].filter(Boolean)
+    ); // Filtrer les valeurs undefined
+
+    // Vérifier si la clé est autorisée
+    if (!validApiKeys.has(validApiKey)) {
+      logger.warn('Tentative d\'accès API avec clé invalide', {
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        path: req.path,
+        keyPrefix: `${validApiKey.substring(0, 8)  }...`
+      });
+      return res.status(401).json({
+        error: 'Clé API invalide',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Log de l'accès autorisé
+    logger.info('Accès API autorisé', {
+      ip: req.ip,
+      path: req.path,
+      keyPrefix: `${validApiKey.substring(0, 8)  }...`
+    });
 
     req.apiKey = validApiKey;
     next();
   } catch (error) {
     if (error instanceof z.ZodError) {
+      logger.warn('Format de clé API invalide', {
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        path: req.path
+      });
       return res.status(401).json({
-        error: 'Clé API invalide',
+        error: 'Format de clé API invalide',
         timestamp: new Date().toISOString()
       });
     }
@@ -244,3 +281,4 @@ function formatBytes (bytes) {
 
 // Export des schémas pour utilisation directe
 export { userInputSchema, playlistSchema, apiKeySchema };
+

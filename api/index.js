@@ -6,6 +6,15 @@ import helmetMiddleware from './middlewares/helmet.js';
 import loggingMiddleware from './middlewares/loggingAPI.js';
 import loadRoutes from './routes.js';
 import monitor from '../core/monitor.js';
+import {
+  validateInput,
+  xssProtection,
+  sqlInjectionProtection,
+  validateHeaders,
+  secureRequestLogging,
+  dosProtection,
+  timeoutProtection
+} from '../core/middleware/security.js';
 
 class WebServer {
   constructor (client, logger) {
@@ -18,8 +27,17 @@ class WebServer {
 
   setupMiddleware () {
     try {
+      // Middlewares de sécurité critiques
       this.app.use(helmetMiddleware);
       this.app.use(corsMiddleware);
+      this.app.use(dosProtection);
+      this.app.use(timeoutProtection(30000)); // 30 secondes max
+      this.app.use(validateHeaders);
+      this.app.use(xssProtection);
+      this.app.use(sqlInjectionProtection);
+      this.app.use(validateInput);
+
+      // Rate limiting standard
       this.app.use(
         rateLimit({
           windowMs: 15 * 60 * 1000,
@@ -30,8 +48,13 @@ class WebServer {
           legacyHeaders: false
         })
       );
+
+      // Parsing des données
       this.app.use(express.json({ limit: '10mb' }));
       this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+      // Logging sécurisé
+      this.app.use(secureRequestLogging);
       this.app.use(loggingMiddleware());
     } catch (error) {
       monitor.handleCriticalError(error, 'MIDDLEWARE_SETUP');
@@ -51,8 +74,43 @@ class WebServer {
 
   setupErrorHandling () {
     this.app.use((err, req, res, _next) => {
-      monitor.handleApiError(err, req, res);
+      // Générer un ID d'erreur unique
+      const errorId = this.generateErrorId();
+
+      // Log sécurisé de l'erreur
+      this.logger.error(`[${errorId}] Erreur API: ${err.message}`, {
+        errorId,
+        url: req.url,
+        method: req.method,
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      });
+
+      // Réponse sécurisée (ne pas exposer les détails internes)
+      const response = {
+        error: 'Erreur interne du serveur',
+        errorId,
+        timestamp: new Date().toISOString()
+      };
+
+      // En développement, ajouter plus de détails
+      if (process.env.NODE_ENV === 'development') {
+        response.debug = {
+          message: err.message,
+          stack: err.stack
+        };
+      }
+
+      res.status(500).json(response);
     });
+  }
+
+  generateErrorId () {
+    return (
+      Math.random().toString(36).substring(2, 15)
+      + Math.random().toString(36).substring(2, 15)
+    );
   }
 
   start (port) {
@@ -93,3 +151,4 @@ class WebServer {
 }
 
 export default WebServer;
+

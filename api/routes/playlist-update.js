@@ -9,6 +9,15 @@ const playlistSchema = z.object({
   topic: z.string().min(1, 'Topic is required')
 });
 
+// Fonction pour s'assurer que les accents sont correctement encodés
+const ensureAccentEncoding = (text) => {
+  // S'assurer que le texte est correctement encodé en UTF-8
+  // et normalisé pour éviter les problèmes avec Discord
+  return text
+    .normalize('NFC') // Normalisation Unicode pour s'assurer que les accents sont bien formés
+    .trim(); // Supprimer les espaces en début/fin
+};
+
 export default (client, logger) => {
   const router = express.Router();
 
@@ -31,6 +40,11 @@ export default (client, logger) => {
         });
       }
       const { playlist, topic } = parseResult.data;
+
+      // Normalisation du topic pour gérer les accents
+      const normalizedTopic = ensureAccentEncoding(topic);
+      logger.info(`Topic original: ${topic}`);
+      logger.info(`Topic normalisé: ${normalizedTopic}`);
 
       let playlistSent = false;
       let stageTopic = false;
@@ -98,8 +112,10 @@ export default (client, logger) => {
             '🔄 Étape 5a: Aucune instance active, création en cours...'
           );
           try {
-            await stageChannel.createStageInstance({ topic });
-            logger.info(`✅ Instance de stage créée avec sujet: ${topic}`);
+            await stageChannel.createStageInstance({ topic: normalizedTopic });
+            logger.info(
+              `✅ Instance de stage créée avec sujet: ${normalizedTopic}`
+            );
             stageTopic = true;
           } catch (createErr) {
             logger.error(`❌ Erreur lors de la création: ${createErr.message}`);
@@ -111,8 +127,8 @@ export default (client, logger) => {
             '🔄 Étape 5b: Instance existante, modification du sujet...'
           );
           try {
-            await stageInstance.edit({ topic });
-            logger.info(`✅ Sujet modifié: ${topic}`);
+            await stageInstance.edit({ topic: normalizedTopic });
+            logger.info(`✅ Sujet modifié: ${normalizedTopic}`);
             stageTopic = true;
           } catch (editErr) {
             logger.error(
@@ -133,7 +149,7 @@ export default (client, logger) => {
             status: 'PARTIAL',
             message: 'Playlist envoyée mais échec du stage channel.',
             playlist,
-            topic,
+            topic: normalizedTopic,
             details: {
               playlistSent: true,
               stageTopic: false,
@@ -150,7 +166,7 @@ export default (client, logger) => {
         status: 'OK',
         message: 'Playlist et stage mis à jour avec succès.',
         playlist,
-        topic,
+        topic: normalizedTopic,
         details: {
           playlistSent,
           stageTopic
@@ -168,3 +184,4 @@ export default (client, logger) => {
 
   return router;
 };
+
