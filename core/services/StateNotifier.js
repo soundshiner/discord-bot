@@ -44,6 +44,7 @@ export default class StateNotifier {
         // Logger pas dispo ici, on peut throw ou ignorer pr l’instant
         // Dans le service principal, on utilisera logger.error
         // Mais ici on peut console.error (optionnel)
+        // eslint-disable-next-line no-console
         console.error(`Erreur dans listener ${component}:`, err);
       }
     }
