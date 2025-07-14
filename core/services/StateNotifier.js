@@ -4,12 +4,12 @@ export default class StateNotifier {
   #listeners = new Map();
 
   /**
-     * S’abonner à un composant
-     * @param {string} component
-     * @param {(state: object) => void} callback
-     * @returns {() => void} fonction pour se désabonner
-     */
-  subscribe (component, callback) {
+   * S’abonner à un composant
+   * @param {string} component
+   * @param {(state: object) => void} callback
+   * @returns {() => void} fonction pour se désabonner
+   */
+  subscribe(component, callback) {
     if (!this.#listeners.has(component)) {
       this.#listeners.set(component, []);
     }
@@ -29,11 +29,11 @@ export default class StateNotifier {
   }
 
   /**
-     * Notifier tous les listeners d’un composant
-     * @param {string} component
-     * @param {object} newState
-     */
-  notify (component, newState) {
+   * Notifier tous les listeners d’un composant
+   * @param {string} component
+   * @param {object} newState
+   */
+  notify(component, newState) {
     if (!this.#listeners.has(component)) return;
 
     const listeners = [...this.#listeners.get(component)];
@@ -43,14 +43,12 @@ export default class StateNotifier {
       } catch (err) {
         // Logger pas dispo ici, on peut throw ou ignorer pr l’instant
         // Dans le service principal, on utilisera logger.error
-        // Mais ici on peut console.error (optionnel)
-        // eslint-disable-next-line no-console
-        console.error(`Erreur dans listener ${component}:`, err);
+        // Ici, on ignore simplement l'erreur
       }
     }
   }
 
-  reset () {
+  reset() {
     this.#listeners.clear();
   }
 }
