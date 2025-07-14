@@ -9,7 +9,7 @@ export default class StateNotifier {
    * @param {(state: object) => void} callback
    * @returns {() => void} fonction pour se désabonner
    */
-  subscribe(component, callback) {
+  subscribe (component, callback) {
     if (!this.#listeners.has(component)) {
       this.#listeners.set(component, []);
     }
@@ -33,22 +33,20 @@ export default class StateNotifier {
    * @param {string} component
    * @param {object} newState
    */
-  notify(component, newState) {
+  notify (component, newState) {
     if (!this.#listeners.has(component)) return;
 
     const listeners = [...this.#listeners.get(component)];
     for (const listener of listeners) {
       try {
         listener(newState);
-      } catch (err) {
-        // Logger pas dispo ici, on peut throw ou ignorer pr l’instant
-        // Dans le service principal, on utilisera logger.error
-        // Ici, on ignore simplement l'erreur
+      } catch {
+        // Erreur ignorée volontairement
       }
     }
   }
 
-  reset() {
+  reset () {
     this.#listeners.clear();
   }
 }
