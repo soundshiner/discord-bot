@@ -3,7 +3,7 @@
 // ========================================
 
 import logger from '../bot/logger.js';
-import alertManager from '../utils/alerts/alerts.js';
+import alertManager from '../utils/bot/alerts.js';
 import errorHandler from '../core/monitor.js';
 import { stopBot } from '../bot/startup.js';
 
