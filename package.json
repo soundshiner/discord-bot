@@ -99,11 +99,8 @@
     "prepare": "husky install",
     "postinstall": "husky install",
     "context:md": "node scripts/tools/projectContext.js --md",
-    "deploy:git": "node scripts/dev/deploy-git.js",
-    "pre-push": "node scripts/dev/pre-commit.js",
     "cleanup": "node scripts/dev/cleanup.js",
-    "cleanup:dry": "node scripts/dev/cleanup.js --dry-run",
-    "clean": "npm run cleanup"
+    "cleanup:dry": "node scripts/dev/cleanup.js --dry-run"
   }
 }
 
