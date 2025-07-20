@@ -1,16 +1,17 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import logger from "../../bot/logger.js";
 
-describe('Stress Tests', () => {
+describe("Stress Tests", () => {
   beforeAll(() => {
-    console.log('Starting stress tests...');
+    logger.debug("Starting stress tests...");
   });
 
   afterAll(() => {
-    console.log('Stress tests completed.');
+    logger.debug("Stress tests completed.");
   });
 
-  describe('High Load Scenarios', () => {
-    it('should handle high message volume', async () => {
+  describe("High Load Scenarios", () => {
+    it("should handle high message volume", async () => {
       const messageCount = 1000;
       const startTime = Date.now();
       let processedCount = 0;
@@ -45,13 +46,15 @@ describe('Stress Tests', () => {
       expect(errorCount).toBeLessThan(messageCount * 0.1); // Moins de 10% d'erreurs
       expect(executionTime).toBeLessThan(30000); // Moins de 30 secondes
 
-      console.log(`Processed ${processedCount} messages in ${executionTime}ms`);
-      console.log(
+      logger.debug(
+        `Processed ${processedCount} messages in ${executionTime}ms`
+      );
+      logger.debug(
         `Error rate: ${((errorCount / messageCount) * 100).toFixed(2)}%`
       );
     });
 
-    it('should handle concurrent command executions', async () => {
+    it("should handle concurrent command executions", async () => {
       const commandCount = 500;
       const startTime = Date.now();
       let successCount = 0;
@@ -86,13 +89,13 @@ describe('Stress Tests', () => {
       expect(failureCount).toBeLessThan(commandCount * 0.05); // Moins de 5% d'échecs
       expect(executionTime).toBeLessThan(15000); // Moins de 15 secondes
 
-      console.log(`Executed ${successCount} commands in ${executionTime}ms`);
-      console.log(
+      logger.debug(`Executed ${successCount} commands in ${executionTime}ms`);
+      logger.debug(
         `Failure rate: ${((failureCount / commandCount) * 100).toFixed(2)}%`
       );
     });
 
-    it('should handle rapid voice state changes', async () => {
+    it("should handle rapid voice state changes", async () => {
       const stateChangeCount = 200;
       const startTime = Date.now();
       let processedChanges = 0;
@@ -119,14 +122,14 @@ describe('Stress Tests', () => {
       expect(processedChanges).toBe(stateChangeCount);
       expect(executionTime).toBeLessThan(5000); // Moins de 5 secondes
 
-      console.log(
+      logger.debug(
         `Processed ${processedChanges} voice state changes in ${executionTime}ms`
       );
     });
   });
 
-  describe('Memory Stress', () => {
-    it('should handle memory pressure gracefully', async () => {
+  describe("Memory Stress", () => {
+    it("should handle memory pressure gracefully", async () => {
       const initialMemory = process.memoryUsage();
       const iterations = 100;
       const dataSize = 10000;
@@ -150,14 +153,14 @@ describe('Stress Tests', () => {
       // La mémoire ne devrait pas augmenter de manière excessive
       expect(memoryIncrease).toBeLessThan(100 * 1024 * 1024); // 100MB
 
-      console.log(
+      logger.debug(
         `Memory increase under stress: ${(memoryIncrease / 1024 / 1024).toFixed(
           2
         )} MB`
       );
     });
 
-    it('should handle cache overflow', async () => {
+    it("should handle cache overflow", async () => {
       const cache = new Map();
       const maxEntries = 10000;
       const overflowEntries = 5000;
@@ -177,12 +180,12 @@ describe('Stress Tests', () => {
       expect(cache.size).toBeLessThanOrEqual(maxEntries);
       expect(cache.has(`key-${maxEntries + overflowEntries - 1}`)).toBe(true);
 
-      console.log(`Cache overflow handled, final size: ${cache.size}`);
+      logger.debug(`Cache overflow handled, final size: ${cache.size}`);
     });
   });
 
-  describe('Network Stress', () => {
-    it('should handle network timeouts gracefully', async () => {
+  describe("Network Stress", () => {
+    it("should handle network timeouts gracefully", async () => {
       const requestCount = 100;
       let timeoutCount = 0;
       let successCount = 0;
@@ -198,7 +201,7 @@ describe('Stress Tests', () => {
               if (timeout > 500) {
                 // Simuler un timeout
                 timeoutCount++;
-                resolve({ success: false, error: 'timeout' });
+                resolve({ success: false, error: "timeout" });
               } else {
                 // Simuler un succès
                 successCount++;
@@ -215,12 +218,12 @@ describe('Stress Tests', () => {
       expect(successCount + timeoutCount).toBe(requestCount);
       expect(timeoutCount).toBeGreaterThan(0); // Il devrait y avoir des timeouts
 
-      console.log(
+      logger.debug(
         `Network requests: ${successCount} success, ${timeoutCount} timeouts`
       );
     });
 
-    it('should handle rate limiting', async () => {
+    it("should handle rate limiting", async () => {
       const requestCount = 200;
       let rateLimitedCount = 0;
       let successCount = 0;
@@ -234,7 +237,7 @@ describe('Stress Tests', () => {
             if (i % 50 === 0 && i > 0) {
               rateLimitedCount++;
               setTimeout(() => {
-                resolve({ success: false, error: 'rate_limited' });
+                resolve({ success: false, error: "rate_limited" });
               }, 1000); // 1 seconde de délai
             } else {
               successCount++;
@@ -252,14 +255,14 @@ describe('Stress Tests', () => {
       expect(successCount + rateLimitedCount).toBe(requestCount);
       expect(rateLimitedCount).toBeGreaterThan(0);
 
-      console.log(
+      logger.debug(
         `Rate limiting: ${successCount} success, ${rateLimitedCount} rate limited`
       );
     });
   });
 
-  describe('Error Recovery', () => {
-    it('should recover from temporary failures', async () => {
+  describe("Error Recovery", () => {
+    it("should recover from temporary failures", async () => {
       const operationCount = 100;
       let failureCount = 0;
       let recoveryCount = 0;
@@ -277,7 +280,7 @@ describe('Stress Tests', () => {
                 try {
                   // Simuler une opération qui peut échouer
                   if (Math.random() < 0.3 && attempts < maxAttempts - 1) {
-                    throw new Error('temporary_failure');
+                    throw new Error("temporary_failure");
                   }
 
                   recoveryCount++;
@@ -290,7 +293,7 @@ describe('Stress Tests', () => {
                 }
 
                 if (attempts >= maxAttempts) {
-                  resolve({ success: false, error: 'max_attempts_exceeded' });
+                  resolve({ success: false, error: "max_attempts_exceeded" });
                   return;
                 }
 
@@ -310,12 +313,12 @@ describe('Stress Tests', () => {
       expect(recoveryCount).toBeGreaterThan(operationCount * 0.7); // Au moins 70% de succès
       expect(failureCount).toBeGreaterThan(0); // Il devrait y avoir des échecs
 
-      console.log(
+      logger.debug(
         `Error recovery: ${recoveryCount} recovered, ${failureCount} failures`
       );
     });
 
-    it('should handle cascading failures', async () => {
+    it("should handle cascading failures", async () => {
       const serviceCount = 10;
       let failedServices = 0;
       let recoveredServices = 0;
@@ -347,14 +350,14 @@ describe('Stress Tests', () => {
       expect(recoveredServices + failedServices).toBe(serviceCount);
       expect(failedServices).toBeLessThan(serviceCount * 0.8); // Moins de 80% d'échecs
 
-      console.log(
+      logger.debug(
         `Cascading failures: ${recoveredServices} recovered, ${failedServices} failed`
       );
     });
   });
 
-  describe('Long Running Tests', () => {
-    it('should maintain stability over extended periods', async () => {
+  describe("Long Running Tests", () => {
+    it("should maintain stability over extended periods", async () => {
       const duration = 5000; // 5 secondes au lieu de 10
       const interval = 100; // 100ms
       const iterations = duration / interval;
@@ -382,7 +385,7 @@ describe('Stress Tests', () => {
       expect(actualDuration).toBeGreaterThanOrEqual(duration * 0.8); // Au moins 80% de la durée prévue
       expect(errorCount).toBeLessThan(iterations * 0.1); // Moins de 10% d'erreurs
 
-      console.log(
+      logger.debug(
         `Long running test: ${successCount} success, ${errorCount} errors over ${actualDuration}ms`
       );
     }, 15000); // Timeout de 15 secondes

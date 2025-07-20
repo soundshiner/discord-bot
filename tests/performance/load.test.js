@@ -1,18 +1,19 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import logger from "../../bot/logger.js";
 
-describe('Performance Tests', () => {
+describe("Performance Tests", () => {
   beforeAll(() => {
     // Setup pour les tests de performance
-    console.log('Starting performance tests...');
+    logger.debug("Starting performance tests...");
   });
 
   afterAll(() => {
     // Cleanup après les tests
-    console.log('Performance tests completed.');
+    logger.debug("Performance tests completed.");
   });
 
-  describe('Memory Usage', () => {
-    it('should maintain reasonable memory usage', () => {
+  describe("Memory Usage", () => {
+    it("should maintain reasonable memory usage", () => {
       const initialMemory = process.memoryUsage();
 
       // Simuler une charge de travail
@@ -21,7 +22,7 @@ describe('Performance Tests', () => {
         testData.push({
           id: i,
           name: `Test Item ${i}`,
-          data: new Array(100).fill('test').join('')
+          data: new Array(100).fill("test").join(""),
         });
       }
 
@@ -31,13 +32,15 @@ describe('Performance Tests', () => {
       // L'augmentation de mémoire ne devrait pas dépasser 50MB
       expect(memoryIncrease).toBeLessThan(50 * 1024 * 1024);
 
-      console.log(`Memory increase: ${(memoryIncrease / 1024 / 1024).toFixed(2)} MB`);
+      logger.debug(
+        `Memory increase: ${(memoryIncrease / 1024 / 1024).toFixed(2)} MB`
+      );
     });
 
-    it('should handle garbage collection properly', () => {
+    it("should handle garbage collection properly", () => {
       // Créer et détruire des objets pour tester le GC
       for (let i = 0; i < 100; i++) {
-        new Array(1000).fill('temp');
+        new Array(1000).fill("temp");
         // Les objets temporaires devraient être collectés
       }
 
@@ -52,19 +55,21 @@ describe('Performance Tests', () => {
       // La mémoire ne devrait pas être excessive
       expect(memoryUsage).toBeLessThan(100 * 1024 * 1024); // 100MB
 
-      console.log(`Final memory usage: ${(memoryUsage / 1024 / 1024).toFixed(2)} MB`);
+      logger.debug(
+        `Final memory usage: ${(memoryUsage / 1024 / 1024).toFixed(2)} MB`
+      );
     });
   });
 
-  describe('CPU Performance', () => {
-    it('should handle concurrent operations efficiently', async () => {
+  describe("CPU Performance", () => {
+    it("should handle concurrent operations efficiently", async () => {
       const startTime = Date.now();
 
       // Simuler des opérations concurrentes
       const promises = [];
       for (let i = 0; i < 100; i++) {
         promises.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             // Simuler un travail CPU
             let result = 0;
             for (let j = 0; j < 1000; j++) {
@@ -83,20 +88,20 @@ describe('Performance Tests', () => {
       // Les opérations concurrentes ne devraient pas prendre plus de 5 secondes
       expect(executionTime).toBeLessThan(5000);
 
-      console.log(`Concurrent operations completed in ${executionTime}ms`);
+      logger.debug(`Concurrent operations completed in ${executionTime}ms`);
     });
 
-    it('should handle database operations efficiently', async () => {
+    it("should handle database operations efficiently", async () => {
       const startTime = Date.now();
 
       // Simuler des opérations de base de données
       const dbOperations = [];
       for (let i = 0; i < 50; i++) {
         dbOperations.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             // Simuler une requête DB
             setTimeout(() => {
-              resolve({ id: i, result: 'success' });
+              resolve({ id: i, result: "success" });
             }, Math.random() * 10); // 0-10ms
           })
         );
@@ -110,19 +115,19 @@ describe('Performance Tests', () => {
       // Les opérations DB ne devraient pas prendre plus de 1 seconde
       expect(executionTime).toBeLessThan(1000);
 
-      console.log(`Database operations completed in ${executionTime}ms`);
+      logger.debug(`Database operations completed in ${executionTime}ms`);
     });
   });
 
-  describe('Network Performance', () => {
-    it('should handle API requests efficiently', async () => {
+  describe("Network Performance", () => {
+    it("should handle API requests efficiently", async () => {
       const startTime = Date.now();
 
       // Simuler des requêtes API
       const apiRequests = [];
       for (let i = 0; i < 20; i++) {
         apiRequests.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             // Simuler une requête HTTP
             setTimeout(() => {
               resolve({ status: 200, data: `response-${i}` });
@@ -139,17 +144,17 @@ describe('Performance Tests', () => {
       // Les requêtes API ne devraient pas prendre plus de 2 secondes
       expect(executionTime).toBeLessThan(2000);
 
-      console.log(`API requests completed in ${executionTime}ms`);
+      logger.debug(`API requests completed in ${executionTime}ms`);
     });
 
-    it('should handle WebSocket connections efficiently', async () => {
+    it("should handle WebSocket connections efficiently", async () => {
       const startTime = Date.now();
 
       // Simuler des connexions WebSocket
       const wsConnections = [];
       for (let i = 0; i < 10; i++) {
         wsConnections.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             // Simuler une connexion WebSocket
             setTimeout(() => {
               resolve({ connected: true, id: i });
@@ -166,19 +171,19 @@ describe('Performance Tests', () => {
       // Les connexions WebSocket ne devraient pas prendre plus de 500ms
       expect(executionTime).toBeLessThan(500);
 
-      console.log(`WebSocket connections completed in ${executionTime}ms`);
+      logger.debug(`WebSocket connections completed in ${executionTime}ms`);
     });
   });
 
-  describe('Discord API Performance', () => {
-    it('should handle Discord API rate limits efficiently', async () => {
+  describe("Discord API Performance", () => {
+    it("should handle Discord API rate limits efficiently", async () => {
       const startTime = Date.now();
 
       // Simuler des requêtes Discord API avec rate limiting
       const discordRequests = [];
       for (let i = 0; i < 30; i++) {
         discordRequests.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             // Simuler un délai de rate limiting
             const delay = Math.floor(i / 10) * 100; // Rate limit tous les 10 requêtes
             setTimeout(
@@ -199,17 +204,17 @@ describe('Performance Tests', () => {
       // Les requêtes Discord ne devraient pas prendre plus de 3 secondes
       expect(executionTime).toBeLessThan(3000);
 
-      console.log(`Discord API requests completed in ${executionTime}ms`);
+      logger.debug(`Discord API requests completed in ${executionTime}ms`);
     });
 
-    it('should handle message processing efficiently', async () => {
+    it("should handle message processing efficiently", async () => {
       const startTime = Date.now();
 
       // Simuler le traitement de messages
       const messageProcessing = [];
       for (let i = 0; i < 100; i++) {
         messageProcessing.push(
-          new Promise(resolve => {
+          new Promise((resolve) => {
             // Simuler le traitement d'un message
             setTimeout(() => {
               resolve({ processed: true, messageId: i });
@@ -226,12 +231,12 @@ describe('Performance Tests', () => {
       // Le traitement des messages ne devrait pas prendre plus de 1 seconde
       expect(executionTime).toBeLessThan(1000);
 
-      console.log(`Message processing completed in ${executionTime}ms`);
+      logger.debug(`Message processing completed in ${executionTime}ms`);
     });
   });
 
-  describe('Cache Performance', () => {
-    it('should handle cache operations efficiently', async () => {
+  describe("Cache Performance", () => {
+    it("should handle cache operations efficiently", async () => {
       const cache = new Map();
       const startTime = Date.now();
 
@@ -251,10 +256,10 @@ describe('Performance Tests', () => {
       // Les opérations de cache ne devraient pas prendre plus de 100ms
       expect(executionTime).toBeLessThan(100);
 
-      console.log(`Cache operations completed in ${executionTime}ms`);
+      logger.debug(`Cache operations completed in ${executionTime}ms`);
     });
 
-    it('should handle cache eviction efficiently', async () => {
+    it("should handle cache eviction efficiently", async () => {
       const cache = new Map();
       const maxSize = 1000;
 
@@ -278,16 +283,16 @@ describe('Performance Tests', () => {
       expect(executionTime).toBeLessThan(50);
       expect(cache.size).toBeLessThanOrEqual(maxSize);
 
-      console.log(`Cache eviction completed in ${executionTime}ms`);
+      logger.debug(`Cache eviction completed in ${executionTime}ms`);
     });
   });
 
-  describe('Startup Performance', () => {
-    it('should start up within reasonable time', async () => {
+  describe("Startup Performance", () => {
+    it("should start up within reasonable time", async () => {
       const startTime = Date.now();
 
       // Simuler le processus de démarrage
-      await new Promise(resolve => {
+      await new Promise((resolve) => {
         // Simuler l'initialisation des modules
         setTimeout(() => {
           // Simuler la connexion à Discord
@@ -306,7 +311,8 @@ describe('Performance Tests', () => {
       // Le démarrage ne devrait pas prendre plus de 5 secondes
       expect(startupTime).toBeLessThan(5000);
 
-      console.log(`Startup completed in ${startupTime}ms`);
+      logger.debug(`Startup completed in ${startupTime}ms`);
     });
   });
 });
+

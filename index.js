@@ -7,10 +7,10 @@ import { startBot, stopBot } from "./bot/startup.js";
 import { registerProcessHandlers } from "./core/lifecycle.js";
 import WebServer from "./api/index.js";
 import logger from "./bot/logger.js";
-import { getGlobalConfig } from "./bot/utils/globalConfig.js";
-import { disconnectDatabase } from "./bot/utils/database.js";
+import { getGlobalConfig } from "./utils/bot/globalConfig.js";
+import { database } from "./utils/database/database.js";
 import appState from "./core/services/AppState.js";
-import { retryDiscord, retry } from "./core/utils/retry.js";
+import { retryDiscord, retry } from "./utils/core/retry.js";
 
 // Configuration globale avec validation
 let config;
@@ -64,7 +64,7 @@ async function gracefulShutdown(signal) {
 
     // Fermer la base de données
     logger.info("Fermeture de la base de données...");
-    await disconnectDatabase();
+    await database.disconnect();
     appState.setDatabaseConnected(false);
     appState.setDatabaseHealthy(false);
     logger.success("Base de données fermée");
@@ -147,7 +147,7 @@ async function startApplication() {
     try {
       if (botClient) await stopBot();
       if (apiServer) await apiServer.stop();
-      await disconnectDatabase();
+      await database.disconnect();
     } catch (cleanupError) {
       logger.error(
         "Erreur lors du nettoyage après erreur de démarrage:",

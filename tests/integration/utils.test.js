@@ -59,8 +59,8 @@ vi.mock("../../bot/utils/genres.js", () => ({
 import { validateURL } from "../../bot/utils/validateURL.js";
 import { checkStreamOnline } from "../../bot/utils/checkStreamOnline.js";
 import { genres } from "../../bot/utils/genres.js";
-import { cache } from "../../utils/cache.js";
-import { database } from "../../utils/database.js";
+import cache from "../../utils/bot/cache.js";
+import { database } from "../../utils/database/database.js";
 
 // Mock des modules
 vi.mock("winston", () => ({

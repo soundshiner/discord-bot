@@ -10,8 +10,15 @@ import path from "path";
 describe("Performance Logger", () => {
   let consoleSpy;
   let testLogDir;
+  let outputBuffer;
+  let stdoutSpy;
 
   beforeEach(async () => {
+    outputBuffer = [];
+    stdoutSpy = vi.spyOn(process.stdout, "write").mockImplementation((msg) => {
+      outputBuffer.push(msg);
+    });
+
     consoleSpy = {
       log: vi.spyOn(console, "log").mockImplementation(() => {}),
       error: vi.spyOn(console, "error").mockImplementation(() => {}),
@@ -62,10 +69,12 @@ describe("Performance Logger", () => {
 
       await logger.info(testMessage, testData);
 
-      expect(consoleSpy.log).toHaveBeenCalledWith(
-        "[INFO]",
-        testMessage,
-        testData
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining("[INFO]"));
+      expect(stdoutSpy).toHaveBeenCalledWith(
+        expect.stringContaining(testMessage)
+      );
+      expect(stdoutSpy).toHaveBeenCalledWith(
+        expect.stringContaining(JSON.stringify(testData))
       );
     });
 
@@ -76,9 +85,17 @@ describe("Performance Logger", () => {
         await logger[level](`Test ${level} message`);
       }
 
-      expect(consoleSpy.error).toHaveBeenCalled();
-      expect(consoleSpy.warn).toHaveBeenCalled();
-      expect(consoleSpy.log).toHaveBeenCalledTimes(3); // info, debug, trace
+      expect(stdoutSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[ERROR]")
+      );
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining("[WARN]"));
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining("[INFO]"));
+      expect(stdoutSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[DEBUG]")
+      );
+      expect(stdoutSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[TRACE]")
+      );
     });
   });
 
@@ -98,7 +115,7 @@ describe("Performance Logger", () => {
 
       // Vérifier que le logging est rapide (< 1 seconde pour 1000 logs)
       expect(duration).toBeLessThan(1000);
-      expect(consoleSpy.log).toHaveBeenCalledTimes(logCount);
+      expect(stdoutSpy).toHaveBeenCalledTimes(logCount);
     });
 
     it("should batch logs for better performance", async () => {
@@ -114,7 +131,7 @@ describe("Performance Logger", () => {
       await Promise.all(promises);
 
       // Vérifier que les logs sont traités
-      expect(consoleSpy.log).toHaveBeenCalled();
+      expect(stdoutSpy).toHaveBeenCalled();
 
       // Restaurer la configuration
       if (originalBatchEnabled) {
@@ -169,7 +186,7 @@ describe("Performance Logger", () => {
       await logger.info("Structured test", { data: "value" });
 
       // Vérifier que le formatage structuré est utilisé (JSON string)
-      expect(consoleSpy.log).toHaveBeenCalledWith(
+      expect(stdoutSpy).toHaveBeenCalledWith(
         expect.stringContaining('"level":"INFO"')
       );
 
@@ -183,7 +200,10 @@ describe("Performance Logger", () => {
       await logger.info("Colored test");
 
       // Vérifier que les arguments sont séparés en développement
-      expect(consoleSpy.log).toHaveBeenCalledWith("[INFO]", "Colored test");
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining("[INFO]"));
+      expect(stdoutSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Colored test")
+      );
 
       process.env.NODE_ENV = originalEnv;
     });
@@ -199,7 +219,7 @@ describe("Performance Logger", () => {
       // Le logger devrait continuer à fonctionner malgré l'erreur
       await logger.info("Error test");
 
-      expect(consoleSpy.log).toHaveBeenCalled();
+      expect(stdoutSpy).toHaveBeenCalled();
       mockAppendFile.mockRestore();
     });
 
@@ -210,15 +230,11 @@ describe("Performance Logger", () => {
       logger.warnSync(testMessage);
       logger.infoSync(testMessage);
 
-      expect(consoleSpy.error).toHaveBeenCalledWith(
+      expect(stdoutSpy).toHaveBeenCalledWith(
         expect.stringContaining("[ERROR]")
       );
-      expect(consoleSpy.warn).toHaveBeenCalledWith(
-        expect.stringContaining("[WARN]")
-      );
-      expect(consoleSpy.log).toHaveBeenCalledWith(
-        expect.stringContaining("[INFO]")
-      );
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining("[WARN]"));
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining("[INFO]"));
     });
   });
 
@@ -234,7 +250,7 @@ describe("Performance Logger", () => {
       await logger.task("Task test");
       await logger.api("API test");
 
-      expect(consoleSpy.log).toHaveBeenCalled();
+      expect(stdoutSpy).toHaveBeenCalled();
     });
 
     it("should handle section formatting", async () => {
@@ -243,10 +259,8 @@ describe("Performance Logger", () => {
       await logger.summary("Test Summary");
 
       // Vérifier que les sections sont loggées avec des arguments séparés
-      expect(consoleSpy.log).toHaveBeenCalledWith(
-        "[INFO]",
-        expect.stringContaining("━")
-      );
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining("━"));
     });
   });
 });
+

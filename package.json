@@ -73,7 +73,7 @@
     "vitest": "^3.2.4"
   },
   "scripts": {
-    "dev": "dotenv -e .env.dev -- node index.js",
+    "dev": "dotenv -e .env.dev -- nodemon index.js",
     "prod": "dotenv -e .env.prod -- node index.js",
     "deploy:dev": "dotenv -e .env.dev -- node scripts/bot/deploy-commands.js --dev",
     "deploy:prod": "dotenv -e .env.prod -- node scripts/bot/deploy-commands.js --global",
@@ -99,11 +99,8 @@
     "prepare": "husky install",
     "postinstall": "husky install",
     "context:md": "node scripts/tools/projectContext.js --md",
-    "deploy:git": "node scripts/dev/deploy-git.js",
-    "pre-push": "node scripts/dev/pre-commit.js",
     "cleanup": "node scripts/dev/cleanup.js",
-    "cleanup:dry": "node scripts/dev/cleanup.js --dry-run",
-    "clean": "npm run cleanup"
+    "cleanup:dry": "node scripts/dev/cleanup.js --dry-run"
   }
 }
 

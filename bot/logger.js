@@ -125,30 +125,36 @@ class PerformanceLogger {
     if (process.env.NODE_ENV === 'production') {
       // Production : log structuré JSON (une seule string)
       if (level === 'error') {
-        console.error(formattedMessage);
+        process.stdout.write(`${formattedMessage  }\n`);
       } else if (level === 'warn') {
-        console.warn(formattedMessage);
+        process.stdout.write(`${formattedMessage  }\n`);
       } else {
-        console.log(formattedMessage);
+        process.stdout.write(`${formattedMessage  }\n`);
       }
     } else {
       // Développement : multi-arguments séparés
       const prefix = `[${level.toUpperCase()}]`;
       if (data) {
         if (level === 'error') {
-          console.error(prefix, message, data);
+          process.stdout.write(
+            `${prefix  } ${  message  } ${  JSON.stringify(data)  }\n`
+          );
         } else if (level === 'warn') {
-          console.warn(prefix, message, data);
+          process.stdout.write(
+            `${prefix  } ${  message  } ${  JSON.stringify(data)  }\n`
+          );
         } else {
-          console.log(prefix, message, data);
+          process.stdout.write(
+            `${prefix  } ${  message  } ${  JSON.stringify(data)  }\n`
+          );
         }
       } else {
         if (level === 'error') {
-          console.error(prefix, message);
+          process.stdout.write(`${prefix  } ${  message  }\n`);
         } else if (level === 'warn') {
-          console.warn(prefix, message);
+          process.stdout.write(`${prefix  } ${  message  }\n`);
         } else {
-          console.log(prefix, message);
+          process.stdout.write(`${prefix  } ${  message  }\n`);
         }
       }
     }
@@ -375,17 +381,17 @@ class PerformanceLogger {
   // Méthodes de compatibilité (synchrone pour les cas critiques)
   errorSync (msg, data = null) {
     const formatted = this.formatMessage('error', msg, data);
-    console.error(formatted);
+    process.stdout.write(`${formatted  }\n`);
   }
 
   warnSync (msg, data = null) {
     const formatted = this.formatMessage('warn', msg, data);
-    console.warn(formatted);
+    process.stdout.write(`${formatted  }\n`);
   }
 
   infoSync (msg, data = null) {
     const formatted = this.formatMessage('info', msg, data);
-    console.log(formatted);
+    process.stdout.write(`${formatted  }\n`);
   }
 }
 

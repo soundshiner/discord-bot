@@ -18,7 +18,7 @@ describe("AppState", () => {
   });
 
   it("getBotState() retourne l'état initial", () => {
-    const bot = appState.getBotState();
+    const bot = appState.bot;
     expect(bot.isReady).toBe(false);
     expect(bot.isConnected).toBe(false);
     expect(bot.commandsExecuted).toBe(0);
@@ -27,39 +27,39 @@ describe("AppState", () => {
 
   it("setBotReady(true) met à jour l'état", () => {
     appState.setBotReady(true);
-    const bot = appState.getBotState();
+    const bot = appState.bot;
     expect(bot.isReady).toBe(true);
     expect(typeof bot.startTime).toBe("number");
   });
 
   it("setBotConnected(true) met à jour l'état", () => {
     appState.setBotConnected(true);
-    const bot = appState.getBotState();
+    const bot = appState.bot;
     expect(bot.isConnected).toBe(true);
   });
 
   it("incrementCommandsExecuted() incrémente le compteur", () => {
     appState.incrementCommandsExecuted();
-    const bot = appState.getBotState();
+    const bot = appState.bot;
     expect(bot.commandsExecuted).toBe(1);
   });
 
   it("incrementCommandsFailed() incrémente le compteur", () => {
     appState.incrementCommandsFailed();
-    const bot = appState.getBotState();
+    const bot = appState.bot;
     expect(bot.commandsFailed).toBe(1);
   });
 
   it("setDatabaseConnected(true) met à jour l'état", () => {
     appState.setDatabaseConnected(true);
-    const db = appState.getDatabaseState();
+    const db = appState.db;
     expect(db.isConnected).toBe(true);
     expect(typeof db.lastCheck).toBe("number");
   });
 
   it("setDatabaseHealthy(true) met à jour l'état", () => {
     appState.setDatabaseHealthy(true);
-    const db = appState.getDatabaseState();
+    const db = appState.db;
     expect(db.isHealthy).toBe(true);
     expect(typeof db.lastCheck).toBe("number");
   });
@@ -84,8 +84,8 @@ describe("AppState", () => {
     appState.setBotReady(true);
     appState.setDatabaseConnected(true);
     appState._resetForTests();
-    const bot = appState.getBotState();
-    const db = appState.getDatabaseState();
+    const bot = appState.bot;
+    const db = appState.db;
     expect(bot.isReady).toBe(false);
     expect(db.isConnected).toBe(false);
   });

@@ -4,18 +4,18 @@
 
 import { Events } from 'discord.js';
 import AppState from '../../core/services/AppState.js';
-import { RetryManager } from '../../core/utils/retry.js';
-import { checkRateLimit, recordCommand } from '../../core/utils/rateLimiter.js';
+import { RetryManager } from '../../utils/core/retry.js';
+import { checkRateLimit, recordCommand } from '../../utils/core/rateLimiter.js';
 import {
   validateSuggestion,
   validateDiscordId,
   sanitizeString
-} from '../../core/utils/validation.js';
+} from '../../utils/core/validation.js';
 import {
   secureLogger,
   secureAudit,
   secureSecurityAlert
-} from '../../core/utils/secureLogger.js';
+} from '../../utils/core/secureLogger.js';
 import logger from '../logger.js';
 
 // Ajout de la fonction safeStringify pour éviter l'erreur BigInt

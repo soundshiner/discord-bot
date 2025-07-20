@@ -4,7 +4,7 @@ import {
   PermissionFlagsBits,
   MessageFlags
 } from 'discord.js';
-import { db } from '../../bot/utils/database.js';
+import { database as db } from '../../utils/database/database.js';
 import config from '../config.js';
 import logger from '../logger.js';
 
