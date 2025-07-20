@@ -22,3 +22,4 @@ describe("cache helper", () => {
     expect(cache.get("x")).toBeNull();
   });
 });
+
