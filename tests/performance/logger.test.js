@@ -161,19 +161,82 @@ describe("Performance Logger", () => {
       expect(metrics.logsByLevel.error).toBeGreaterThan(0);
     });
 
-    it("should track performance metrics", async () => {
-      const startTime = Date.now();
+    it("should track performance metrics when file logging is enabled", async () => {
+      // Activer temporairement l'écriture de fichier pour tester les métriques de performance
+      const originalLogToFile = process.env.LOG_TO_FILE;
+      process.env.LOG_TO_FILE = "true";
 
-      await logger.info("Performance test");
+      // Mock fs.appendFile pour simuler un délai d'écriture
+      const mockAppendFile = vi
+        .spyOn(fs, "appendFile")
+        .mockImplementation(async () => {
+          // Simuler un délai d'écriture de 10ms
+          await new Promise((resolve) => setTimeout(resolve, 10));
+        });
 
-      const metrics = logger.getMetrics();
+      // Mock fs.stat pour retourner une taille de fichier valide
+      const mockStat = vi.spyOn(fs, "stat").mockResolvedValue({ size: 1000 });
 
-      expect(metrics.performance).toHaveProperty("avgWriteTime");
-      expect(metrics.performance).toHaveProperty("totalWriteTime");
-      expect(metrics.performance).toHaveProperty("writeCount");
+      try {
+        // Obtenir les métriques initiales
+        const initialMetrics = logger.getMetrics();
+        const initialWriteCount = initialMetrics.performance.writeCount;
 
-      expect(metrics.performance.writeCount).toBeGreaterThan(0);
-      expect(metrics.performance.avgWriteTime).toBeGreaterThan(0);
+        // Utiliser la méthode normale de logging qui déclenchera writeToFile
+        await logger.info("Test performance metrics");
+
+        // Forcer le flush du batch si nécessaire
+        if (logger.flushBatch) {
+          await logger.flushBatch();
+        }
+
+        const metrics = logger.getMetrics();
+
+        expect(metrics.performance).toHaveProperty("avgWriteTime");
+        expect(metrics.performance).toHaveProperty("totalWriteTime");
+        expect(metrics.performance).toHaveProperty("writeCount");
+
+        expect(metrics.performance.writeCount).toBeGreaterThan(
+          initialWriteCount
+        );
+        expect(metrics.performance.avgWriteTime).toBeGreaterThan(0);
+        expect(metrics.performance.totalWriteTime).toBeGreaterThan(0);
+      } finally {
+        // Restaurer les mocks et la configuration
+        mockAppendFile.mockRestore();
+        mockStat.mockRestore();
+
+        if (originalLogToFile !== undefined) {
+          process.env.LOG_TO_FILE = originalLogToFile;
+        } else {
+          delete process.env.LOG_TO_FILE;
+        }
+      }
+    });
+
+    it("should have performance metrics structure", async () => {
+      // S'assurer que l'écriture de fichier est désactivée
+      const originalLogToFile = process.env.LOG_TO_FILE;
+      delete process.env.LOG_TO_FILE;
+
+      try {
+        // Test que la structure des métriques existe
+        const metrics = logger.getMetrics();
+
+        expect(metrics.performance).toHaveProperty("avgWriteTime");
+        expect(metrics.performance).toHaveProperty("totalWriteTime");
+        expect(metrics.performance).toHaveProperty("writeCount");
+
+        // Vérifier que les propriétés sont des nombres (même si 0)
+        expect(typeof metrics.performance.writeCount).toBe("number");
+        expect(typeof metrics.performance.avgWriteTime).toBe("number");
+        expect(typeof metrics.performance.totalWriteTime).toBe("number");
+      } finally {
+        // Restaurer la configuration originale
+        if (originalLogToFile !== undefined) {
+          process.env.LOG_TO_FILE = originalLogToFile;
+        }
+      }
     });
   });
 
@@ -255,8 +318,6 @@ describe("Performance Logger", () => {
 
     it("should handle section formatting", async () => {
       await logger.section("Test Section");
-      await logger.sectionStart("Test Section Start");
-      await logger.summary("Test Summary");
 
       // Vérifier que les sections sont loggées avec des arguments séparés
       expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining("━"));

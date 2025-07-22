@@ -62,7 +62,6 @@ class DiscordClientSingleton {
       }
       this.#isInitialized = true;
       this.#isDestroyed = false;
-      logger.success('Client Discord créé avec succès');
       return this.#client;
     } catch (error) {
       logger.error(

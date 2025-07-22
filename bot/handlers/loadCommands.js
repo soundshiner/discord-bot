@@ -29,7 +29,6 @@ export async function loadCommands (client, importFn = (src) => import(src)) {
 
     for (const file of files) {
       const filePath = path.join(commandsPath, file);
-      logger.debug('loadCommands: importing', filePath);
 
       try {
         const fileModule = await importFn(pathToFileURL(filePath).href);
@@ -39,8 +38,7 @@ export async function loadCommands (client, importFn = (src) => import(src)) {
           && typeof fileModule.default.execute === 'function'
         ) {
           client.commands.set(fileModule.default.data.name, fileModule.default);
-          logger.custom(
-            'CMD',
+          logger.info(
             `Commande chargée : ${fileModule.default.data.name}`
           );
           loadedCommands.push(fileModule.default.data.name);

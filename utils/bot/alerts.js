@@ -24,8 +24,8 @@ class AlertManager {
       this.webhookClient = new WebhookClient({ url: this.webhookUrl });
       logger.info("🔔 Système d'alertes webhook initialisé");
     }
-
-    logger.info("🚨 Système d'alertes initialisé");
+    logger.banner("Initialisation du bot Discord...");
+    logger.info("Système d'alertes initialisé");
   }
 
   /**

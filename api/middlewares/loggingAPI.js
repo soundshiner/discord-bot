@@ -22,6 +22,4 @@ export default function loggingAPI () {
     next();
   };
 }
-// This middleware logs API requests, including method, URL, status code, duration, and IP address.
-// It also integrates with a global metrics collector if available, recording the request metrics.
 

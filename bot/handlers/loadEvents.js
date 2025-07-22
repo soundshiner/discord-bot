@@ -29,7 +29,6 @@ export async function loadEvents (client, importFn = (src) => import(src)) {
 
     for (const file of files) {
       const filePath = path.join(eventsPath, file);
-      logger.debug('loadEvents: importing', filePath);
 
       try {
         const fileModule = await importFn(pathToFileURL(filePath).href);
@@ -48,7 +47,6 @@ export async function loadEvents (client, importFn = (src) => import(src)) {
           }
 
           logger.custom(
-            'EVENTS',
             `Événement chargé : ${fileModule.default.name}`
           );
           loadedEvents.push(fileModule.default.name);

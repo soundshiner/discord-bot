@@ -65,7 +65,7 @@ class WebServer {
   setupRoutes () {
     try {
       loadRoutes(this.app, this.client, this.logger);
-      this.logger.info('✅ Routes API chargées');
+      this.logger.info('Routes API chargées');
     } catch (error) {
       monitor.handleCriticalError(error, 'ROUTES_SETUP');
       throw error;

@@ -15,9 +15,6 @@ let updateStatusInterval = null;
 
 export async function startBot () {
   try {
-    logger.custom('BOOT', 'soundSHINE Bot v1.0', 'magenta');
-    logger.custom('ENV', `Environnement : ${config.NODE_ENV}`, 'blue');
-
     // Initialiser le client Discord
     client = createClient();
 
@@ -30,15 +27,9 @@ export async function startBot () {
 
     // Démarrer les tâches
     startUpdateStatus();
-
-    logger.section('Finale');
     logger.info(
-      `📡 Tâche updateStatus lancée toutes les ${updateStatus.interval} ms`
+      `Tâche updateStatus lancée toutes les ${updateStatus.interval} ms`
     );
-    logger.success(
-      `✨ soundSHINE Bot démarré avec le username ${client.user.tag}`
-    );
-    logger.section('Start logging now...');
 
     return client;
   } catch (error) {
@@ -113,3 +104,4 @@ export async function stopBot () {
     throw error;
   }
 }
+
