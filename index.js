@@ -11,12 +11,12 @@ import { getGlobalConfig } from "./utils/bot/globalConfig.js";
 import { database } from "./utils/database/database.js";
 import appState from "./core/services/AppState.js";
 import { retryDiscord, retry } from "./utils/core/retry.js";
+import pkg from "./package.json" with { type: "json" };
 
 // Configuration globale avec validation
 let config;
 try {
   config = getGlobalConfig();
-  logger.info(`Configuration chargée pour l'environnement: ${config.NODE_ENV}`);
 
   // Initialiser l'état global
   appState.initialize();
@@ -80,13 +80,13 @@ async function gracefulShutdown(signal) {
 // Fonction de démarrage principale avec retry
 async function startApplication() {
   try {
-    logger.sectionStart("Démarrage de soundSHINE Bot");
-    logger.info(`Version: ${process.env.npm_package_version || "2.0.0"}`);
+    // Lancement du bot Discord avec retry
+    console.log("");
+    logger.info(`Version: ${pkg.version}`);
     logger.info(`Node.js: ${process.version}`);
-    logger.info(`Environnement: ${config.NODE_ENV}`);
-
-    // 🚀 Lancement du bot Discord avec retry
-    logger.info("Initialisation du bot Discord...");
+    logger.info(
+      `Configuration chargée pour l'environnement: ${config.NODE_ENV}`
+    );
     botClient = await retryDiscord(
       async () => {
         const client = await startBot();
@@ -102,14 +102,15 @@ async function startApplication() {
         },
       }
     );
+
     logger.success("Bot Discord démarré avec succès");
 
-    // 🌐 Lancement du serveur API avec retry
-    logger.info("Initialisation du serveur API...");
+    // Lancement du serveur API avec retry
+    logger.banner("Initialisation du serveur API...");
     apiServer = new WebServer(botClient, logger);
     await retry(
       async () => {
-        apiServer.start(config.api.port);
+        await apiServer.start(config.api.port);
         appState.setApiRunning(true, config.api.port);
       },
       {
@@ -129,17 +130,17 @@ async function startApplication() {
     process.on("SIGINT", () => gracefulShutdown("SIGINT"));
     process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 
-    logger.section("Démarrage terminé avec succès");
-    logger.info("📊 Métriques disponibles sur /v1/metrics");
-    logger.info("🏥 Health check sur /v1/health");
-    logger.info("📝 Logs centralisés disponibles sur /v1/logs");
-    logger.info("🚨 Alertes disponibles sur /v1/alerts");
-
+    logger.section("Chargement des routes");
+    logger.info("Métriques disponibles sur /v1/metrics");
+    logger.info("Health check sur /v1/health");
+    logger.info("Logs centralisés disponibles sur /v1/logs");
+    logger.info("Alertes disponibles sur /v1/alerts");
     // Log des informations de performance
     const memUsage = process.memoryUsage();
     logger.info(
       `Mémoire utilisée: ${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`
     );
+    logger.banner("Start logging on...");
   } catch (error) {
     logger.error("Erreur critique lors du démarrage de l'application:", error);
 
