@@ -193,14 +193,14 @@ class Logger {
   section = async (title) => {
     const line = '━'.repeat(60);
     process.stdout.write(
-      `\n[INFO] ${chalk.yellow(line)}\n[INFO] ${chalk.bold(`  ${title}  `)}\n[INFO] ${chalk.yellow(line)}\n`
+      `\n${chalk.yellow(line)}\n${chalk.bold(`  ${title}  `)}\n${chalk.yellow(line)}\n`
     );
   };
 
   sectionStart = async (title) => {
     const line = `┏${'━'.repeat(57)}`;
     process.stdout.write(
-      `\n[INFO] ${chalk.cyan(line)}\n[INFO] ${chalk.bold(`  ${title}  `)}\n[INFO] ${chalk.cyan(line)}\n`
+      `\n${chalk.cyan(line)}\n${chalk.bold(`  ${title}  `)}\n${chalk.cyan(line)}\n`
     );
   };
 
