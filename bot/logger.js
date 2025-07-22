@@ -1,40 +1,59 @@
-import chalk from "chalk";
-import fs from "fs/promises";
-import path from "path";
-
+import chalk from 'chalk';
+import fs from 'fs/promises';
+import path from 'path';
+import stripAnsi from 'strip-ansi';
 const LOG_CONFIG = {
-  levels: ["error", "warn", "info", "debug"],
+  levels: ['error', 'warn', 'info', 'debug', 'trace', 'success'],
   file: {
-    enabled: process.env.LOG_TO_FILE === "true",
-    directory: "./logs",
+    get enabled () {
+      return process.env.LOG_TO_FILE === 'true';
+    },
+    directory: './logs',
     maxSize: 10 * 1024 * 1024, // 10MB
-    maxFiles: 5,
+    maxFiles: 5
   },
   batch: {
     enabled: true,
     size: 10,
-    timeout: 1000,
-  },
+    timeout: 1000
+  }
 };
 
 const logBatch = [];
 let batchTimeout = null;
 
 const levelColors = {
-  error: chalk.red("[ERROR]"),
-  warn: chalk.yellow("[WARN]"),
-  info: chalk.blue("[INFO]"),
-  debug: chalk.gray("[DEBUG]"),
-  success: chalk.green("[SUCCESS]"),
+  error: chalk.red('[ERROR]'),
+  warn: chalk.yellow('[WARN]'),
+  info: chalk.blue('[INFO]'),
+  debug: chalk.gray('[DEBUG]'),
+  trace: chalk.magenta('[TRACE]'),
+  success: chalk.green('[INFO]')
 };
 
 class Logger {
-  constructor() {
+  constructor () {
     this.startTime = Date.now();
+    this.metrics = {
+      totalLogs: 0,
+      logsByLevel: {
+        info: 0,
+        warn: 0,
+        error: 0,
+        debug: 0,
+        trace: 0,
+        success: 0
+      },
+      performance: {
+        avgWriteTime: 0,
+        totalWriteTime: 0,
+        writeCount: 0
+      }
+    };
     this.initialize();
   }
 
-  async initialize() {
+  async initialize () {
     if (LOG_CONFIG.file.enabled) {
       await fs
         .mkdir(LOG_CONFIG.file.directory, { recursive: true })
@@ -42,17 +61,35 @@ class Logger {
     }
   }
 
-  format(level, section = "", message = "") {
+  format (level, section = '', message = '') {
+    if (process.env.NODE_ENV === 'production') {
+      return JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: level.toUpperCase(),
+        section,
+        message
+      });
+    }
     const timestamp = chalk.dim(`[${new Date().toISOString()}]`);
     const tag = levelColors[level] || `[${level.toUpperCase()}]`;
-    const sectionTag = section ? chalk.cyan(`${section}`) : "";
+    const sectionTag = section ? chalk.cyan(`${section}`) : '';
     return `${timestamp} ${tag} ${sectionTag} ${message}`;
   }
 
-  async log(level, section, message) {
-    const formatted = this.format(level, section, message);
-    console.log(formatted);
+  async log (level, section, ...messages) {
+    const msg = messages
+      .map((m) => (typeof m === 'object' && m !== null ? JSON.stringify(m) : m))
+      .join(' ');
+    const formatted = this.format(level, section, msg);
+    process.stdout.write(`${formatted}\n`);
 
+    // Metrics
+    this.metrics.totalLogs++;
+    if (this.metrics.logsByLevel[level] !== undefined) {
+      this.metrics.logsByLevel[level]++;
+    }
+
+    // File logging
     if (LOG_CONFIG.file.enabled) {
       if (LOG_CONFIG.batch.enabled) {
         this.queueLog(this.stripChalk(formatted));
@@ -62,11 +99,11 @@ class Logger {
     }
   }
 
-  stripChalk(str) {
-    return str.replace(/\x1b\[[0-9;]*m/g, "");
+  stripChalk (str) {
+    return stripAnsi(str);
   }
 
-  queueLog(line) {
+  queueLog (line) {
     logBatch.push(line);
     if (logBatch.length >= LOG_CONFIG.batch.size) {
       this.flushBatch();
@@ -78,27 +115,37 @@ class Logger {
     }
   }
 
-  async flushBatch() {
+  async flushBatch () {
     if (batchTimeout) {
       clearTimeout(batchTimeout);
       batchTimeout = null;
     }
     if (logBatch.length === 0) return;
 
-    const content = logBatch.join("\n") + "\n";
+    const content = `${logBatch.join('\n')}\n`;
     logBatch.length = 0;
     await this.writeToFile(content);
   }
 
-  async writeToFile(content) {
+  async writeToFile (content) {
     const filename = path.join(
       LOG_CONFIG.file.directory,
       this.getCurrentLogFile()
     );
 
+    const start = Date.now();
     await fs.appendFile(filename, content).catch((err) => {
-      console.error("Erreur écriture fichier log:", err);
+      process.stdout.write(`[ERROR] Erreur écriture fichier log: ${err}\n`);
     });
+    const end = Date.now();
+
+    // Metrics
+    const duration = end - start;
+    this.metrics.performance.totalWriteTime += duration;
+    this.metrics.performance.writeCount++;
+    this.metrics.performance.avgWriteTime
+      = this.metrics.performance.totalWriteTime
+      / this.metrics.performance.writeCount;
 
     const { size } = await fs.stat(filename);
     if (size > LOG_CONFIG.file.maxSize) {
@@ -106,11 +153,11 @@ class Logger {
     }
   }
 
-  getCurrentLogFile() {
-    return `bot-${new Date().toISOString().split("T")[0]}.log`;
+  getCurrentLogFile () {
+    return `bot-${new Date().toISOString().split('T')[0]}.log`;
   }
 
-  async rotateFile(filepath) {
+  async rotateFile (filepath) {
     const timestamp = Date.now();
     const rotated = filepath.replace(/\.log$/, `-${timestamp}.log`);
 
@@ -118,9 +165,9 @@ class Logger {
     await this.cleanOldLogs();
   }
 
-  async cleanOldLogs() {
+  async cleanOldLogs () {
     const files = await fs.readdir(LOG_CONFIG.file.directory);
-    const logs = files.filter((f) => f.endsWith(".log")).sort();
+    const logs = files.filter((f) => f.endsWith('.log')).sort();
 
     if (logs.length > LOG_CONFIG.file.maxFiles) {
       const toDelete = logs.slice(0, logs.length - LOG_CONFIG.file.maxFiles);
@@ -132,26 +179,54 @@ class Logger {
     }
   }
 
-  // Public logging methods
-  info = (section, msg) => this.log("info", section, msg);
-  warn = (section, msg) => this.log("warn", section, msg);
-  error = (section, msg) => this.log("error", section, msg);
-  debug = (section, msg) => this.log("debug", section, msg);
-  success = (section, msg) => this.log("success", section, msg);
-  custom = (section, msg) => this.log("custom", section, msg);
+  // Public logging methods (compatibles avec les tests)
+  info = async (...args) => this.log('info', '', ...args);
+  warn = async (...args) => this.log('warn', '', ...args);
+  error = async (...args) => this.log('error', '', ...args);
+  debug = async (...args) => this.log('debug', '', ...args);
+  trace = async (...args) => this.log('trace', '', ...args);
+  success = async (...args) => this.log('success', '', `✅ ${args.join(' ')}`);
+  custom = async (label, ...args) =>
+    this.log('info', '', `[${label}] ${args.join(' ')}`);
 
-  // Bannières & sections
-  banner(title) {
-    const line = "━".repeat(60);
-    console.log(
-      `\n${chalk.magentaBright(line)}\n${chalk.bold(title)}\n${chalk.magentaBright(line)}\n`
+  // Section, sectionStart, summary
+  section = async (title) => {
+    const line = '━'.repeat(60);
+    process.stdout.write(
+      `\n[INFO] ${chalk.yellow(line)}\n[INFO] ${chalk.bold(`  ${title}  `)}\n[INFO] ${chalk.yellow(line)}\n`
     );
-  }
+  };
 
-  section(title) {
-    const line = "─".repeat(60);
-    console.log(
-      `\n${chalk.yellow(line)}\n${chalk.bold(`  ${title}  `)}\n${chalk.yellow(line)}\n`
+  sectionStart = async (title) => {
+    const line = `┏${'━'.repeat(57)}`;
+    process.stdout.write(
+      `\n[INFO] ${chalk.cyan(line)}\n[INFO] ${chalk.bold(`  ${title}  `)}\n[INFO] ${chalk.cyan(line)}\n`
+    );
+  };
+
+  summary = async (...args) => this.info(...args);
+
+  // Métriques
+  getMetrics = () => this.metrics;
+
+  // Méthodes synchrones
+  errorSync = (...args) => process.stdout.write(`[ERROR] ${args.join(' ')}\n`);
+  warnSync = (...args) => process.stdout.write(`[WARN] ${args.join(' ')}\n`);
+  infoSync = (...args) => process.stdout.write(`[INFO] ${args.join(' ')}\n`);
+
+  // Méthodes de compatibilité
+  infocmd = async (...args) => this.info(...args);
+  bot = async (...args) => this.info('BOT', ...args);
+  command = async (...args) => this.info('COMMAND', ...args);
+  event = async (...args) => this.info('EVENT', ...args);
+  task = async (...args) => this.info('TASK', ...args);
+  api = async (...args) => this.info('API', ...args);
+
+  // Bannières
+  banner (title) {
+    const line = '━'.repeat(60);
+    process.stdout.write(
+      `\n${chalk.magentaBright(line)}\n${chalk.bold(title)}\n${chalk.magentaBright(line)}\n`
     );
   }
 }
