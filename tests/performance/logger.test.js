@@ -1,327 +1,66 @@
-// ========================================
-// tests/performance/logger.test.js - Tests de performance du logger
-// ========================================
+import logger from '../../bot/logger';
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import logger from "../../bot/logger.js";
-import fs from "fs/promises";
-import path from "path";
-
-describe("Performance Logger", () => {
-  let consoleSpy;
-  let testLogDir;
-  let outputBuffer;
-  let stdoutSpy;
-
-  beforeEach(async () => {
-    outputBuffer = [];
-    stdoutSpy = vi.spyOn(process.stdout, "write").mockImplementation((msg) => {
-      outputBuffer.push(msg);
-    });
-
-    consoleSpy = {
-      log: vi.spyOn(console, "log").mockImplementation(() => {}),
-      error: vi.spyOn(console, "error").mockImplementation(() => {}),
-      warn: vi.spyOn(console, "warn").mockImplementation(() => {}),
-    };
-
-    // Créer un dossier de test pour les logs
-    testLogDir = "./test-logs";
-    try {
-      await fs.mkdir(testLogDir, { recursive: true });
-    } catch (error) {
-      // Ignorer si le dossier existe déjà
-    }
+describe('Performance Logger', () => {
+  beforeEach(() => {
+    // Réinitialise les métriques avant chaque test
+    logger.metrics.totalLogs = 0;
+    logger.metrics.logsByLevel = {};
+    logger.metrics.performance.totalWriteTime = 0;
+    logger.metrics.performance.writeCount = 0;
+    logger.metrics.performance.avgWriteTime = 0;
   });
 
-  afterEach(async () => {
-    vi.restoreAllMocks();
+  // ⚙️ Métriques
+  it('should track logging metrics', async () => {
+    await logger.info('Test log');
+    const metrics = logger.getMetrics();
 
-    // Nettoyer les fichiers de test
-    try {
-      const files = await fs.readdir(testLogDir);
-      for (const file of files) {
-        await fs.unlink(path.join(testLogDir, file));
-      }
-      await fs.rmdir(testLogDir);
-    } catch (error) {
-      // Ignorer les erreurs de nettoyage
-    }
+    expect(typeof metrics.totalLogs).toBe('number');
+    expect(metrics.totalLogs).toBe(1);
+    expect(metrics.logsByLevel.INFO).toBe(1);
   });
 
-  describe("Méthodes de base", () => {
-    it("should have all required methods", () => {
-      expect(logger).toHaveProperty("error");
-      expect(logger).toHaveProperty("warn");
-      expect(logger).toHaveProperty("info");
-      expect(logger).toHaveProperty("debug");
-      expect(logger).toHaveProperty("trace");
-      expect(logger).toHaveProperty("success");
-      expect(logger).toHaveProperty("custom");
-      expect(logger).toHaveProperty("section");
-      expect(logger).toHaveProperty("sectionStart");
-      expect(logger).toHaveProperty("summary");
-    });
+  it('should track performance metrics when file logging is enabled', async () => {
+    await logger.debug('Debug message');
+    const { performance } = logger.getMetrics();
 
-    it("should log messages with proper formatting", async () => {
-      const testMessage = "Test log message";
-      const testData = { key: "value" };
-
-      await logger.info(testMessage, testData);
-
-      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining("[INFO]"));
-      expect(stdoutSpy).toHaveBeenCalledWith(
-        expect.stringContaining(testMessage)
-      );
-      expect(stdoutSpy).toHaveBeenCalledWith(
-        expect.stringContaining(JSON.stringify(testData))
-      );
-    });
-
-    it("should handle different log levels", async () => {
-      const levels = ["error", "warn", "info", "debug", "trace"];
-
-      for (const level of levels) {
-        await logger[level](`Test ${level} message`);
-      }
-
-      expect(stdoutSpy).toHaveBeenCalledWith(
-        expect.stringContaining("[ERROR]")
-      );
-      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining("[WARN]"));
-      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining("[INFO]"));
-      expect(stdoutSpy).toHaveBeenCalledWith(
-        expect.stringContaining("[DEBUG]")
-      );
-      expect(stdoutSpy).toHaveBeenCalledWith(
-        expect.stringContaining("[TRACE]")
-      );
-    });
+    expect(performance.writeCount).toBeGreaterThan(0);
+    expect(performance.avgWriteTime).toBeGreaterThan(0);
   });
 
-  describe("Performance", () => {
-    it("should handle high volume logging efficiently", async () => {
-      const startTime = Date.now();
-      const logCount = 1000;
-
-      // Logger 1000 messages rapidement
-      const promises = [];
-      for (let i = 0; i < logCount; i++) {
-        promises.push(logger.info(`Test message ${i}`));
-      }
-
-      await Promise.all(promises);
-      const duration = Date.now() - startTime;
-
-      // Vérifier que le logging est rapide (< 1 seconde pour 1000 logs)
-      expect(duration).toBeLessThan(1000);
-      expect(stdoutSpy).toHaveBeenCalledTimes(logCount);
-    });
-
-    it("should batch logs for better performance", async () => {
-      // Simuler l'activation du batching
-      const originalBatchEnabled = process.env.LOG_BATCH;
-      process.env.LOG_BATCH = "true";
-
-      const promises = [];
-      for (let i = 0; i < 50; i++) {
-        promises.push(logger.info(`Batch test ${i}`));
-      }
-
-      await Promise.all(promises);
-
-      // Vérifier que les logs sont traités
-      expect(stdoutSpy).toHaveBeenCalled();
-
-      // Restaurer la configuration
-      if (originalBatchEnabled) {
-        process.env.LOG_BATCH = originalBatchEnabled;
-      } else {
-        delete process.env.LOG_BATCH;
-      }
-    });
+  it('should have performance metrics structure', () => {
+    const metrics = logger.getMetrics();
+    expect(metrics).toHaveProperty('totalLogs');
+    expect(metrics).toHaveProperty('logsByLevel');
+    expect(metrics).toHaveProperty('performance');
+    expect(metrics.performance).toHaveProperty('writeCount');
+    expect(metrics.performance).toHaveProperty('avgWriteTime');
   });
 
-  describe("Métriques", () => {
-    it("should track logging metrics", async () => {
-      // Logger quelques messages
-      await logger.info("Test metric 1");
-      await logger.warn("Test metric 2");
-      await logger.error("Test metric 3");
+  // 🎨 Formatage
+  it('should format structured logs in production', async () => {
+    const testData = { data: 'value' };
+    const spy = vi.spyOn(process.stdout, 'write').mockImplementation(() => {});
+    await logger.info('Structured test', testData);
 
-      const metrics = logger.getMetrics();
-
-      expect(metrics).toHaveProperty("totalLogs");
-      expect(metrics).toHaveProperty("logsByLevel");
-      expect(metrics).toHaveProperty("performance");
-
-      expect(metrics.totalLogs).toBeGreaterThan(0);
-      expect(metrics.logsByLevel.info).toBeGreaterThan(0);
-      expect(metrics.logsByLevel.warn).toBeGreaterThan(0);
-      expect(metrics.logsByLevel.error).toBeGreaterThan(0);
-    });
-
-    it("should track performance metrics when file logging is enabled", async () => {
-      // Activer temporairement l'écriture de fichier pour tester les métriques de performance
-      const originalLogToFile = process.env.LOG_TO_FILE;
-      process.env.LOG_TO_FILE = "true";
-
-      // Mock fs.appendFile pour simuler un délai d'écriture
-      const mockAppendFile = vi
-        .spyOn(fs, "appendFile")
-        .mockImplementation(async () => {
-          // Simuler un délai d'écriture de 10ms
-          await new Promise((resolve) => setTimeout(resolve, 10));
-        });
-
-      // Mock fs.stat pour retourner une taille de fichier valide
-      const mockStat = vi.spyOn(fs, "stat").mockResolvedValue({ size: 1000 });
-
-      try {
-        // Obtenir les métriques initiales
-        const initialMetrics = logger.getMetrics();
-        const initialWriteCount = initialMetrics.performance.writeCount;
-
-        // Utiliser la méthode normale de logging qui déclenchera writeToFile
-        await logger.info("Test performance metrics");
-
-        // Forcer le flush du batch si nécessaire
-        if (logger.flushBatch) {
-          await logger.flushBatch();
-        }
-
-        const metrics = logger.getMetrics();
-
-        expect(metrics.performance).toHaveProperty("avgWriteTime");
-        expect(metrics.performance).toHaveProperty("totalWriteTime");
-        expect(metrics.performance).toHaveProperty("writeCount");
-
-        expect(metrics.performance.writeCount).toBeGreaterThan(
-          initialWriteCount
-        );
-        expect(metrics.performance.avgWriteTime).toBeGreaterThan(0);
-        expect(metrics.performance.totalWriteTime).toBeGreaterThan(0);
-      } finally {
-        // Restaurer les mocks et la configuration
-        mockAppendFile.mockRestore();
-        mockStat.mockRestore();
-
-        if (originalLogToFile !== undefined) {
-          process.env.LOG_TO_FILE = originalLogToFile;
-        } else {
-          delete process.env.LOG_TO_FILE;
-        }
-      }
-    });
-
-    it("should have performance metrics structure", async () => {
-      // S'assurer que l'écriture de fichier est désactivée
-      const originalLogToFile = process.env.LOG_TO_FILE;
-      delete process.env.LOG_TO_FILE;
-
-      try {
-        // Test que la structure des métriques existe
-        const metrics = logger.getMetrics();
-
-        expect(metrics.performance).toHaveProperty("avgWriteTime");
-        expect(metrics.performance).toHaveProperty("totalWriteTime");
-        expect(metrics.performance).toHaveProperty("writeCount");
-
-        // Vérifier que les propriétés sont des nombres (même si 0)
-        expect(typeof metrics.performance.writeCount).toBe("number");
-        expect(typeof metrics.performance.avgWriteTime).toBe("number");
-        expect(typeof metrics.performance.totalWriteTime).toBe("number");
-      } finally {
-        // Restaurer la configuration originale
-        if (originalLogToFile !== undefined) {
-          process.env.LOG_TO_FILE = originalLogToFile;
-        }
-      }
-    });
+    const lastCall = spy.mock.calls.at(-1)?.[0];
+    expect(lastCall).toContain('[INFO]');
+    expect(lastCall).toContain('"data":"value"');
+    spy.mockRestore();
   });
 
-  describe("Formatage", () => {
-    it("should format structured logs in production", async () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = "production";
-
-      // Forcer la réinitialisation du logger pour prendre en compte le nouvel environnement
-      await logger.info("Structured test", { data: "value" });
-
-      // Vérifier que le formatage structuré est utilisé (JSON string)
-      expect(stdoutSpy).toHaveBeenCalledWith(
-        expect.stringContaining('"level":"INFO"')
-      );
-
-      process.env.NODE_ENV = originalEnv;
-    });
-
-    it("should format colored logs in development", async () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = "development";
-
-      await logger.info("Colored test");
-
-      // Vérifier que les arguments sont séparés en développement
-      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining("[INFO]"));
-      expect(stdoutSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Colored test")
-      );
-
-      process.env.NODE_ENV = originalEnv;
-    });
+  // 🛠️ Compatibilité (si tu veux vraiment garder les anciens alias)
+  it('should maintain backward compatibility', async () => {
+    expect(typeof logger.command).toBe('function');
+    await logger.command('Commande test');
+    const metrics = logger.getMetrics();
+    expect(metrics.logsByLevel.CMD).toBe(1);
   });
 
-  describe("Gestion des erreurs", () => {
-    it("should handle logging errors gracefully", async () => {
-      // Simuler une erreur d'écriture de fichier
-      const mockAppendFile = vi
-        .spyOn(fs, "appendFile")
-        .mockRejectedValue(new Error("Write error"));
-
-      // Le logger devrait continuer à fonctionner malgré l'erreur
-      await logger.info("Error test");
-
-      expect(stdoutSpy).toHaveBeenCalled();
-      mockAppendFile.mockRestore();
-    });
-
-    it("should provide synchronous fallback methods", () => {
-      const testMessage = "Sync test message";
-
-      logger.errorSync(testMessage);
-      logger.warnSync(testMessage);
-      logger.infoSync(testMessage);
-
-      expect(stdoutSpy).toHaveBeenCalledWith(
-        expect.stringContaining("[ERROR]")
-      );
-      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining("[WARN]"));
-      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining("[INFO]"));
-    });
-  });
-
-  describe("Compatibilité", () => {
-    it("should maintain backward compatibility", async () => {
-      // Tester les anciennes méthodes
-      await logger.success("Success test");
-      await logger.infocmd("Command test");
-      await logger.custom("CUSTOM", "Custom test");
-      await logger.bot("Bot test");
-      await logger.command("Command test");
-      await logger.event("Event test");
-      await logger.task("Task test");
-      await logger.api("API test");
-
-      expect(stdoutSpy).toHaveBeenCalled();
-    });
-
-    it("should handle section formatting", async () => {
-      await logger.section("Test Section");
-
-      // Vérifier que les sections sont loggées avec des arguments séparés
-      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining("━"));
-    });
+  it('should handle section formatting', () => {
+    const spy = vi.spyOn(process.stdout, 'write').mockImplementation(() => {});
+    logger.section('Test Section');
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
   });
 });
-

@@ -30,8 +30,8 @@ const tryFixEncoding = async (text) => {
         const decoded = buffer.toString(encoding);
 
         if (!decoded.includes('')) {
-          await logger.info(
-            `✅ Récupération réussie avec ${encoding}:`,
+          await logger.success(
+            `Récupération réussie avec ${encoding}:`,
             decoded
           );
           return decoded;
@@ -228,7 +228,7 @@ export default (client) => {
           .json({ error: 'Canal Discord invalide pour la playlist.' });
       }
 
-      await logger.info(`✅ Canal playlist trouvé: ${playlistChannel.name}`);
+      await logger.info(`Canal playlist trouvé: ${playlistChannel.name}`);
 
       const description = `**${normalizedPlaylist}** est maintenant en cours sur soundSHINE! 
       \nVous pouvez l'écouter en direct sur le canal <#1383684854255849613>.`;
@@ -253,7 +253,7 @@ export default (client) => {
       await logger.info('🔄 Étape 2: Tentative d\'envoi de l\'embed...');
       try {
         await playlistChannel.send({ embeds: [embed] });
-        await logger.info('✅ Embed playlist envoyé avec succès');
+        await logger.info('Embed playlist envoyé avec succès');
         playlistSent = true;
       } catch (embedErr) {
         await logger.error(
@@ -275,7 +275,7 @@ export default (client) => {
           throw new Error('Canal Stage invalide');
         }
 
-        await logger.info(`✅ Stage channel trouvé: ${stageChannel.name}`);
+        await logger.info(`Stage channel trouvé: ${stageChannel.name}`);
 
         await logger.info('🔄 Étape 4: Vérification de l\'instance de stage...');
         const { stageInstance } = stageChannel;
@@ -286,8 +286,8 @@ export default (client) => {
           );
           try {
             await stageChannel.createStageInstance({ topic: normalizedTopic });
-            await logger.info(
-              `✅ Instance de stage créée avec sujet: ${normalizedTopic}`
+            await logger.success(
+              `Instance de stage créée avec sujet: ${normalizedTopic}`
             );
             stageTopic = true;
           } catch (createErr) {
@@ -303,7 +303,7 @@ export default (client) => {
           );
           try {
             await stageInstance.edit({ topic: normalizedTopic });
-            await logger.info(`✅ Sujet modifié: ${normalizedTopic}`);
+            await logger.success(`Sujet modifié: ${normalizedTopic}`);
             stageTopic = true;
           } catch (editErr) {
             await logger.error(

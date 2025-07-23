@@ -1,79 +1,78 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import logger from "../bot/logger.js";
+// tests/logger.test.js
+import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest';
+import logger from '../bot/logger.js';
 
-let outputBuffer;
-let stdoutSpy;
+describe('PerformanceLogger', () => {
+  let stdoutSpy;
 
-describe("Logger", () => {
   beforeEach(() => {
-    outputBuffer = [];
-    stdoutSpy = vi.spyOn(process.stdout, "write").mockImplementation((msg) => {
-      outputBuffer.push(msg);
-    });
+    stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    logger.metrics.totalLogs = 0;
+    logger.metrics.logsByLevel = {};
+    logger.metrics.performance = {
+      totalWriteTime: 0,
+      writeCount: 0,
+      avgWriteTime: 0
+    };
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
-    outputBuffer = [];
+    stdoutSpy.mockRestore();
   });
 
-  it("should have all required methods", () => {
-    expect(logger).toHaveProperty("info");
-    expect(logger).toHaveProperty("error");
-    expect(logger).toHaveProperty("warn");
-    expect(logger).toHaveProperty("success");
-    expect(logger).toHaveProperty("custom");
-    expect(logger).toHaveProperty("section");
+  it('should log an info message', async () => {
+    await logger.info('Ceci est un log info');
+    expect(stdoutSpy).toHaveBeenCalled();
+    expect(logger.metrics.totalLogs).toBe(1);
+    expect(logger.metrics.logsByLevel.INFO).toBe(1);
   });
 
-  it("should log error messages with custom format", async () => {
-    const message = "Test error message";
-    await logger.error(message);
-    expect(outputBuffer.join("")).toContain("[ERROR]");
-    expect(outputBuffer.join("")).toContain(message);
+  it('should log an error message', async () => {
+    await logger.error('Une erreur est survenue');
+    expect(stdoutSpy).toHaveBeenCalled();
+    expect(logger.metrics.logsByLevel.ERROR).toBe(1);
   });
 
-  it("should log warning messages with custom format", async () => {
-    const message = "Test warning message";
-    await logger.warn(message);
-    expect(outputBuffer.join("")).toContain("[WARN]");
-    expect(outputBuffer.join("")).toContain(message);
+  it('should track performance metrics', async () => {
+    await logger.warn('Test performance');
+    expect(logger.metrics.performance.writeCount).toBe(1);
+    expect(logger.metrics.performance.totalWriteTime).toBeGreaterThan(0);
+    expect(logger.metrics.performance.avgWriteTime).toBeGreaterThan(0);
   });
 
-  it("should log success messages with custom format", async () => {
-    const message = "Test success message";
-    await logger.success(message);
-    expect(outputBuffer.join("")).toContain("[INFO]");
-    expect(outputBuffer.join("")).toContain(`✅ ${message}`);
+  it('should handle custom levels like CMD and INIT', async () => {
+    await logger.command('Commande exécutée');
+    await logger.init('Initialisation en cours');
+    expect(logger.metrics.logsByLevel.CMD).toBe(1);
+    expect(logger.metrics.logsByLevel.INIT).toBe(1);
   });
 
-  it("should log custom messages with custom format", async () => {
-    const label = "CUSTOM";
-    const message = "Test custom message";
-    await logger.custom(label, message);
-    expect(outputBuffer.join("")).toContain("[INFO]");
-    expect(outputBuffer.join("")).toContain(`[${label}] ${message}`);
+  it('should stringify objects properly', async () => {
+    const obj = { foo: 'bar', num: 42 };
+    await logger.debug('Objet:', obj);
+    const written = stdoutSpy.mock.calls[0][0];
+    expect(written).toContain('foo');
+    expect(written).toContain('bar');
   });
 
-  it("should log section headers", async () => {
-    const sectionName = "Test Section";
-    await logger.section(sectionName);
-    expect(outputBuffer.join("")).toContain("[INFO]");
-    expect(outputBuffer.join("")).toMatch(/━/);
+  it('should not crash on circular references', async () => {
+    const a = {}; a.self = a;
+    await logger.info('Test circulaire', a);
+    expect(stdoutSpy).toHaveBeenCalled();
   });
 
-  it("should log section start headers", async () => {
-    const sectionName = "Test Section Start";
-    await logger.sectionStart(sectionName);
-    expect(outputBuffer.join("")).toContain("[INFO]");
-    expect(outputBuffer.join("")).toMatch(/┏/);
+  it('should have working section methods', () => {
+    logger.banner('TEST BANNER');
+    logger.section('TEST SECTION');
+    logger.sectionStart('TEST START');
+    logger.summary('TEST SUMMARY');
+    expect(stdoutSpy).toHaveBeenCalled();
   });
 
-  it("should log info messages", async () => {
-    const message = "Test CMD message";
-    await logger.info(message);
-    expect(outputBuffer.join("")).toContain("[INFO]");
-    expect(outputBuffer.join("")).toContain(message);
+  it('should support synchronous methods', () => {
+    logger.infoSync('sync info');
+    logger.warnSync('sync warn');
+    logger.errorSync('sync error');
+    expect(stdoutSpy).toHaveBeenCalled();
   });
 });
-

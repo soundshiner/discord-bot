@@ -51,7 +51,7 @@ export default {
       );
 
       return await interaction.reply(
-        `✅ Suggestion **${newTitre}** modifiée avec succès.`
+        `Suggestion **${newTitre}** modifiée avec succès.`
       );
     } catch (error) {
       logger.error('Erreur modification suggestion:', error);

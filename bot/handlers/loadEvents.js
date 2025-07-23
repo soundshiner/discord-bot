@@ -46,7 +46,7 @@ export async function loadEvents (client, importFn = (src) => import(src)) {
             client.on(fileModule.default.name, handler);
           }
 
-          logger.custom(
+          logger.event(
             `Événement chargé : ${fileModule.default.name}`
           );
           loadedEvents.push(fileModule.default.name);
@@ -60,7 +60,7 @@ export async function loadEvents (client, importFn = (src) => import(src)) {
       }
     }
 
-    logger.info(`${loadedEvents.length} événements chargés avec succès`);
+    logger.success(`${loadedEvents.length} événements chargés avec succès`);
     if (failedEvents.length > 0) {
       logger.warn(`${failedEvents.length} événements en échec`);
     }

@@ -46,7 +46,6 @@ class AppStateService {
   setBotReady (isReady) {
     this.#storage.setBotReady(isReady);
     this.#notifier.notify('bot', this.bot);
-    logger.info(`Bot ready: ${isReady}`);
   }
 
   setBotConnected (isConnected) {

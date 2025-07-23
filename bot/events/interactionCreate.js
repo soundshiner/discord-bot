@@ -744,7 +744,7 @@ async function handleButtonInteraction (interaction, _client, _db, _config) {
     if (customId.startsWith('suggestion_')) {
       // Traitement des boutons de suggestion...
       await interaction.reply({
-        content: '✅ Action effectuée avec succès!',
+        content: 'Action effectuée avec succès!',
         flags: 64 // MessageFlags.Ephemeral
       });
       return { success: true, message: 'BUTTON_HANDLED', ephemeral: false };
@@ -831,7 +831,7 @@ async function handleModalSubmit (interaction, _client, _db, _config) {
     // Traitement de la suggestion...
     return {
       success: true,
-      message: '✅ Votre suggestion a été soumise avec succès!',
+      message: 'Votre suggestion a été soumise avec succès!',
       ephemeral: true
     };
   }
@@ -879,7 +879,7 @@ async function handlePlayCommand (interaction, _client) {
       AudioPlayerStatus,
       NoSubscriberBehavior
     } = await import('@discordjs/voice');
-    logger.info('✅ Modules audio importés avec succès');
+    logger.success('Modules audio importés avec succès');
 
     const config = (await import('../config.js')).default;
     const { STREAM_URL } = config;
@@ -892,7 +892,7 @@ async function handlePlayCommand (interaction, _client) {
       adapterCreator: channel.guild.voiceAdapterCreator,
       selfDeaf: false
     });
-    logger.info('✅ Connexion établie');
+    logger.success('Connexion établie');
 
     logger.info('🎵 Création du player audio...');
     const player = createAudioPlayer({
@@ -900,18 +900,18 @@ async function handlePlayCommand (interaction, _client) {
         noSubscriber: NoSubscriberBehavior.Pause
       }
     });
-    logger.info('✅ Player créé');
+    logger.success(' Player créé');
 
     logger.info('🎼 Création de la ressource audio...');
     const resource = createAudioResource(STREAM_URL, {
       inlineVolume: true
     });
-    logger.info('✅ Ressource audio créée');
+    logger.success(' Ressource audio créée');
 
     logger.info('▶️ Lancement de la lecture...');
     player.play(resource);
     connection.subscribe(player);
-    logger.info('✅ Lecture lancée');
+    logger.success(' Lecture lancée');
 
     interaction.client.audio = { connection, player };
     logger.info('💾 Audio sauvegardé dans client.audio');
@@ -926,7 +926,7 @@ async function handlePlayCommand (interaction, _client) {
       logger.info('🎵 Événement Playing détecté');
       clearTimeout(timeout);
       await interaction.editReply('▶️ Stream lancé dans le stage channel.');
-      logger.info('✅ Message de succès envoyé');
+      logger.success(' Message de succès envoyé');
     });
 
     player.on('error', async (error) => {
@@ -937,7 +937,7 @@ async function handlePlayCommand (interaction, _client) {
       );
     });
 
-    logger.info('✅ handlePlayCommand terminé avec succès');
+    logger.success(' handlePlayCommand terminé avec succès');
   } catch (error) {
     logger.error('❌ Erreur lors du traitement de la commande play:', error);
     // L'interaction est déjà différée par le code principal, donc on utilise editReply

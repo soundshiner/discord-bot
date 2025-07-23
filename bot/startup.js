@@ -27,9 +27,6 @@ export async function startBot () {
 
     // Démarrer les tâches
     startUpdateStatus();
-    logger.info(
-      `Tâche updateStatus lancée toutes les ${updateStatus.interval} ms`
-    );
 
     return client;
   } catch (error) {
@@ -42,7 +39,6 @@ export async function startBot () {
 async function connectBot () {
   try {
     await client.login(config.DISCORD_TOKEN);
-    logger.success('Bot Discord connecté avec succès');
   } catch (error) {
     errorHandler.handleCriticalError(error, 'BOT_LOGIN');
     throw error;
