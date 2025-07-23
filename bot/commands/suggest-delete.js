@@ -39,7 +39,7 @@ export default {
       await db.query('DELETE FROM suggestions WHERE id = ?', [suggestionId]);
 
       return await interaction.reply(
-        `✅ Suggestion **${suggestion.titre}** supprimée avec succès.`
+        `Suggestion **${suggestion.titre}** supprimée avec succès.`
       );
     } catch (error) {
       logger.error('Erreur suppression suggestion:', error);

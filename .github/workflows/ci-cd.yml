@@ -115,7 +115,7 @@ jobs:
           # Push to main
           git push origin main
 
-          echo "✅ Successfully merged develop to main"
+          echo "Successfully merged develop to main"
 
   # Déploiement automatique sur main (seulement si PR mergée)
   deploy:
@@ -151,7 +151,7 @@ jobs:
           status: success
           title: "🚀 Déploiement Automatique"
           description: |
-            ✅ Code mergé et déployé automatiquement !
+            Code mergé et déployé automatiquement !
 
             **PR:** ${{ github.event.pull_request.title }}
             **Auteur:** ${{ github.event.pull_request.user.login }}
@@ -170,7 +170,7 @@ jobs:
           status: ${{ job.status }}
           title: "🧪 Résultats des Tests"
           description: |
-            ${{ job.status == 'success' && '✅ Tous les tests sont passés !' || '❌ Certains tests ont échoué.' }}
+            ${{ job.status == 'success' && 'Tous les tests sont passés !' || '❌ Certains tests ont échoué.' }}
 
   # Notification d'échec général
   notify-failure:

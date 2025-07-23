@@ -23,7 +23,7 @@ async function updateStatus (client) {
     }
 
     if (currentSong !== lastSong) {
-      logger.info(`Updated status to: ${currentSong}`);
+      logger.info(`Status to: ${currentSong}`);
       lastSong = currentSong;
     }
 

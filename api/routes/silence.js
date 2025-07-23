@@ -172,7 +172,7 @@ export default function silenceRoutes (client, loggerInstance = logger) {
         = '🧪 **TEST D\'ALERTE API**\n\n'
         + 'Ceci est un test du système d\'alerte de silence via l\'API.\n'
         + `⏰ Test effectué à: ${new Date().toLocaleString('fr-FR')}\n`
-        + '✅ Le système fonctionne correctement.';
+        + 'Le système fonctionne correctement.';
 
       const client = await silenceDetector.getDiscordClient();
       if (client) {

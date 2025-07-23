@@ -38,9 +38,8 @@ export async function loadCommands (client, importFn = (src) => import(src)) {
           && typeof fileModule.default.execute === 'function'
         ) {
           client.commands.set(fileModule.default.data.name, fileModule.default);
-          logger.info(
-            `Commande chargée : ${fileModule.default.data.name}`
-          );
+          logger.custom('CMD',
+            `Commande chargée : ${fileModule.default.data.name}`);
           loadedCommands.push(fileModule.default.data.name);
         } else {
           logger.warn(`Commande invalide dans ${file}`);
@@ -52,7 +51,7 @@ export async function loadCommands (client, importFn = (src) => import(src)) {
       }
     }
 
-    logger.info(`${loadedCommands.length} commandes chargées avec succès`);
+    logger.success(`${loadedCommands.length} commandes chargées avec succès`);
     if (failedCommands.length > 0) {
       logger.warn(`${failedCommands.length} commandes en échec`);
     }

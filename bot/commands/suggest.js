@@ -79,7 +79,7 @@ export default {
 
       return await interaction.reply({
         content:
-          '✅ Ta suggestion a été prise en compte. On garde un oeil dessus !',
+          'Ta suggestion a été prise en compte. On garde un oeil dessus !',
         flags: MessageFlags.Ephemeral
       });
     } catch (error) {

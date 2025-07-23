@@ -103,8 +103,6 @@ async function startApplication() {
       }
     );
 
-    logger.success("Bot Discord démarré avec succès");
-
     // Lancement du serveur API avec retry
     logger.banner("Initialisation du serveur API...");
     apiServer = new WebServer(botClient, logger);
@@ -123,7 +121,7 @@ async function startApplication() {
     );
     logger.success(`Serveur API démarré sur le port ${config.api.port}`);
 
-    // 🧼 Gestion du cycle de vie
+    // Gestion du cycle de vie
     registerProcessHandlers();
 
     // Enregistrer les gestionnaires de fermeture
@@ -131,16 +129,16 @@ async function startApplication() {
     process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 
     logger.section("Chargement des routes");
-    logger.info("Métriques disponibles sur /v1/metrics");
-    logger.info("Health check sur /v1/health");
-    logger.info("Logs centralisés disponibles sur /v1/logs");
-    logger.info("Alertes disponibles sur /v1/alerts");
+    logger.api("Métriques disponibles sur /v1/metrics");
+    logger.api("Health check sur /v1/health");
+    logger.api("Logs centralisés disponibles sur /v1/logs");
+    logger.api("Alertes disponibles sur /v1/alerts");
     // Log des informations de performance
     const memUsage = process.memoryUsage();
-    logger.info(
+    logger.bot(
       `Mémoire utilisée: ${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`
     );
-    logger.banner("Start logging on...");
+    logger.banner("Bot started... Begin logging on...");
   } catch (error) {
     logger.error("Erreur critique lors du démarrage de l'application:", error);
 
@@ -155,7 +153,6 @@ async function startApplication() {
         cleanupError
       );
     }
-
     process.exit(1);
   }
 }

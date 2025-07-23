@@ -262,7 +262,7 @@ export default {
 
     const embed = {
       color: 0x00ff00,
-      title: '✅ Destinataire ajouté',
+      title: 'Destinataire ajouté',
       description: `${user.tag} a été ajouté aux destinataires d'alerte.`,
       timestamp: new Date().toISOString()
     };
@@ -302,7 +302,7 @@ export default {
       = '🧪 **TEST D\'ALERTE**\n\n'
       + 'Ceci est un test du système d\'alerte de silence.\n'
       + `⏰ Test effectué à: ${new Date().toLocaleString('fr-FR')}\n`
-      + '✅ Le système fonctionne correctement.';
+      + 'Le système fonctionne correctement.';
 
     try {
       const client = await silenceDetector.getDiscordClient();

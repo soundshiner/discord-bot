@@ -15,6 +15,7 @@ import {
   dosProtection,
   timeoutProtection
 } from '../core/middleware/security.js';
+import prometheusMiddleware from './middlewares/prometheus.js';
 
 class WebServer {
   constructor (client, logger) {
@@ -36,7 +37,7 @@ class WebServer {
       this.app.use(xssProtection);
       this.app.use(sqlInjectionProtection);
       this.app.use(validateInput);
-
+      this.app.use(prometheusMiddleware);
       // Rate limiting standard
       this.app.use(
         rateLimit({
@@ -65,7 +66,7 @@ class WebServer {
   setupRoutes () {
     try {
       loadRoutes(this.app, this.client, this.logger);
-      this.logger.info('Routes API chargées');
+      this.logger.api('Routes chargées');
     } catch (error) {
       monitor.handleCriticalError(error, 'ROUTES_SETUP');
       throw error;
