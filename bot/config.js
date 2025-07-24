@@ -72,8 +72,8 @@ const botConfig = {
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   isDev: env === 'dev',
   isProd: env === 'prod',
-  roleId: '1381014207788613693',
-  channelId: '1385772202716299264'
+  roleId: process.env.SUG_ROLE_ID,
+  channelId: process.env.SUG_CHANNEL_ID
 };
 
 export default botConfig;
