@@ -87,6 +87,7 @@
     "lint": "eslint bot/ api/ core/ --config config/.eslintrc.js",
     "lint:fix": "eslint bot/ api/ core/ --config config/.eslintrc.js --fix",
     "format": "eslint bot/ api/ core/ --config config/.eslintrc.js --fix",
+    "fix:all": "eslint bot/ api/ core/ --config config/.eslintrc.js --fix && npm run format",
     "check-syntax": "node --check index.js api/server.js core/config.js core/loadFiles.js utils/logger.js utils/errorHandler.js",
     "security:audit": "node scripts/security/audit.js",
     "security:fix": "node scripts/security/fix-permissions.js",
