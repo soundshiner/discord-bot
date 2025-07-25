@@ -25,21 +25,22 @@ export default {
   async execute (interaction) {
     const target = interaction.options.getUser('user');
     const sender = interaction.user;
+    const drink = randomDrink();
 
     if (target.id === sender.id) {
       await interaction.reply({
-        content: `🤨 T'offrir un verre à toi-même ? Allez va... tiens, bois ça. *${randomDrink()}*`,
+        content: `🤨 T'offrir un verre à toi-même ? Allez va... tiens, bois ça. *${drink}*`,
         ephemeral: false
       });
-      return;
+      return 'self_drink';
     }
-
-    const drink = randomDrink();
 
     await interaction.reply({
       content: `🍸 **${sender.username}** offre un ${drink} à **${target.username}** ! Santé ! 🥂`,
       ephemeral: false
     });
+
+    return 'drink_sent';
   }
 };
 

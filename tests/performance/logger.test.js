@@ -45,10 +45,10 @@ describe('Performance Logger', () => {
 
     const lastCall = spy.mock.calls.at(-1)?.[0];
     expect(lastCall).toContain('[INFO]');
-    expect(lastCall).toContain('"data":"value"');
+    expect(lastCall).toMatch(/"data"\s*:\s*"value"/);
     spy.mockRestore();
   });
-
+  
   // 🛠️ Compatibilité (si tu veux vraiment garder les anciens alias)
   it('should maintain backward compatibility', async () => {
     expect(typeof logger.command).toBe('function');
