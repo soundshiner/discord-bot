@@ -32,7 +32,7 @@ const interactionRetryManager = new RetryManager({
 
 export default {
   name: Events.InteractionCreate,
-  async execute(interaction) {
+  async execute (interaction) {
     const startTime = Date.now();
     const { client, db } = AppState;
 
@@ -86,7 +86,8 @@ export default {
       recordCommand(userId, commandType);
 
       // Traitement de l'interaction avec retry
-      const result = await executeWithRetry(interaction, discordClient, db, discordConfig, commandName, interactionType, userId);
+      const result = await executeWithRetry(interaction, discordClient, db, discordConfig,
+        commandName, interactionType, userId);
 
       // Gestion de la réponse
       await handleInteractionResponse(interaction, result, commandName);
@@ -98,7 +99,6 @@ export default {
         commandType,
         success: true
       });
-
     } catch (error) {
       await handleInteractionError(interaction, error, startTime);
     }
@@ -108,7 +108,7 @@ export default {
 /**
  * Gère le rate limiting pour une interaction
  */
-async function handleRateLimit(interaction, userId, commandName) {
+async function handleRateLimit (interaction, userId, commandName) {
   const commandType = getCommandType(commandName);
   const rateLimitResult = checkRateLimit(userId, commandType);
 
@@ -145,7 +145,7 @@ async function handleRateLimit(interaction, userId, commandName) {
 /**
  * Gère les erreurs de validation
  */
-async function handleValidationError(interaction, validationResult, userId, commandName) {
+async function handleValidationError (interaction, validationResult, userId, commandName) {
   secureSecurityAlert(
     'Entrée utilisateur invalide',
     {
@@ -166,14 +166,14 @@ async function handleValidationError(interaction, validationResult, userId, comm
 /**
  * Exécute l'interaction avec retry
  */
-async function executeWithRetry(interaction, discordClient, db, discordConfig, commandName, interactionType, userId) {
+async function executeWithRetry (interaction, discordClient, db, discordConfig, commandName, interactionType, userId) {
   try {
     return await interactionRetryManager.execute(
       async () => {
         logger.info(`Début du traitement de l'interaction ${commandName}`);
-        
+
         const result = await handleInteractionByType(interaction, discordClient, db, discordConfig);
-        
+
         logger.info(`Résultat de l'interaction: ${safeStringify(result)}`);
         return result;
       },
@@ -197,7 +197,7 @@ async function executeWithRetry(interaction, discordClient, db, discordConfig, c
         content: '❌ Une erreur est survenue lors du traitement de votre demande.'
       });
     }
-    
+
     throw error;
   }
 }
@@ -205,7 +205,7 @@ async function executeWithRetry(interaction, discordClient, db, discordConfig, c
 /**
  * Gère la réponse à l'interaction
  */
-async function handleInteractionResponse(interaction, result, commandName) {
+async function handleInteractionResponse (interaction, result, commandName) {
   logger.info(`Résultat final après RetryManager: ${safeStringify(result)}`);
 
   if (result && result.success) {
@@ -246,7 +246,7 @@ async function handleInteractionResponse(interaction, result, commandName) {
 /**
  * Gère les erreurs d'interaction
  */
-async function handleInteractionError(interaction, error, startTime) {
+async function handleInteractionError (interaction, error, startTime) {
   const duration = Date.now() - startTime;
 
   // Log d'erreur sécurisé

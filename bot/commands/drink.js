@@ -22,7 +22,7 @@ export default {
         .setDescription('La personne à qui offrir un verre')
         .setRequired(true)),
 
-  async execute(interaction) {
+  async execute (interaction) {
     const target = interaction.options.getUser('user');
     const sender = interaction.user;
     const drink = randomDrink();
@@ -44,6 +44,6 @@ export default {
   }
 };
 
-function randomDrink() {
+function randomDrink () {
   return drinks[Math.floor(Math.random() * drinks.length)];
 }

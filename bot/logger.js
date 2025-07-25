@@ -5,20 +5,20 @@
 import chalk from 'chalk';
 
 const LEVELS = {
-  TRACE:   { label: 'TRACE',   color: chalk.gray },
-  DEBUG:   { label: 'DEBUG',   color: chalk.magenta },
-  INFO:    { label: 'INFO',    color: chalk.cyan },
-  WARN:    { label: 'WARN',    color: chalk.yellowBright },
-  ERROR:   { label: 'ERROR',   color: chalk.redBright.bold },
+  TRACE: { label: 'TRACE',   color: chalk.gray },
+  DEBUG: { label: 'DEBUG',   color: chalk.magenta },
+  INFO: { label: 'INFO',    color: chalk.cyan },
+  WARN: { label: 'WARN',    color: chalk.yellowBright },
+  ERROR: { label: 'ERROR',   color: chalk.redBright.bold },
   SUCCESS: { label: '✓ OK',    color: chalk.greenBright },
 
-  CMD:     { label: 'CMD',     color: chalk.blueBright },
-  EVENT:   { label: 'EVT',     color: chalk.magentaBright },
-  API:     { label: 'API',     color: chalk.cyanBright },
-  BOT:     { label: 'BOT',     color: chalk.greenBright },
-  TASK:    { label: 'TASK',    color: chalk.yellowBright },
-  INIT:    { label: 'INIT',    color: chalk.hex('#FFA500') },
-  UPDATE:  { label: 'UPD',     color: chalk.white }
+  CMD: { label: 'CMD',     color: chalk.blueBright },
+  EVENT: { label: 'EVT',     color: chalk.magentaBright },
+  API: { label: 'API',     color: chalk.cyanBright },
+  BOT: { label: 'BOT',     color: chalk.greenBright },
+  TASK: { label: 'TASK',    color: chalk.yellowBright },
+  INIT: { label: 'INIT',    color: chalk.hex('#FFA500') },
+  UPDATE: { label: 'UPD',     color: chalk.white }
 };
 
 class Logger {
@@ -53,7 +53,7 @@ class Logger {
     const message = args.map(this.formatArg).join(' ');
     const line = `${chalk.gray(`[${timestamp}]`)} ${levelInfo.color(`[${levelInfo.label}]`)} ${message}`;
 
-    process.stdout.write(line + '\n');
+    process.stdout.write(`${line  }\n`);
 
     this._track(level, performance.now() - start);
   }
@@ -63,8 +63,8 @@ class Logger {
     this.metrics.logsByLevel[level] = (this.metrics.logsByLevel[level] || 0) + 1;
     this.metrics.performance.writeCount++;
     this.metrics.performance.totalWriteTime += duration;
-    this.metrics.performance.avgWriteTime =
-      this.metrics.performance.totalWriteTime / this.metrics.performance.writeCount;
+    this.metrics.performance.avgWriteTime
+      = this.metrics.performance.totalWriteTime / this.metrics.performance.writeCount;
   }
 
   getMetrics () {

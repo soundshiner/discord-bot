@@ -7,13 +7,12 @@ import logger from '../../logger.js';
 /**
  * Traiter une interaction de type select menu
  */
-export async function handleSelectMenu(interaction, _client, _db, _config) {
+export async function handleSelectMenu (interaction, _client, _db, _config) {
   const { customId, values } = interaction;
 
   try {
-    // Exemple : menu pour choisir une langue
     if (customId === 'select_language') {
-      const selectedLang = values[0];
+      const [selectedLang] = values;
 
       await interaction.reply({
         content: `🌐 Langue sélectionnée : **${selectedLang}**`,
@@ -29,7 +28,6 @@ export async function handleSelectMenu(interaction, _client, _db, _config) {
       flags: 64
     });
     return { success: false, message: 'SELECT_MENU_UNKNOWN', ephemeral: true };
-
   } catch (error) {
     logger.error('Erreur lors du traitement du select menu:', error);
     try {

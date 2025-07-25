@@ -7,7 +7,7 @@ import logger from '../../logger.js';
 /**
  * Traiter une interaction de type modal submit
  */
-export async function handleModalSubmit(interaction, _client, _db, _config) {
+export async function handleModalSubmit (interaction, _client, _db, _config) {
   const { customId, fields } = interaction;
 
   try {
@@ -31,7 +31,6 @@ export async function handleModalSubmit(interaction, _client, _db, _config) {
       flags: 64
     });
     return { success: false, message: 'MODAL_UNKNOWN', ephemeral: true };
-
   } catch (error) {
     logger.error('Erreur lors du traitement du modal:', error);
     try {

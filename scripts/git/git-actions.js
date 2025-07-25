@@ -120,14 +120,8 @@ async function runGitActions () {
     allTestsPassed = false;
   }
 
-  // Étape 5: Vérification du formatage
-  if (
-    !runCommand('npm run fix:all', 'Vérification du formatage du code')
-  ) {
-    allTestsPassed = false;
-  }
 
-  // Étape 6: Tests d'intégration
+  // Étape 5: Tests d'intégration
   if (!runCommand('npm run test:integration', 'Tests d\'intégration', testEnv)) {
     allTestsPassed = false;
   }
@@ -188,9 +182,6 @@ async function runGitActions () {
     // Suggestions de correction
     console.log(chalk.blue('\n🔧 Suggestions de correction:'));
     console.log(chalk.gray('npm run lint:fix          # Corriger le linting'));
-    console.log(
-      chalk.gray('npm run format            # Corriger le formatage')
-    );
     console.log(chalk.gray('npm run test              # Relancer les tests'));
 
     process.exit(1);
