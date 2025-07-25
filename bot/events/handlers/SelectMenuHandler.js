@@ -5,11 +5,11 @@
 /**
  * Traiter un menu de sélection
  */
-export async function handleSelectMenu(_interaction, _client, _db, _config) {
-    // Traitement des menus de sélection...
-    return {
-      success: true,
-      message: '✅ Sélection effectuée avec succès!',
-      ephemeral: true
-    };
-  }
+export async function handleSelectMenu (_interaction, _client, _db, _config) {
+  // Traitement des menus de sélection...
+  return {
+    success: true,
+    message: '✅ Sélection effectuée avec succès!',
+    ephemeral: true
+  };
+}

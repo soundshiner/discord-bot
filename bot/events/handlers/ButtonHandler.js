@@ -8,7 +8,7 @@ import { safeStringify } from '../utils/SafeStringify.js';
 /**
  * Traiter une interaction de bouton
  */
-export async function handleButtonInteraction(interaction, _client, _db, _config) {
+export async function handleButtonInteraction (interaction, _client, _db, _config) {
   const { customId } = interaction;
 
   try {
@@ -30,7 +30,6 @@ export async function handleButtonInteraction(interaction, _client, _db, _config
       flags: 64 // MessageFlags.Ephemeral
     });
     return { success: true, message: 'BUTTON_HANDLED', ephemeral: false };
-
   } catch (error) {
     logger.error('Erreur lors du traitement du bouton:', error);
     try {
@@ -51,7 +50,7 @@ export async function handleButtonInteraction(interaction, _client, _db, _config
 /**
  * Gérer les boutons de suggestion
  */
-async function handleSuggestionButton(interaction) {
+async function handleSuggestionButton (interaction) {
   // Traitement des boutons de suggestion...
   await interaction.reply({
     content: 'Action effectuée avec succès!',
@@ -63,7 +62,7 @@ async function handleSuggestionButton(interaction) {
 /**
  * Gérer les boutons de planning
  */
-async function handleScheduleButton(interaction, customId) {
+async function handleScheduleButton (interaction, customId) {
   const scheduleService = (
     await import('../../../core/services/ScheduleService.js')
   ).default;
@@ -88,7 +87,7 @@ async function handleScheduleButton(interaction, customId) {
 /**
  * Gérer le bouton des statistiques complètes
  */
-async function handleFullStatsButton(interaction) {
+async function handleFullStatsButton (interaction) {
   try {
     const axios = (await import('axios')).default;
     const config = (await import('../../config.js')).default;

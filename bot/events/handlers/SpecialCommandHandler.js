@@ -7,7 +7,7 @@ import logger from '../../logger.js';
 /**
  * Gérer les commandes spéciales qui nécessitent deferReply
  */
-export async function handleSpecialCommands(interaction, result, commandName) {
+export async function handleSpecialCommands (interaction, result, commandName) {
   // Traitement spécial pour la commande play
   if (result.message === 'PLAY_COMMAND') {
     logger.info('Traitement de la commande PLAY_COMMAND');
@@ -25,7 +25,7 @@ export async function handleSpecialCommands(interaction, result, commandName) {
 /**
  * Traiter la commande play
  */
-async function handlePlayCommand(interaction) {
+async function handlePlayCommand (interaction) {
   try {
     logger.info('🚀 Début de handlePlayCommand');
 
@@ -118,7 +118,7 @@ async function handlePlayCommand(interaction) {
 /**
  * Traiter la commande schedule
  */
-async function handleScheduleCommand(interaction, _result) {
+async function handleScheduleCommand (interaction, _result) {
   try {
     // Import dynamique de la commande schedule
     const scheduleCommand = await import('../../commands/schedule.js');
