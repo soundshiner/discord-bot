@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import getSilenceDetector from '../../core/services/SilenceDetector.js';
-import logger from '../logger.js';
+import getSilenceDetector from '../../../core/services/SilenceDetector.js';
+import logger from '../../logger.js';
 
 export default {
   data: new SlashCommandBuilder()

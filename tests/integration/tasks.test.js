@@ -8,9 +8,16 @@ vi.mock("axios", () => ({
 }));
 import axios from "axios";
 
+vi.mock("../../bot/config.js", () => ({
+  default: {
+    JSON_URL: "http://test-json-url.com"
+  }
+}));
+
 vi.mock("../../bot/logger.js", () => ({
   default: {
     info: vi.fn(),
+    update: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
   },
@@ -39,6 +46,8 @@ const mockClient = {
 describe("updateStatus task", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // S'assurer que mockSetActivity réussit par défaut
+    mockSetActivity.mockResolvedValue();
   });
 
   it("met à jour le status Discord avec la chanson courante", async () => {
@@ -59,14 +68,14 @@ describe("updateStatus task", () => {
     });
     expect(mockSetActivity).toHaveBeenCalledWith({
       name: "📀 Test Song - Test Artist",
-      type: expect.any(Number),
+      type: 42, // ActivityType.Custom
       url: "https://soundshineradio.com",
     });
+    expect(logger.update).toHaveBeenCalledWith("Status to: Test Song - Test Artist");
   });
 
   it("utilise le fallback si axios échoue", async () => {
     axios.get.mockRejectedValue(new Error("axios fail"));
-    mockSetActivity.mockResolvedValue();
 
     await updateStatusTask.execute(mockClient);
 
@@ -78,8 +87,10 @@ describe("updateStatus task", () => {
       "Error fetching metadata or updating status:",
       expect.any(Error)
     );
-    expect(mockSetActivity).toHaveBeenCalledWith("Soundshine Radio", {
-      type: expect.any(Number),
+    // Dans le fallback, setActivity reçoit un objet avec name et type
+    expect(mockSetActivity).toHaveBeenCalledWith({
+      name: 'Soundshine Radio',
+      type: 2, // ActivityType.Listening
     });
     expect(logger.warn).toHaveBeenCalledWith(
       "Fallback activity set to Soundshine Radio"
@@ -102,4 +113,3 @@ describe("updateStatus task", () => {
     );
   });
 });
-

@@ -11,7 +11,7 @@ import { handleSelectMenu } from './SelectMenuHandler.js';
 /**
  * Router principal pour traiter les interactions selon leur type
  */
-export async function handleInteractionByType(interaction, client, db, config) {
+export async function handleInteractionByType (interaction, client, db, config) {
   const commandName = interaction.commandName || interaction.customId;
 
   // Log de début de traitement
