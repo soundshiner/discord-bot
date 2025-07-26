@@ -10,7 +10,7 @@ import logger from '../../logger.js';
 export async function handleSpecialCommands (interaction, result, commandName) {
   // Traitement spécial pour la commande play
   if (result.message === 'PLAY_COMMAND') {
-    logger.info('Traitement de la commande PLAY_COMMAND');
+    logger.info(`Traitement de la commande ${commandName}`);
     await handlePlayCommand(interaction);
     return;
   }

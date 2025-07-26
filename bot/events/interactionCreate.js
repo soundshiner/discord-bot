@@ -86,7 +86,8 @@ export default {
       recordCommand(userId, commandType);
 
       // Traitement de l'interaction avec retry
-      const result = await executeWithRetry(interaction, discordClient, db, discordConfig, commandName, interactionType, userId);
+      const result = await executeWithRetry(interaction, discordClient, db, discordConfig,
+        commandName, interactionType, userId);
 
       // Gestion de la réponse
       await handleInteractionResponse(interaction, result, commandName);

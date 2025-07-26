@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { setYodaMode } from '../../utils/bot/yoda-config.js'; // adapte le chemin si besoin
+import { setYodaMode } from '../../../utils/bot/yoda-config.js'; // adapte le chemin si besoin
 
 export const data = new SlashCommandBuilder()
   .setName('force')

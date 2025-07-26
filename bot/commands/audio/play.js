@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, ChannelType } from 'discord.js';
-import logger from '../logger.js';
+import logger from '../../logger.js';
 
 export default {
   data: new SlashCommandBuilder()
