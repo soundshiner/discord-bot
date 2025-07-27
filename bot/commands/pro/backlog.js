@@ -59,7 +59,7 @@ export default {
           'Utilisateur': user.tag,
           'User ID': user.id,
           'Date': new Date().toISOString(),
-          'Status': '💡 Backlog'
+          'Statut': '💡 Backlog'
         }
       }]);
 
