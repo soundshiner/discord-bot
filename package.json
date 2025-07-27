@@ -42,6 +42,7 @@
     "@babel/types": "^7.27.7",
     "@discordjs/opus": "^0.10.0",
     "@discordjs/voice": "^0.18.0",
+    "airtable": "^0.12.2",
     "axios": "^1.9.0",
     "better-sqlite3": "^12.1.0",
     "chalk": "^4.1.2",
@@ -53,6 +54,7 @@
     "eslint": "^9.29.0",
     "express": "^5.1.0",
     "express-rate-limit": "^7.1.5",
+    "fast-glob": "^3.3.3",
     "helmet": "^8.0.0",
     "inquirer": "^12.7.0",
     "node-cron": "^4.1.1",
@@ -77,6 +79,7 @@
     "dev": "dotenv -e .env.dev -- nodemon index.js",
     "prod": "dotenv -e .env.prod -- node index.js",
     "deploy:dev": "dotenv -e .env.dev -- node scripts/bot/deploy-commands.js --dev",
+    "clear:dev": "dotenv -e .env.dev -- node scripts/bot/deploy-commands.js --dev --clear",
     "deploy:prod": "dotenv -e .env.prod -- node scripts/bot/deploy-commands.js --global",
     "test": "vitest --config config/vitest.config.js",
     "test:coverage": "vitest --coverage --config config/vitest.config.js",
@@ -101,10 +104,9 @@
     "prepare": "husky install",
     "postinstall": "husky install",
     "context": "node ./tools/projectContext.js",
-    "context:md": "node ./tools/projectContext.js --md",
-    "context:full": "node ./tools/projectContext.js --md --full",
+    "context:md": "node ./scripts/tools/projectContext.js --md",
+    "context:full": "node ./scripts/tools/projectContext.js --md --full",
     "cleanup": "node scripts/dev/cleanup.js",
     "cleanup:dry": "node scripts/dev/cleanup.js --dry-run"
   }
 }
-

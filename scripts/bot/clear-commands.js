@@ -1,9 +1,9 @@
 // clear-commands.js
 import { REST, Routes } from 'discord.js';
-import config from '../../core/config.js';
-import logger from '../../utils/logger.js';
+import config from '../../bot/config.js';
+import logger from '../../bot/logger.js';
 
-const rest = new REST({ version: '10' }).setToken(config.BOT_TOKEN);
+const rest = new REST({ version: '10' }).setToken(config.DISCORD_TOKEN);
 
 const isDev = process.argv.slice(2).includes('--dev');
 
