@@ -100,7 +100,9 @@
     "db:deploy": "node bot/utils/database.js",
     "prepare": "husky install",
     "postinstall": "husky install",
-    "context:md": "node scripts/tools/projectContext.js --md",
+    "context": "node ./tools/projectContext.js",
+    "context:md": "node ./tools/projectContext.js --md",
+    "context:full": "node ./tools/projectContext.js --md --full",
     "cleanup": "node scripts/dev/cleanup.js",
     "cleanup:dry": "node scripts/dev/cleanup.js --dry-run"
   }
