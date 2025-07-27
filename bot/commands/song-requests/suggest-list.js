@@ -4,9 +4,9 @@ import {
   PermissionFlagsBits,
   MessageFlags
 } from 'discord.js';
-import { database as db } from '../../utils/database/database.js';
-import config from '../config.js';
-import logger from '../logger.js';
+import { database as db } from '../../../utils/database/database.js';
+import config from '../../config.js';
+import logger from '../../logger.js';
 
 export default {
   data: new SlashCommandBuilder()

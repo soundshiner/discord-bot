@@ -1,8 +1,8 @@
 // commands/suggest-delete.js
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 // import db depuis ton gestionnaire SQLite
-import { database as db } from '../../utils/database/database.js';
-import logger from '../logger.js';
+import { database as db } from '../../../utils/database/database.js';
+import logger from '../../logger.js';
 
 export default {
   data: new SlashCommandBuilder()

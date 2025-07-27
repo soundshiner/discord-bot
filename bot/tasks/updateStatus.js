@@ -23,7 +23,7 @@ async function updateStatus (client) {
     }
 
     if (currentSong !== lastSong) {
-      logger.info(`Status to: ${currentSong}`);
+      logger.update(`Status to: ${currentSong}`);
       lastSong = currentSong;
     }
 
@@ -36,7 +36,8 @@ async function updateStatus (client) {
     monitor.handleTaskError(error, 'UPDATE_STATUS');
     logger.error('Error fetching metadata or updating status:', error);
     try {
-      await client.user.setActivity('Soundshine Radio', {
+      await client.user.setActivity({
+        name: 'Soundshine Radio',
         type: ActivityType.Listening
       });
       logger.warn('Fallback activity set to Soundshine Radio');

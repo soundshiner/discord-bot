@@ -1,10 +1,10 @@
 // commands/suggest.js
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
-import { database as db } from '../../utils/database/database.js';
-import { validateURL } from '../../utils/bot/validateURL.js';
-import { genres } from '../../utils/bot/genres.js';
-import config from '../config.js';
-import logger from '../logger.js';
+import { database as db } from '../../../utils/database/database.js';
+import { validateURL } from '../../../utils/bot/validateURL.js';
+import { genres } from '../../../utils/bot/genres.js';
+import config from '../../config.js';
+import logger from '../../logger.js';
 
 export default {
   data: new SlashCommandBuilder()

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import pingCommand from "../../bot/commands/ping.js";
+import pingCommand from "../../bot/commands/system/ping.js";
 
 vi.mock("discord.js", () => ({
   MessageFlags: { Ephemeral: 64 },
