@@ -131,7 +131,7 @@ const botConfig = {
       streaming: this.hasStreamService()
     };
 
-    logger.info('\n🔧 État des services :');
+    logger.banner('État des services :');
     logger.info(`   Airtable: ${services.airtable ? '✅ Configuré' : '❌ Non configuré'}`);
     logger.info(`   Unsplash: ${services.unsplash ? '✅ Configuré' : '❌ Non configuré'}`);
     logger.info(`   Streaming: ${services.streaming ? '✅ Configuré' : '❌ Non configuré'}`);
