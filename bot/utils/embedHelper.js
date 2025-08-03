@@ -12,7 +12,7 @@ import { EmbedBuilder } from 'discord.js';
  * }} options
  * @returns {EmbedBuilder}
  */
-export function createEmbed(options = {}) {
+export function createEmbed (options = {}) {
   const {
     title,
     description,

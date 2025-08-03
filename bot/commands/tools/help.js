@@ -9,12 +9,11 @@ export default {
   /**
    * @param {import('discord.js').ChatInputCommandInteraction} interaction
    */
-  async execute(interaction) {
+  async execute (interaction) {
     const isAdmin = interaction.member.roles.cache.some(role =>
-      ['Admin', 'Administrateur', 'Modérateur'].includes(role.name)
-    );
+      ['Admin', 'Administrateur', 'Modérateur'].includes(role.name));
 
-    const commands = interaction.client.commands;
+    const { commands } = interaction.client;
     const visibleCommands = [...commands.values()].filter(cmd => {
       return !(cmd.adminOnly && !isAdmin);
     });
@@ -26,7 +25,7 @@ export default {
     const embed = createEmbed({
       title: '📘 Aide — Commandes disponibles',
       description: helpList || 'Aucune commande disponible.',
-      footer: { text: `Demandé par ${interaction.user.username}` },
+      footer: { text: `Demandé par ${interaction.user.username}` }
     });
 
     return {
