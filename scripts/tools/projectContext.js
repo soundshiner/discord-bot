@@ -1,23 +1,16 @@
-// tools/projectContext.js
-
 import fs from 'fs';
 import path from 'path';
 
 const projectRoot = process.cwd();
 const args = process.argv.slice(2);
 const outputMarkdown = args.includes('--md') || args.includes('--markdown');
+const includeFull = args.includes('--full');
 
 const IGNORED = [
-  'node_modules',
-  '.git',
-  'logs',
-  'coverage',
-  '.vscode',
-  'suggestions.sqlite',
-  'z_contexte.txt'
+  'node_modules', '.git', 'logs', 'coverage', '.vscode',
+  'suggestions.sqlite', 'z_contexte.txt'
 ];
 
-// ==== Configuration projet ====
 const config = {
   projectName: 'soundshine-bot',
   description: 'Bot Discord modulaire pour webradio communautaire.',
@@ -42,7 +35,6 @@ const config = {
   }
 };
 
-// ==== Arborescence du projet ====
 function getTree(dir, depth = 0) {
   const entries = fs.readdirSync(dir, { withFileTypes: true })
     .filter((f) => !IGNORED.includes(f.name))
@@ -59,61 +51,66 @@ function getTree(dir, depth = 0) {
   });
 }
 
-// ==== Markdown Renderer ====
-function generateMarkdown(context) {
-  return `# 📦 ${context.projectName}
+function getStats(root) {
+  let totalSize = 0;
+  let fileCount = 0;
+  let jsCount = 0;
+  let tsCount = 0;
 
-> ${context.description}
+  function scan(dir) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (IGNORED.includes(entry.name)) continue;
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        scan(fullPath);
+      } else {
+        const size = fs.statSync(fullPath).size;
+        totalSize += size;
+        fileCount++;
+        if (fullPath.endsWith('.js')) jsCount++;
+        if (fullPath.endsWith('.ts')) tsCount++;
+      }
+    }
+  }
 
----
-
-## 🧠 Stack
-
-- **Runtime:** ${context.stack.runtime}
-- **Framework:** ${context.stack.framework}
-- **DB:** ${context.stack.database}
-- **Logger:** ${context.stack.logger}
-- **Validation:** ${context.stack.validation}
-- **Tests:** ${context.stack.tests.join(', ')}
-- **DevOps:** ${context.stack.devops.join(', ')}
-
----
-
-## 🗂️ Fichiers critiques
-
-${context.criticalFiles.map(f => `- \`${f}\``).join('\n')}
-
----
-
-## ⚙️ Architecture
-
-- **Modèle:** ${context.architecture.style}
-- **Entrée:** \`${context.architecture.entryPoint}\`
-- **Handlers:** ${context.architecture.handlers.join(', ')}
-- **API:** ${context.architecture.api.type}
-- **Routes:** ${context.architecture.api.routes.join(', ')}
-- **AppState:** \`${context.architecture.appState}\`
-
----
-
-## 🌱 Variables d’environnement
-
-- ${context.env.envFiles.map(e => `\`${e}\``).join(', ')}
-- **Actuellement :** \`${context.env.currentEnv}\`
-
----
-
-## 🧾 Arborescence (excluant: ${IGNORED.join(', ')})
-
-\`\`\`
-${context.projectTree}
-\`\`\`
-`;
+  scan(root);
+  return {
+    fileCount,
+    totalSizeKb: (totalSize / 1024).toFixed(2),
+    avgSizeKb: (totalSize / fileCount / 1024).toFixed(2),
+    jsCount,
+    tsCount
+  };
 }
 
-// ==== Générer le contexte ====
+function readIfExists(file) {
+  const p = path.join(projectRoot, file);
+  return fs.existsSync(p) ? fs.readFileSync(p, 'utf-8') : null;
+}
+
+function findConfigFiles(fileNames) {
+  const found = [];
+  for (const fileName of fileNames) {
+    const pathsToTry = [
+      fileName,
+      path.join('config', fileName),
+      path.join('docker', fileName)
+    ];
+    for (const p of pathsToTry) {
+      if (fs.existsSync(path.join(projectRoot, p))) {
+        found.push(p);
+        break;
+      }
+    }
+  }
+  return found;
+}
+
 function generateContext() {
   const treeOutput = getTree(projectRoot).join('\n');
+  const stats = getStats(projectRoot);
+
   const context = {
     ...config,
     architecture: {
@@ -130,19 +127,67 @@ function generateContext() {
       envFiles: config.envFiles,
       currentEnv: process.env.NODE_ENV || 'undefined'
     },
-    projectTree: treeOutput
+    projectTree: treeOutput,
+    stats,
+    dependencies: {},
+    scripts: {},
+    configFiles: {}
   };
+
+  const pkg = readIfExists('package.json');
+  if (pkg) {
+    const parsed = JSON.parse(pkg);
+    context.dependencies = parsed.dependencies || {};
+    context.devDependencies = parsed.devDependencies || {};
+    context.scripts = parsed.scripts || {};
+  }
+
+  const fileNames = [
+    'docker-compose.yml',
+    'tsconfig.json',
+    'vite.config.js',
+    '.eslintrc.js',
+    '.prettierrc',
+    'prometheus.yml'
+  ];
+  const configFiles = findConfigFiles(fileNames);
+
+  configFiles.forEach(file => {
+    const content = readIfExists(file);
+    if (content && includeFull) context.configFiles[file] = content;
+    else if (content) context.configFiles[file] = '[present]';
+  });
 
   const jsonPath = path.join(projectRoot, 'chatgpt-project-context.json');
   fs.writeFileSync(jsonPath, JSON.stringify(context, null, 2));
+  console.log('✅ Export JSON : chatgpt-project-context.json');
 
   if (outputMarkdown) {
     const markdownPath = path.join(projectRoot, 'chatgpt-project-context.md');
     fs.writeFileSync(markdownPath, generateMarkdown(context));
     console.log('📘 Export Markdown : chatgpt-project-context.md');
   }
+}
 
-  console.log('✅ Export JSON : chatgpt-project-context.json');
+function generateMarkdown(context) {
+  return `# 📦 ${context.projectName}
+
+> ${context.description}
+
+## 🧠 Stack
+${Object.entries(context.stack).map(([k, v]) => `- **${k}**: ${Array.isArray(v) ? v.join(', ') : v}`).join('\n')}
+
+## 🧾 Arborescence
+\`\`\`
+${context.projectTree}
+\`\`\`
+
+## 📊 Stats
+- Fichiers : ${context.stats.fileCount}
+- JS : ${context.stats.jsCount}, TS : ${context.stats.tsCount}
+- Taille totale : ${context.stats.totalSizeKb} Ko
+- Taille moyenne/fichier : ${context.stats.avgSizeKb} Ko
+`;
 }
 
 generateContext();

@@ -231,6 +231,7 @@ async function handleInteractionResponse (interaction, result, commandName) {
       logger.info('Réponse normale avec interaction.reply()');
       await interaction.reply({
         content: result.message,
+        embeds: result.embeds,
         flags: result.ephemeral !== false ? 64 : 0 // 64 = MessageFlags.Ephemeral
       });
     }
