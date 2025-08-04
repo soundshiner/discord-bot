@@ -8,7 +8,7 @@ import logger from '../../logger.js';
 
 export default {
   data: new SlashCommandBuilder()
-    .setName('suggest')
+    .setName('requests')
     .setDescription('Proposer un morceau pour la rotation')
     .addStringOption((option) =>
       option

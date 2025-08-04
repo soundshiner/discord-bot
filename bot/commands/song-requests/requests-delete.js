@@ -6,7 +6,7 @@ import logger from '../../logger.js';
 
 export default {
   data: new SlashCommandBuilder()
-    .setName('suggest-delete')
+    .setName('delete-requests')
     .setDescription('Supprimer une suggestion.')
     .addIntegerOption((option) =>
       option
