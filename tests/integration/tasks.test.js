@@ -67,7 +67,7 @@ describe("updateStatus task", () => {
       timeout: 10000,
     });
     expect(mockSetActivity).toHaveBeenCalledWith({
-      name: "📀 Test Song - Test Artist",
+      name: "💿 Test Song - Test Artist",
       type: 42, // ActivityType.Custom
       url: "https://soundshineradio.com",
     });
