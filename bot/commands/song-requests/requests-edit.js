@@ -6,7 +6,7 @@ import logger from '../../logger.js';
 
 export default {
   data: new SlashCommandBuilder()
-    .setName('edit-requests')
+    .setName('requests-edit')
     .setDescription('Éditer une suggestion.')
     .addIntegerOption((option) =>
       option
