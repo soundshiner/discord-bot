@@ -18,7 +18,7 @@ export default {
         .setDescription('Votre idée géniale')
         .setRequired(true)),
 
-  async execute(interaction) {
+  async execute (interaction) {
     const ideeText = interaction.options.getString('idee');
     try {
       const createdRecord = await base('Backlog').create([
