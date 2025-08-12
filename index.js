@@ -12,7 +12,7 @@ import appState from "./core/services/AppState.js";
 import { retryDiscord, retry } from "./utils/core/retry.js";
 import { registerProcessHandlers } from "./core/lifecycle.js";
 import pkg from "./package.json" with { type: "json" };
-
+import logMemory from './bot/tasks/logMemory.js';
 let config;
 let botClient = null;
 let apiServer = null;
@@ -100,7 +100,7 @@ async function startApplication() {
     registerProcessHandlers({ gracefulShutdown });
 
     logger.api("Routes API disponibles : /v1/metrics, /v1/health, /v1/logs, /v1/alerts, v1/send-playlist");
-    logger.bot(`Mémoire utilisée: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`);
+    logMemory.execute();
     logger.banner("Bot prêt. Logging en cours...");
   } catch (error) {
     logger.error("Erreur critique au démarrage:", error);

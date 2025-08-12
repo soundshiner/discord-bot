@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import nowplayingCommand from "../../bot/commands/audio/nowplaying.js";
+import nowplayingCommand from "../../bot/commands/music/nowplaying.js";
 import { MessageFlags } from "discord.js";
 import axios from "axios";
 
