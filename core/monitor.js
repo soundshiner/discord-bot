@@ -12,6 +12,11 @@ class Monitor {
     this.errorCounts = new Map();
     this.maxErrorsPerMinute = 10;
     this.startTime = Date.now();
+    this.error521Count = 0;
+    this.max521ErrorsBeforeRestart = 3;
+    this.last521ErrorTime = 0;
+    this.error521ResetInterval = 300000; // 5 minutes
+    this.isRestarting = false;
   }
 
   /**
@@ -56,6 +61,7 @@ class Monitor {
       databaseErrors: fullState.database.queriesFailed,
       uptime: fullState.bot.uptime,
       errorCounts: Object.fromEntries(this.errorCounts),
+      error521Count: this.error521Count,
       healthStatus: {
         database: fullState.database.isHealthy,
         discord: fullState.bot.isReady,
@@ -79,11 +85,104 @@ class Monitor {
   }
 
   /**
+   * Gère spécifiquement les erreurs 521
+   */
+  async handle521Error (error, context = 'unknown') {
+    const errorId = this.generateErrorId();
+    const now = Date.now();
+
+    // Reset du compteur si plus de 5 minutes depuis la dernière erreur 521
+    if (now - this.last521ErrorTime > this.error521ResetInterval) {
+      this.error521Count = 0;
+    }
+
+    this.error521Count++;
+    this.last521ErrorTime = now;
+
+    this.logger.error(
+      `[${errorId}] ERREUR 521 - Web Server Down [${context}] (${this.error521Count}/${this.max521ErrorsBeforeRestart})`,
+      {
+        errorId,
+        context,
+        error521Count: this.error521Count,
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+        message: error.message
+      }
+    );
+
+    // Si on atteint le seuil et qu'on n'est pas déjà en train de redémarrer
+    if (this.error521Count >= this.max521ErrorsBeforeRestart && !this.isRestarting) {
+      this.logger.warn(
+        `🔄 REDÉMARRAGE AUTOMATIQUE déclenché après ${this.error521Count} erreurs 521`
+      );
+      
+      await this.performAutoRestart(errorId);
+    } else if (!this.isRestarting) {
+      this.logger.info(
+        `⚠️ Erreur 521 détectée (${this.error521Count}/${this.max521ErrorsBeforeRestart}). Redémarrage automatique si répétition.`
+      );
+    }
+  }
+
+  /**
+   * Effectue le redémarrage automatique
+   */
+  async performAutoRestart (errorId) {
+    if (this.isRestarting) {
+      this.logger.warn('Redémarrage déjà en cours, abandon...');
+      return;
+    }
+
+    this.isRestarting = true;
+
+    try {
+      this.logger.warn(`🔄 [${errorId}] DÉBUT DU REDÉMARRAGE AUTOMATIQUE`);
+      
+      // Notification critique
+      this.sendCriticalAlert(
+        new Error(`Redémarrage automatique suite à ${this.error521Count} erreurs 521`),
+        errorId,
+        'AUTO_RESTART_521'
+      );
+
+      // Attendre un peu pour permettre aux logs de se finaliser
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Redémarrage gracieux
+      this.logger.warn('🔄 Redémarrage du processus Node.js...');
+      
+      // Reset du compteur avant redémarrage
+      this.error521Count = 0;
+      
+      // Exit avec code 2 pour indiquer un redémarrage volontaire
+      // (PM2, nodemon ou systemd peuvent relancer automatiquement)
+      process.exit(2);
+
+    } catch (restartError) {
+      this.logger.error('Erreur lors du redémarrage automatique:', restartError);
+      this.isRestarting = false;
+      
+      // Si le redémarrage échoue, essayer un arrêt d'urgence
+      setTimeout(() => {
+        this.logger.error('ARRÊT D\'URGENCE après échec du redémarrage gracieux');
+        process.exit(1);
+      }, 5000);
+    }
+  }
+
+  /**
    * Gère les erreurs de commandes Discord
    */
   async handleCommandError (error, interaction) {
     const errorId = this.generateErrorId();
     const errorType = this.categorizeError(error);
+
+    // Vérifier si c'est une erreur 521
+    if (this.is521Error(error)) {
+      await this.handle521Error(error, `COMMAND_${interaction?.commandName || 'unknown'}`);
+      return;
+    }
 
     // Mettre à jour les métriques via AppState
     this.updateMetric('commandsFailed');
@@ -129,6 +228,12 @@ class Monitor {
    * Gère les erreurs API avec métriques
    */
   handleApiError (error, req, res) {
+    // Vérifier si c'est une erreur 521
+    if (this.is521Error(error)) {
+      this.handle521Error(error, `API_${req?.method}_${req?.path}`);
+      return;
+    }
+
     this.updateMetric('apiErrors');
 
     if (typeof res.status === 'function' && typeof res.json === 'function') {
@@ -180,6 +285,12 @@ class Monitor {
    * Gère les erreurs critiques avec alerting
    */
   handleCriticalError (error, context = 'unknown') {
+    // Vérifier si c'est une erreur 521
+    if (this.is521Error(error)) {
+      this.handle521Error(error, context);
+      return;
+    }
+
     const errorId = this.generateErrorId();
 
     this.logger.error(
@@ -206,6 +317,12 @@ class Monitor {
    * Gère les erreurs de tâches planifiées
    */
   handleTaskError (error, context = 'TASK') {
+    // Vérifier si c'est une erreur 521
+    if (this.is521Error(error)) {
+      this.handle521Error(error, context);
+      return;
+    }
+
     const errorId = this.generateErrorId();
     this.logger.error(
       `[${errorId}] ERREUR TÂCHE [${context}]: ${error.message}`,
@@ -225,6 +342,12 @@ class Monitor {
    * Gère les erreurs de base de données
    */
   handleDatabaseError (error, operation = 'unknown') {
+    // Vérifier si c'est une erreur 521
+    if (this.is521Error(error)) {
+      this.handle521Error(error, `DATABASE_${operation}`);
+      return;
+    }
+
     this.updateMetric('databaseErrors');
 
     const errorId = this.generateErrorId();
@@ -246,9 +369,35 @@ class Monitor {
   }
 
   /**
+   * Détermine si une erreur est de type 521
+   */
+  is521Error (error) {
+    if (!error) return false;
+    
+    const message = typeof error.message === 'string' ? error.message.toLowerCase() : '';
+    const code = error.code || '';
+    const status = error.status || error.response?.status || 0;
+
+    return (
+      status === 521 ||
+      code === '521' ||
+      message.includes('521') ||
+      message.includes('web server is down') ||
+      message.includes('origin server down') ||
+      (code === 'ECONNREFUSED' && message.includes('cloudflare')) ||
+      (message.includes('cloudflare') && message.includes('down'))
+    );
+  }
+
+  /**
    * Catégorise les erreurs avec plus de précision
    */
   categorizeError (error) {
+    // Vérifier d'abord si c'est une erreur 521
+    if (this.is521Error(error)) {
+      return 'SERVER_521';
+    }
+
     const msg
       = typeof error.message === 'string' ? error.message.toLowerCase() : '';
     const code = error.code || '';
@@ -291,6 +440,7 @@ class Monitor {
    */
   getUserFriendlyMessage (errorType) {
     const messages = {
+      SERVER_521: '🔧 Le serveur est temporairement indisponible. Redémarrage automatique en cours...',
       NETWORK:
         '🌐 Problème de connexion réseau. Réessayez dans quelques instants.',
       PERMISSION: '🔒 Permissions insuffisantes pour cette action.',
@@ -311,6 +461,7 @@ class Monitor {
    */
   getHttpStatusCode (errorType) {
     const codes = {
+      SERVER_521: 521,
       NETWORK: 503,
       PERMISSION: 403,
       AUTH: 401,
@@ -402,12 +553,27 @@ class Monitor {
       uptime: fullState.bot.uptime,
       memory: fullState.system.memoryUsage,
       metrics: this.getMetrics(),
+      error521Count: this.error521Count,
       health: {
         database: fullState.database.isHealthy,
         discord: fullState.bot.isReady,
         api: fullState.api.isRunning
       }
     };
+  }
+
+  /**
+   * Méthode pour tester manuellement le redémarrage (à des fins de debug)
+   */
+  testAutoRestart () {
+    if (process.env.NODE_ENV !== 'development') {
+      this.logger.warn('Test de redémarrage disponible uniquement en développement');
+      return;
+    }
+    
+    this.logger.info('🧪 Test de redémarrage automatique...');
+    this.error521Count = this.max521ErrorsBeforeRestart;
+    this.handle521Error(new Error('Test 521 error'), 'MANUAL_TEST');
   }
 }
 
@@ -420,4 +586,3 @@ export function getApiErrorMessage (error) {
 }
 
 export default monitor;
-
