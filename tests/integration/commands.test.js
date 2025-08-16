@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import pingCommand from "../../bot/commands/system/ping.js";
-import playCommand from "../../bot/commands/audio/play.js";
-import stopCommand from "../../bot/commands/audio/stop.js";
+import playCommand from "../../bot/commands/music/play.js";
+import stopCommand from "../../bot/commands/music/stop.js";
 import {
   joinVoiceChannel,
   createAudioPlayer,

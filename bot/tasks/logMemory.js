@@ -7,7 +7,7 @@ function formatBytes (bytes) {
 
 async function logMemory () {
   const mem = process.memoryUsage();
-  logger.custom('MEM', `rss: ${formatBytes(mem.rss)}, heapUsed: ${formatBytes(mem.heapUsed)}`, 'cyan');
+  logger.bot(`rss: ${formatBytes(mem.rss)}, heapUsed: ${formatBytes(mem.heapUsed)}`);
 }
 
 export default {
