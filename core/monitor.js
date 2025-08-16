@@ -71,7 +71,7 @@ class Monitor {
   }
 
   /**
-   * Vérifie l'état de santé du système via AppState
+   * Vérifie l'état de santé du système via AppState //
    */
   async checkHealth () {
     const appHealth = appState.isHealthy();
