@@ -80,12 +80,9 @@ function startUpdateStatus () {
 }
 
 export async function stopBot () {
- 
-
   try {
     if (updateStatusInterval) {
       clearInterval(updateStatusInterval);
-     
     }
 
     if (client) {
