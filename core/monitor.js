@@ -13,7 +13,7 @@ class Monitor {
     this.maxErrorsPerMinute = 10;
     this.startTime = Date.now();
     this.error521Count = 0;
-    this.max521ErrorsBeforeRestart = 3;
+    this.max521ErrorsBeforeRestart = 1;
     this.last521ErrorTime = 0;
     this.error521ResetInterval = 300000; // 5 minutes
     this.isRestarting = false;
