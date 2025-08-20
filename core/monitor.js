@@ -13,7 +13,7 @@ class Monitor {
     this.maxErrorsPerMinute = 10;
     this.startTime = Date.now();
     this.error521Count = 0;
-    this.max521ErrorsBeforeRestart = 3;
+    this.max521ErrorsBeforeRestart = 1;
     this.last521ErrorTime = 0;
     this.error521ResetInterval = 300000; // 5 minutes
     this.isRestarting = false;
@@ -100,7 +100,8 @@ class Monitor {
     this.last521ErrorTime = now;
 
     this.logger.error(
-      `[${errorId}] ERREUR 521 - Web Server Down [${context}] (${this.error521Count}/${this.max521ErrorsBeforeRestart})`,
+      `[${errorId}] ERREUR 521 - Web Server Down [${context}] 
+        (${this.error521Count}/${this.max521ErrorsBeforeRestart})`,
       {
         errorId,
         context,
@@ -116,11 +117,12 @@ class Monitor {
       this.logger.warn(
         `🔄 REDÉMARRAGE AUTOMATIQUE déclenché après ${this.error521Count} erreurs 521`
       );
-      
+
       await this.performAutoRestart(errorId);
     } else if (!this.isRestarting) {
       this.logger.info(
-        `⚠️ Erreur 521 détectée (${this.error521Count}/${this.max521ErrorsBeforeRestart}). Redémarrage automatique si répétition.`
+        `⚠️ Erreur 521 détectée (${this.error521Count}/${this.max521ErrorsBeforeRestart}).
+         Redémarrage automatique si répétition.`
       );
     }
   }
@@ -138,7 +140,7 @@ class Monitor {
 
     try {
       this.logger.warn(`🔄 [${errorId}] DÉBUT DU REDÉMARRAGE AUTOMATIQUE`);
-      
+
       // Notification critique
       this.sendCriticalAlert(
         new Error(`Redémarrage automatique suite à ${this.error521Count} erreurs 521`),
@@ -151,18 +153,17 @@ class Monitor {
 
       // Redémarrage gracieux
       this.logger.warn('🔄 Redémarrage du processus Node.js...');
-      
+
       // Reset du compteur avant redémarrage
       this.error521Count = 0;
-      
+
       // Exit avec code 2 pour indiquer un redémarrage volontaire
       // (PM2, nodemon ou systemd peuvent relancer automatiquement)
       process.exit(2);
-
     } catch (restartError) {
       this.logger.error('Erreur lors du redémarrage automatique:', restartError);
       this.isRestarting = false;
-      
+
       // Si le redémarrage échoue, essayer un arrêt d'urgence
       setTimeout(() => {
         this.logger.error('ARRÊT D\'URGENCE après échec du redémarrage gracieux');
@@ -373,19 +374,19 @@ class Monitor {
    */
   is521Error (error) {
     if (!error) return false;
-    
+
     const message = typeof error.message === 'string' ? error.message.toLowerCase() : '';
     const code = error.code || '';
     const status = error.status || error.response?.status || 0;
 
     return (
-      status === 521 ||
-      code === '521' ||
-      message.includes('521') ||
-      message.includes('web server is down') ||
-      message.includes('origin server down') ||
-      (code === 'ECONNREFUSED' && message.includes('cloudflare')) ||
-      (message.includes('cloudflare') && message.includes('down'))
+      status === 521
+      || code === '521'
+      || message.includes('521')
+      || message.includes('web server is down')
+      || message.includes('origin server down')
+      || (code === 'ECONNREFUSED' && message.includes('cloudflare'))
+      || (message.includes('cloudflare') && message.includes('down'))
     );
   }
 
@@ -570,7 +571,7 @@ class Monitor {
       this.logger.warn('Test de redémarrage disponible uniquement en développement');
       return;
     }
-    
+
     this.logger.info('🧪 Test de redémarrage automatique...');
     this.error521Count = this.max521ErrorsBeforeRestart;
     this.handle521Error(new Error('Test 521 error'), 'MANUAL_TEST');
