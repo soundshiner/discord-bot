@@ -80,17 +80,13 @@ function startUpdateStatus () {
 }
 
 export async function stopBot () {
-  logger.info('Arrêt du bot en cours...');
-
   try {
     if (updateStatusInterval) {
       clearInterval(updateStatusInterval);
-      logger.info('Tâche updateStatus arrêtée');
     }
 
     if (client) {
       await client.destroy();
-      logger.success('Client Discord déconnecté');
     }
 
     logger.success('soundSHINE Bot arrêté proprement');

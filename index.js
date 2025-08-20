@@ -35,27 +35,23 @@ async function gracefulShutdown(signal = "UNKNOWN") {
 
   try {
     if (apiServer) {
-      logger.info("Arrêt du serveur API...");
       await apiServer.stop();
       appState.setApiRunning(false);
-      logger.success("Serveur API arrêté");
     }
 
     if (botClient) {
-      logger.info("Arrêt du bot Discord...");
+
       await stopBot();
       appState.setBotConnected(false);
       appState.setBotReady(false);
-      logger.success("Bot Discord arrêté");
+
     }
 
-    logger.info("Fermeture de la base de données...");
+
     await database.disconnect();
     appState.setDatabaseConnected(false);
     appState.setDatabaseHealthy(false);
-    logger.success("Base de données fermée");
 
-    logger.success("Fermeture gracieuse complétée");
     process.exit(0);
   } catch (error) {
     logger.error("Erreur durant la fermeture:", error);
