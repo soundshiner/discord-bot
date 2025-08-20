@@ -13,7 +13,6 @@ export function registerProcessHandlers ({ gracefulShutdown }) {
   };
 
   process.on('SIGINT', () => {
-    logger.warn('Signal SIGINT reçu.');
     shutdownWithFallback('SIGINT');
   });
 
