@@ -230,15 +230,15 @@ export default (client) => {
 
       await logger.info(`Canal playlist trouvé: ${playlistChannel.name}`);
 
-      const description = `**${normalizedPlaylist}** est maintenant en cours sur soundSHINE! 
-      \nVous pouvez l'écouter en direct sur le canal <#1383684854255849613>.`;
+      const description = `**${normalizedPlaylist}** est maintenant en ondes sur soundSHINE! 
+      \nVous pouvez l'écouter en direct sur le https://soundshineradio.com`;
 
       const embed = {
-        title: '💿 Nouvelle Session en cours',
+        title: '💿 Nouvelle playlist en ondes',
         description,
         color: 0xaff6e4,
         footer: {
-          text: 'https://soundshineradio.com',
+          text: 'soundSHINE Radio',
           icon_url: 'https://soundshineradio.com/avatar.jpg'
         }
       };
