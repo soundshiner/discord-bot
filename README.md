@@ -2,6 +2,8 @@
 
 Bot Discord pour la gestion de playlists et de musique.
 
+[![CI/CD Pipeline](https://github.com/n3m01726/soundshine-bot/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/n3m01726/soundshine-bot/actions/workflows/ci-cd.yml)
+
 ## 🚀 Installation rapide
 
 ### Option 1 : Installation simple
