@@ -4,8 +4,7 @@ import logger from '../../logger.js';
 export default {
   data: new SlashCommandBuilder()
     .setName('play')
-    .setDescription('Lance le stream dans un Stage Channel')
-    .setDMPermission(false),
+    .setDescription('Lance le stream dans un Stage Channel'),
 
   async execute (interaction) {
     try {

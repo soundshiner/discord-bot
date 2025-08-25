@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import stopCommand from "../../bot/commands/radio/stop.js";
+import stopCommand from "../../bot/commands/_backup/stop.js";
 
 vi.mock("discord.js", () => ({
   SlashCommandBuilder: class {

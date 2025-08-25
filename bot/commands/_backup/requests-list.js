@@ -1,28 +1,16 @@
-// commands/list_suggestions.js
 import {
   SlashCommandBuilder,
-  PermissionFlagsBits,
   MessageFlags
 } from 'discord.js';
 import { database as db } from '../../../utils/database/database.js';
-import config from '../../config.js';
 import logger from '../../logger.js';
 
 export default {
   data: new SlashCommandBuilder()
-    .setName('requests-list')
-    .setDescription('Voir toutes les suggestions de morceaux')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
+    .setName('list')
+    .setDescription('Voir toutes les suggestions de morceaux'),
   async execute (interaction) {
     try {
-      // Check role
-      if (!interaction.member.roles.cache.has(config.roleId)) {
-        return await interaction.reply({
-          content: '❌ Tu n\'as pas l\'autorisation d\'utiliser cette commande.',
-          flags: MessageFlags.Ephemeral
-        });
-      }
-
       // Retrieve from SQLite
       const suggestions = await db.query(
         'SELECT * FROM suggestions ORDER BY createdAt DESC LIMIT 20'

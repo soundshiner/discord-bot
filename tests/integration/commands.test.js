@@ -1,15 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import pingCommand from "../../bot/commands/system/ping.js";
-import playCommand from "../../bot/commands/radio/play.js";
-import stopCommand from "../../bot/commands/radio/stop.js";
-import {
-  joinVoiceChannel,
-  createAudioPlayer,
-  createAudioResource,
-  AudioPlayerStatus,
-  NoSubscriberBehavior,
-} from "@discordjs/voice";
-import logger from "../../bot/logger.js";
 
 vi.mock("path", () => ({
   default: {
@@ -61,6 +51,33 @@ vi.mock("discord.js", () => ({
       return this;
     }
     setDefaultMemberPermissions() {
+      return this;
+    }
+    addSubcommand() {
+      return this;
+    }
+    addStringOption() {
+      return this;
+    }
+    addIntegerOption() {
+      return this;
+    }
+    addBooleanOption() {
+      return this;
+    }
+    addUserOption() {
+      return this;
+    }
+    addChannelOption() {
+      return this;
+    }
+    addRoleOption() {
+      return this;
+    }
+    addMentionableOption() {
+      return this;
+    }
+    addAttachmentOption() {
       return this;
     }
   },
@@ -126,7 +143,7 @@ describe("Discord Commands Integration", () => {
 
   describe("Command Structure Validation", () => {
     it("should validate all commands have required properties", () => {
-      const commands = [pingCommand, playCommand, stopCommand];
+      const commands = [pingCommand];
 
       commands.forEach((command) => {
         expect(command).toHaveProperty("data");
@@ -139,12 +156,8 @@ describe("Discord Commands Integration", () => {
 
     it("should validate command data types", () => {
       expect(pingCommand.data.name).toBe("ping");
-      expect(playCommand.data.name).toBe("play");
-      expect(stopCommand.data.name).toBe("stop");
 
       expect(typeof pingCommand.data.description).toBe("string");
-      expect(typeof playCommand.data.description).toBe("string");
-      expect(typeof stopCommand.data.description).toBe("string");
     });
   });
 
@@ -174,16 +187,16 @@ describe("Discord Commands Integration", () => {
         },
       };
 
-      const playCommand = {
+      const radioCommand = {
         execute: vi.fn().mockResolvedValue({
           success: false,
           message: "You must be in a voice channel to use this command",
         }),
       };
 
-      await playCommand.execute(mockInteractionNoVoice, mockClient);
+      await radioCommand.execute(mockInteractionNoVoice, mockClient);
 
-      expect(playCommand.execute).toHaveBeenCalledWith(
+      expect(radioCommand.execute).toHaveBeenCalledWith(
         mockInteractionNoVoice,
         mockClient
       );
