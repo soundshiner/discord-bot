@@ -1,8 +1,8 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
-import askSubcommand from '../_backup/requests.js';
-import editSubcommand from '../_backup/requests-edit.js';
-import deleteSubcommand from '../_backup/requests-delete.js';
-import listSubcommand from '../_backup/requests-list.js';
+import askSubcommand from './requests.js';
+import editSubcommand from './_backup/requests-edit.js';
+import deleteSubcommand from './_backup/requests-delete.js';
+import listSubcommand from './requests-list.js';
 import config from '../../config.js';
 
 export default {

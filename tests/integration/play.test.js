@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import playCommand from "../../bot/commands/_backup/play.js";
+import playCommand from "../../bot/commands/radio/play.js";
 import {
   joinVoiceChannel,
   createAudioPlayer,

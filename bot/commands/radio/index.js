@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
-import playSubcommand from '../_backup/play.js';
-import stopSubcommand from '../_backup/stop.js';
-import nowplayingSubcommand from '../_backup/nowplaying.js';
+import playSubcommand from './play.js';
+import stopSubcommand from './stop.js';
+import nowplayingSubcommand from './nowplaying.js';
 import config from '../../config.js';
 
 export default {
