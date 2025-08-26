@@ -6,7 +6,14 @@ import config from '../../config.js';
 import logger from '../../logger.js';
 
 export default {
-  data: (subcommand) =>
+  // Changez cette fonction en objet statique
+  data: {
+    name: 'ask',
+    description: 'Proposer un morceau pour la rotation'
+  },
+  
+  // Ajoutez une fonction builder pour la construction dynamique
+  builder: (subcommand) =>
     subcommand
       .setName('ask')
       .setDescription('Proposer un morceau pour la rotation')
@@ -33,6 +40,7 @@ export default {
               value: g.toLowerCase().replace(/\s/g, '_')
             }))
           )),
+          
   async execute (interaction) {
     try {
       // Gather data
@@ -83,4 +91,3 @@ export default {
     }
   }
 };
-
