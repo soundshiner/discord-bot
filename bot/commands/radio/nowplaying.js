@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, MessageFlags } from 'discord.js';
+import { MessageFlags } from 'discord.js';
 import axios from 'axios';
 import config from '../../config.js';
 import logger from '../../logger.js';
@@ -6,15 +6,20 @@ import logger from '../../logger.js';
 const { JSON_URL } = config;
 
 export default {
-  data: new SlashCommandBuilder()
-    .setName('nowplaying')
-    .setDescription('Affiche la chanson en cours de lecture')
-    .setDMPermission(false),
+  builder: (subcommand) =>
+    subcommand
+      .setName('nowplaying')
+      .setDescription('Affiche la chanson en cours de lecture'),
+  data: {
+    name: 'nowplaying',
+    description: 'Affiche la chanson en cours de lecture'
+  },
   async execute (interaction) {
     try {
       const response = await axios.get(JSON_URL);
       const { data } = response;
-      const currentSong = data?.icestats?.source?.title || 'Aucune chanson en cours.';
+      const currentSong
+        = data?.icestats?.source?.title || 'Aucune chanson en cours.';
 
       return await interaction.reply(`🎶 Now playing: **${currentSong}**`);
     } catch (error) {
@@ -26,3 +31,4 @@ export default {
     }
   }
 };
+

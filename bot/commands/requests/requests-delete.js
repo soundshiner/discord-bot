@@ -1,18 +1,18 @@
-// commands/suggest-delete.js
-import { SlashCommandBuilder, MessageFlags } from 'discord.js';
-// import db depuis ton gestionnaire SQLite
+import { MessageFlags } from 'discord.js';
 import { database as db } from '../../../utils/database/database.js';
 import logger from '../../logger.js';
 
 export default {
-  data: new SlashCommandBuilder()
-    .setName('requests-delete')
-    .setDescription('Supprimer une suggestion.')
-    .addIntegerOption((option) =>
-      option
-        .setName('id')
-        .setDescription('ID de la suggestion')
-        .setRequired(true)),
+  builder: (subcommand) =>
+    subcommand
+      .setName('delete')
+      .setDescription('Supprimer une suggestion.')
+      .addIntegerOption((option) =>
+        option
+          .setName('id')
+          .setDescription('ID de la suggestion')
+          .setRequired(true)),
+  data: { name: 'delete', description: 'Supprimer une suggestion.' },
   async execute (interaction) {
     const suggestionId = interaction.options.getInteger('id');
 

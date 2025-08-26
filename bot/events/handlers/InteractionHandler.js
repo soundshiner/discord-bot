@@ -3,6 +3,7 @@
 // ========================================
 
 import logger from '../../logger.js';
+const COMPACT_LOGS = process.env.COMPACT_LOGS === 'true';
 
 /**
  * Traite une interaction selon son type
@@ -14,11 +15,18 @@ import logger from '../../logger.js';
  */
 export async function handleInteractionByType (interaction, client, db, config) {
   try {
-    logger.info(`Traitement de l'interaction ${interaction.commandName || interaction.customId}`, {
-      userId: interaction.user.id,
-      commandName: interaction.commandName || interaction.customId,
-      timestamp: new Date().toISOString()
-    });
+    if (!COMPACT_LOGS) {
+      logger.debug(
+        `Traitement de l'interaction ${
+          interaction.commandName || interaction.customId
+        }`,
+        {
+          userId: interaction.user.id,
+          commandName: interaction.commandName || interaction.customId,
+          timestamp: new Date().toISOString()
+        }
+      );
+    }
 
     // Gestion des slash commands
     if (interaction.isChatInputCommand()) {
@@ -48,7 +56,10 @@ export async function handleInteractionByType (interaction, client, db, config) 
       ephemeral: true
     };
   } catch (error) {
-    logger.error(`Erreur dans handleInteractionByType: ${error.message}`, error);
+    logger.error(
+      `Erreur dans handleInteractionByType: ${error.message}`,
+      error
+    );
     return {
       success: false,
       message: '❌ Erreur lors du traitement de l\'interaction.',
@@ -73,7 +84,11 @@ async function handleSlashCommand (interaction, client, db, config) {
     const command = client.commands?.get(commandName);
     if (!command) {
       logger.warn(`Commande "${commandName}" non trouvée dans client.commands`);
-      logger.debug(`Commandes disponibles: ${Array.from(client.commands?.keys() || []).join(', ')}`);
+      logger.debug(
+        `Commandes disponibles: ${Array.from(
+          client.commands?.keys() || []
+        ).join(', ')}`
+      );
 
       return {
         success: false,
@@ -84,7 +99,9 @@ async function handleSlashCommand (interaction, client, db, config) {
 
     // Vérifier que la fonction execute existe
     if (typeof command.execute !== 'function') {
-      logger.error(`La commande "${commandName}" n'a pas de méthode execute valide`);
+      logger.error(
+        `La commande "${commandName}" n'a pas de méthode execute valide`
+      );
       return {
         success: false,
         message: `❌ Erreur de configuration de la commande "${commandName}".`,
@@ -92,7 +109,8 @@ async function handleSlashCommand (interaction, client, db, config) {
       };
     }
 
-    logger.info(`Exécution de la commande "${commandName}"`);
+    if (!COMPACT_LOGS)
+      logger.debug(`Exécution de la commande "${commandName}"`);
 
     // Exécuter la commande avec contexte enrichi
     const context = {
@@ -111,7 +129,8 @@ async function handleSlashCommand (interaction, client, db, config) {
     // Normaliser le résultat
     const normalizedResult = normalizeCommandResult(result, commandName);
 
-    logger.info(`Commande "${commandName}" exécutée avec succès`);
+    if (!COMPACT_LOGS)
+      logger.debug(`Commande "${commandName}" exécutée avec succès`);
     return normalizedResult;
   } catch (error) {
     logger.error(`Erreur dans la commande ${commandName}:`, {
@@ -202,7 +221,10 @@ async function handleSelectMenu (interaction) {
 
     return { success: true, message: 'SELECT_MENU_HANDLED' };
   } catch (error) {
-    logger.error(`Erreur lors du traitement du select menu ${customId}:`, error);
+    logger.error(
+      `Erreur lors du traitement du select menu ${customId}:`,
+      error
+    );
     return {
       success: false,
       message: '❌ Erreur lors du traitement de la sélection.',
@@ -227,8 +249,8 @@ async function handleModal (interaction) {
 
     // Récupérer les valeurs des champs
     const fields = {};
-    interaction.components.forEach(row => {
-      row.components.forEach(component => {
+    interaction.components.forEach((row) => {
+      row.components.forEach((component) => {
         fields[component.customId] = component.value;
       });
     });
@@ -299,3 +321,4 @@ function normalizeCommandResult (result, commandName) {
     ephemeral: false
   };
 }
+

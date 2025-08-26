@@ -13,11 +13,14 @@ import {
 } from '../../utils/core/secureLogger.js';
 import logger from '../logger.js';
 
+// Mode logs compacts: ne garder que start/success et erreurs
+const COMPACT_LOGS = process.env.COMPACT_LOGS === 'true';
+
 // Import des handlers spécialisés
 import { validateInteractionInput } from './handlers/ValidationHandler.js';
 import { handleInteractionByType } from './handlers/InteractionHandler.js';
 import { getCommandType } from './handlers/CommandTypeHandler.js';
-import { safeStringify } from './utils/SafeStringify.js';
+// import { safeStringify } from './utils/SafeStringify.js';
 
 // Instance de RetryManager pour les interactions Discord
 const interactionRetryManager = new RetryManager({
@@ -36,7 +39,7 @@ export default {
     const startTime = Date.now();
     const { client, db } = AppState;
 
-    logger.info(
+    logger.debug(
       `AppState - client: ${client ? 'défini' : 'undefined'}, db: ${
         db ? 'défini' : 'undefined'
       }`
@@ -54,20 +57,33 @@ export default {
       }
 
       const userId = interaction.user.id;
-      const commandName = interaction.commandName || interaction.customId || 'unknown';
+      const commandName
+        = interaction.commandName || interaction.customId || 'unknown';
       const interactionType = interaction.type || 'unknown';
 
-      // Log sécurisé de l'interaction
-      secureAudit('Interaction Discord reçue', userId, {
-        commandName,
-        interactionType,
-        channelId: interaction.channelId,
-        guildId: interaction.guildId,
-        timestamp: new Date().toISOString()
+      // Audit (désactivé si COMPACT_LOGS)
+      if (!COMPACT_LOGS) {
+        secureAudit('Interaction Discord reçue', userId, {
+          commandName,
+          interactionType,
+          channelId: interaction.channelId,
+          guildId: interaction.guildId,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Log de début (concis)
+      logger.info(`[CMD] ${commandName} start`, {
+        userId,
+        interactionType
       });
 
       // Vérification du rate limiting
-      const rateLimitResult = await handleRateLimit(interaction, userId, commandName);
+      const rateLimitResult = await handleRateLimit(
+        interaction,
+        userId,
+        commandName
+      );
       if (!rateLimitResult.allowed) {
         return;
       }
@@ -75,29 +91,45 @@ export default {
       // Validation et sanitization des entrées utilisateur
       const validationResult = await validateInteractionInput(interaction);
       if (!validationResult.valid) {
-        await handleValidationError(interaction, validationResult, userId, commandName);
+        await handleValidationError(
+          interaction,
+          validationResult,
+          userId,
+          commandName
+        );
         return;
       }
 
-      logger.info(`Validation réussie pour la commande ${commandName}`);
+      logger.debug(`Validation réussie pour la commande ${commandName}`);
 
       // Enregistrer l'exécution de la commande
       const commandType = getCommandType(commandName);
       recordCommand(userId, commandType);
 
       // Traitement de l'interaction avec retry
-      const result = await executeWithRetry(interaction, discordClient, db, discordConfig,
-        commandName, interactionType, userId);
+      const result = await executeWithRetry(
+        interaction,
+        discordClient,
+        db,
+        discordConfig,
+        commandName,
+        interactionType,
+        userId
+      );
 
       // Gestion de la réponse
       await handleInteractionResponse(interaction, result, commandName);
 
-      // Log de performance
+      // Log de performance + fin concise
       const duration = Date.now() - startTime;
       secureLogger.securePerformance(`Interaction ${commandName}`, duration, {
         userId,
         commandType,
         success: true
+      });
+      logger.info(`[CMD] ${commandName} success`, {
+        userId,
+        durationMs: duration
       });
     } catch (error) {
       await handleInteractionError(interaction, error, startTime);
@@ -127,9 +159,10 @@ async function handleRateLimit (interaction, userId, commandName) {
       userId
     );
 
-    const errorMessage = rateLimitResult.reason === 'USER_BLOCKED'
-      ? `Vous êtes temporairement bloqué. Réessayez dans ${remainingTime} secondes.`
-      : `Trop de commandes. Réessayez dans ${remainingTime} secondes.`;
+    const errorMessage
+      = rateLimitResult.reason === 'USER_BLOCKED'
+        ? `Vous êtes temporairement bloqué. Réessayez dans ${remainingTime} secondes.`
+        : `Trop de commandes. Réessayez dans ${remainingTime} secondes.`;
 
     await interaction.reply({
       content: `⚠️ ${errorMessage}`,
@@ -145,7 +178,12 @@ async function handleRateLimit (interaction, userId, commandName) {
 /**
  * Gère les erreurs de validation
  */
-async function handleValidationError (interaction, validationResult, userId, commandName) {
+async function handleValidationError (
+  interaction,
+  validationResult,
+  userId,
+  commandName
+) {
   secureSecurityAlert(
     'Entrée utilisateur invalide',
     {
@@ -166,15 +204,27 @@ async function handleValidationError (interaction, validationResult, userId, com
 /**
  * Exécute l'interaction avec retry
  */
-async function executeWithRetry (interaction, discordClient, db, discordConfig, commandName, interactionType, userId) {
+async function executeWithRetry (
+  interaction,
+  discordClient,
+  db,
+  discordConfig,
+  commandName,
+  interactionType,
+  userId
+) {
   try {
     return await interactionRetryManager.execute(
       async () => {
-        logger.info(`Début du traitement de l'interaction ${commandName}`);
+        logger.debug(`Début du traitement de l'interaction ${commandName}`);
 
-        const result = await handleInteractionByType(interaction, discordClient, db, discordConfig);
-
-        logger.info(`Résultat de l'interaction: ${safeStringify(result)}`);
+        const result = await handleInteractionByType(
+          interaction,
+          discordClient,
+          db,
+          discordConfig
+        );
+        // logger.debug(`Résultat de l'interaction: ${safeStringify(result)}`);
         return result;
       },
       {
@@ -189,12 +239,14 @@ async function executeWithRetry (interaction, discordClient, db, discordConfig, 
     // Vérifier si l'interaction a déjà été répondue avant d'essayer de répondre
     if (!interaction.replied && !interaction.deferred) {
       await interaction.reply({
-        content: '❌ Une erreur est survenue lors du traitement de votre demande.',
+        content:
+          '❌ Une erreur est survenue lors du traitement de votre demande.',
         flags: 64 // MessageFlags.Ephemeral
       });
     } else if (interaction.deferred) {
       await interaction.editReply({
-        content: '❌ Une erreur est survenue lors du traitement de votre demande.'
+        content:
+          '❌ Une erreur est survenue lors du traitement de votre demande.'
       });
     }
 
@@ -206,7 +258,7 @@ async function executeWithRetry (interaction, discordClient, db, discordConfig, 
  * Gère la réponse à l'interaction
  */
 async function handleInteractionResponse (interaction, result, commandName) {
-  logger.info(`Résultat final après RetryManager: ${safeStringify(result)}`);
+  // logger.debug(`Résultat final après RetryManager: ${safeStringify(result)}`);
 
   if (result && result.success) {
     logger.info(
@@ -221,14 +273,27 @@ async function handleInteractionResponse (interaction, result, commandName) {
 
     // Gestion spéciale pour les commandes qui nécessitent deferReply
     if (result.deferReply) {
-      logger.info('Commande nécessite deferReply, appel de interaction.deferReply()');
-      await interaction.deferReply();
+      logger.debug(
+        'Commande nécessite deferReply, appel de interaction.deferReply()'
+      );
+      if (!interaction.deferred) {
+        await interaction.deferReply();
+      }
 
       // Import dynamique des handlers spéciaux
-      const { handleSpecialCommands } = await import('./handlers/SpecialCommandHandler.js');
+      const { handleSpecialCommands } = await import(
+        './handlers/SpecialCommandHandler.js'
+      );
       await handleSpecialCommands(interaction, result, commandName);
     } else {
-      logger.info('Réponse normale avec interaction.reply()');
+      // Éviter les doubles réponses si la commande a déjà répondu
+      if (interaction.replied || interaction.deferred) {
+        logger.debug(
+          'Interaction déjà répondue/différée; saut de la réponse automatique'
+        );
+        return;
+      }
+      logger.debug('Réponse normale avec interaction.reply()');
       await interaction.reply({
         content: result.message,
         embeds: result.embeds,
@@ -238,7 +303,8 @@ async function handleInteractionResponse (interaction, result, commandName) {
   } else {
     logger.warn('Résultat de commande échoué ou null');
     await interaction.reply({
-      content: '❌ Une erreur est survenue lors du traitement de votre demande.',
+      content:
+        '❌ Une erreur est survenue lors du traitement de votre demande.',
       flags: 64 // MessageFlags.Ephemeral
     });
   }
@@ -251,22 +317,19 @@ async function handleInteractionError (interaction, error, startTime) {
   const duration = Date.now() - startTime;
 
   // Log d'erreur sécurisé
-  secureLogger.secureError(
-    'Erreur lors du traitement d\'interaction',
-    error,
-    {
-      userId: interaction?.user?.id,
-      commandName: interaction?.commandName || interaction?.customId,
-      interactionType: interaction?.type,
-      duration: `${duration}ms`
-    }
-  );
+  secureLogger.secureError('Erreur lors du traitement d\'interaction', error, {
+    userId: interaction?.user?.id,
+    commandName: interaction?.commandName || interaction?.customId,
+    interactionType: interaction?.type,
+    duration: `${duration}ms`
+  });
 
   // Réponse d'erreur à l'utilisateur
   try {
-    const errorMessage = interaction.replied || interaction.deferred
-      ? '❌ Une erreur est survenue lors du traitement de votre demande.'
-      : '❌ Une erreur inattendue s\'est produite.';
+    const errorMessage
+      = interaction.replied || interaction.deferred
+        ? '❌ Une erreur est survenue lors du traitement de votre demande.'
+        : '❌ Une erreur inattendue s\'est produite.';
 
     if (!interaction.replied && !interaction.deferred) {
       await interaction.reply({
@@ -280,7 +343,10 @@ async function handleInteractionError (interaction, error, startTime) {
     }
   } catch (replyError) {
     // Log spécifique pour l'erreur InteractionAlreadyReplied
-    if (replyError.message && replyError.message.includes('InteractionAlreadyReplied')) {
+    if (
+      replyError.message
+      && replyError.message.includes('InteractionAlreadyReplied')
+    ) {
       logger.error('🚨 ERREUR InteractionAlreadyReplied détectée:', {
         error: replyError.message,
         interactionState: {
@@ -294,3 +360,4 @@ async function handleInteractionError (interaction, error, startTime) {
     logger.error('Impossible d\'envoyer la réponse d\'erreur', replyError);
   }
 }
+

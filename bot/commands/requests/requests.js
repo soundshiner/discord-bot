@@ -1,5 +1,4 @@
-// commands/suggest.js
-import { SlashCommandBuilder, MessageFlags } from 'discord.js';
+import { MessageFlags } from 'discord.js';
 import { database as db } from '../../../utils/database/database.js';
 import { validateURL } from '../../../utils/bot/validateURL.js';
 import { genres } from '../../../utils/bot/genres.js';
@@ -7,42 +6,35 @@ import config from '../../config.js';
 import logger from '../../logger.js';
 
 export default {
-  data: new SlashCommandBuilder()
-    .setName('requests')
-    .setDescription('Proposer un morceau pour la rotation')
-    .addStringOption((option) =>
-      option
-        .setName('titre')
-        .setDescription('Le titre du morceau')
-        .setRequired(true))
-    .addStringOption((option) =>
-      option.setName('artiste').setDescription('L\'artiste').setRequired(true))
-    .addStringOption((option) =>
-      option
-        .setName('lien')
-        .setDescription('URL Youtube ou Spotify')
-        .setRequired(false))
-    .addStringOption((option) =>
-      option
-        .setName('genre')
-        .setDescription('Le genre musical')
-        .setRequired(false)
-        .addChoices(
-          ...genres.map((g) => ({
-            name: g,
-            value: g.toLowerCase().replace(/\s/g, '_')
-          }))
-        )),
+  data: (subcommand) =>
+    subcommand
+      .setName('ask')
+      .setDescription('Proposer un morceau pour la rotation')
+      .addStringOption((option) =>
+        option
+          .setName('titre')
+          .setDescription('Le titre du morceau')
+          .setRequired(true))
+      .addStringOption((option) =>
+        option.setName('artiste').setDescription('L\'artiste').setRequired(true))
+      .addStringOption((option) =>
+        option
+          .setName('lien')
+          .setDescription('URL Youtube ou Spotify')
+          .setRequired(false))
+      .addStringOption((option) =>
+        option
+          .setName('genre')
+          .setDescription('Le genre musical')
+          .setRequired(false)
+          .addChoices(
+            ...genres.map((g) => ({
+              name: g,
+              value: g.toLowerCase().replace(/\s/g, '_')
+            }))
+          )),
   async execute (interaction) {
     try {
-      // Check role
-      if (!interaction.member.roles.cache.has(config.roleId)) {
-        return await interaction.reply({
-          content: '❌ Tu n\'as pas l\'autorisation d\'utiliser cette commande.',
-          flags: MessageFlags.Ephemeral
-        });
-      }
-
       // Gather data
       const titre = interaction.options.getString('titre');
       const artiste = interaction.options.getString('artiste');

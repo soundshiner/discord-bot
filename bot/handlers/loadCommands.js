@@ -125,6 +125,15 @@ export async function loadCommands (client, importFn = (src) => import(src)) {
         const fileUrl = pathToFileURL(fullPath).href;
         const commandModule = await importFn(fileUrl);
 
+        // Ignorer les sous-commandes qui exportent un callback de builder
+        if (
+          commandModule?.default
+          && typeof commandModule.default.data === 'function'
+        ) {
+          logger.debug(`Ignoré (sous-commande): ${relativePath}`);
+          continue;
+        }
+
         // Validation du module
         const validation = validateCommandModule(commandModule, fileName);
         if (!validation.valid) {
@@ -188,7 +197,7 @@ export async function loadCommands (client, importFn = (src) => import(src)) {
 
     if (failedCommands.length > 0) {
       logger.warn(`${failedCommands.length} commandes en échec:`);
-      failedCommands.forEach(failed => {
+      failedCommands.forEach((failed) => {
         logger.error(`  - ${failed.file}: ${failed.error}`);
       });
     }
@@ -200,7 +209,9 @@ export async function loadCommands (client, importFn = (src) => import(src)) {
       categories
     };
   } catch (error) {
-    logger.error(`Erreur critique lors du chargement des commandes: ${error.message}`);
+    logger.error(
+      `Erreur critique lors du chargement des commandes: ${error.message}`
+    );
     return {
       loaded: [],
       failed: [],
@@ -210,3 +221,4 @@ export async function loadCommands (client, importFn = (src) => import(src)) {
     };
   }
 }
+

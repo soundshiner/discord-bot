@@ -1,11 +1,12 @@
-import { SlashCommandBuilder, ChannelType } from 'discord.js';
+import { ChannelType } from 'discord.js';
 import logger from '../../logger.js';
 
 export default {
-  data: new SlashCommandBuilder()
-    .setName('play')
-    .setDescription('Lance le stream dans un Stage Channel')
-    .setDMPermission(false),
+  builder: (subcommand) =>
+    subcommand
+      .setName('play')
+      .setDescription('Lance le stream dans un Stage Channel'),
+  data: { name: 'play', description: 'Lance le stream dans un Stage Channel' },
 
   async execute (interaction) {
     try {

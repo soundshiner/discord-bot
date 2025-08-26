@@ -1,23 +1,16 @@
-import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { getVoiceConnection } from '@discordjs/voice';
-import config from '../../config.js';
 import logger from '../../logger.js';
 
-const { ADMIN_ROLE_ID } = config;
-
-const data = new SlashCommandBuilder()
-  .setName('stop')
-  .setDescription('Arrête le stream et déconnecte le bot du salon vocal')
-  .setDefaultMemberPermissions(0); // Perms custom
+const builder = (subcommand) =>
+  subcommand
+    .setName('stop')
+    .setDescription('Arrête le stream et déconnecte le bot du salon vocal');
+const data = {
+  name: 'stop',
+  description: 'Arrête le stream et déconnecte le bot du salon vocal'
+};
 
 async function execute (interaction) {
-  if (!interaction.member.roles.cache.has(ADMIN_ROLE_ID)) {
-    return await interaction.reply({
-      content: '❌ Cette commande est réservée aux administrateurs.',
-      flags: MessageFlags.Ephemeral
-    });
-  }
-
   const connection = getVoiceConnection(interaction.guildId);
 
   if (!connection) {
@@ -38,5 +31,5 @@ async function execute (interaction) {
   }
 }
 
-export default { data, execute };
+export default { builder, data, execute };
 
