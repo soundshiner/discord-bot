@@ -10,10 +10,7 @@ export default {
     subcommand
       .setName('nowplaying')
       .setDescription('Affiche la chanson en cours de lecture'),
-  data: {
-    name: 'nowplaying',
-    description: 'Affiche la chanson en cours de lecture'
-  },
+
   async execute (interaction) {
     try {
       const response = await axios.get(JSON_URL);
@@ -31,4 +28,3 @@ export default {
     }
   }
 };
-

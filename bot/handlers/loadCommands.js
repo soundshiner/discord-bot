@@ -1,5 +1,5 @@
 // ========================================
-// bot/handlers/loadCommands.js (ESM) - Version améliorée
+// bot/handlers/loadCommands.js (ESM) - Version corrigée pour subcommands
 // ========================================
 
 import fs from 'node:fs';
@@ -29,7 +29,6 @@ function getCommandFiles (dirPath, basePath = '') {
     const relativePath = basePath ? `${basePath}/${entry.name}` : entry.name;
 
     if (entry.isDirectory()) {
-      // Récursion dans les sous-dossiers
       const subFiles = getCommandFiles(fullPath, relativePath);
       files.push(...subFiles);
     } else if (entry.isFile() && entry.name.endsWith('.js')) {
@@ -53,34 +52,23 @@ function getCommandFiles (dirPath, basePath = '') {
  */
 function validateCommandModule (commandModule, fileName) {
   if (!commandModule.default) {
-    return {
-      valid: false,
-      error: `Pas d'export default dans ${fileName}`
-    };
+    return { valid: false, error: `Pas d'export default dans ${fileName}` };
   }
 
   const command = commandModule.default;
 
+  // Cas sous-commande : a un builder mais pas de data → on ne la valide pas ici
+  if (typeof command.builder === 'function' && !command.data) {
+    return { valid: true, subcommand: true };
+  }
+
+  // Cas commande principale : doit avoir data.name et execute()
   if (!command.data || !command.data.name) {
-    return {
-      valid: false,
-      error: `Pas de data.name dans ${fileName}`
-    };
+    return { valid: false, error: `Pas de data.name dans ${fileName}` };
   }
 
   if (typeof command.execute !== 'function') {
-    return {
-      valid: false,
-      error: `Pas de fonction execute dans ${fileName}`
-    };
-  }
-
-  // Validation optionnelle des propriétés SlashCommand
-  if (command.data.setName && typeof command.data.setName !== 'function') {
-    return {
-      valid: false,
-      error: `data.setName invalide dans ${fileName}`
-    };
+    return { valid: false, error: `Pas de fonction execute dans ${fileName}` };
   }
 
   return { valid: true };
@@ -101,7 +89,6 @@ export async function loadCommands (client, importFn = (src) => import(src)) {
       return { loaded: [], failed: [], total: 0, categories: {} };
     }
 
-    // Récupérer tous les fichiers .js récursivement
     const commandFiles = getCommandFiles(commandsPath);
 
     if (commandFiles.length === 0) {
@@ -116,82 +103,58 @@ export async function loadCommands (client, importFn = (src) => import(src)) {
     const failedCommands = [];
     const categories = {};
 
-    // Traiter chaque fichier de commande
     for (const fileInfo of commandFiles) {
       const { name: fileName, fullPath, relativePath, category } = fileInfo;
 
       try {
-        // Import dynamique du module
         const fileUrl = pathToFileURL(fullPath).href;
         const commandModule = await importFn(fileUrl);
 
-        // Ignorer les sous-commandes qui exportent un callback de builder
-        if (
-          commandModule?.default
-          && typeof commandModule.default.data === 'function'
-        ) {
-          logger.debug(`Ignoré (sous-commande): ${relativePath}`);
-          continue;
-        }
-
-        // Validation du module
         const validation = validateCommandModule(commandModule, fileName);
         if (!validation.valid) {
           logger.warn(validation.error);
-          failedCommands.push({
-            file: relativePath,
-            error: validation.error
-          });
+          failedCommands.push({ file: relativePath, error: validation.error });
+          continue;
+        }
+
+        // Si c'est une sous-commande : on ne l'enregistre pas ici
+        if (validation.subcommand) {
+          logger.debug(`Sous-commande ignorée (chargée via parent) : ${relativePath}`);
           continue;
         }
 
         const command = commandModule.default;
         const commandName = command.data.name;
 
-        // Vérifier les doublons
         if (client.commands.has(commandName)) {
           const error = `Commande "${commandName}" déjà enregistrée (doublon dans ${relativePath})`;
           logger.warn(error);
-          failedCommands.push({
-            file: relativePath,
-            error
-          });
+          failedCommands.push({ file: relativePath, error });
           continue;
         }
 
-        // Enregistrer la commande
         client.commands.set(commandName, command);
 
-        // Organiser par catégorie
         if (!categories[category]) {
           categories[category] = [];
         }
         categories[category].push(commandName);
 
-        loadedCommands.push({
-          name: commandName,
-          file: relativePath,
-          category
-        });
-
+        loadedCommands.push({ name: commandName, file: relativePath, category });
         logger.custom('CMD', `${commandName} (${category})`);
       } catch (error) {
         const errorMsg = `Erreur lors du chargement de ${relativePath}: ${error.message}`;
         logger.error(errorMsg);
-        failedCommands.push({
-          file: relativePath,
-          error: error.message
-        });
+        failedCommands.push({ file: relativePath, error: error.message });
       }
     }
 
-    // Afficher les résultats
     logger.success(`${loadedCommands.length} commandes chargées avec succès`);
 
     if (Object.keys(categories).length > 0) {
       logger.info('Répartition par catégorie:');
-      for (const [category, commands] of Object.entries(categories)) {
-        logger.custom('CAT', `${category}: ${commands.length} commande(s)`);
+      for (const [cat, commands] of Object.entries(categories)) {
+        logger.custom('CAT', `${cat}: ${commands.length} commande(s)`);
       }
     }
 
@@ -209,16 +172,7 @@ export async function loadCommands (client, importFn = (src) => import(src)) {
       categories
     };
   } catch (error) {
-    logger.error(
-      `Erreur critique lors du chargement des commandes: ${error.message}`
-    );
-    return {
-      loaded: [],
-      failed: [],
-      total: 0,
-      categories: {},
-      criticalError: error.message
-    };
+    logger.error(`Erreur critique lors du chargement des commandes: ${error.message}`);
+    return { loaded: [], failed: [], total: 0, categories: {}, criticalError: error.message };
   }
 }
-

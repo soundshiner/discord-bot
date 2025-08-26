@@ -22,7 +22,7 @@ export default {
           .setName('artiste')
           .setDescription('Nouvel artiste')
           .setRequired(false)),
-  data: { name: 'edit', description: 'Éditer une suggestion.' },
+
   async execute (interaction) {
     const suggestionId = interaction.options.getInteger('id');
     const newTitre = interaction.options.getString('titre');

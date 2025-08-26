@@ -10,10 +10,10 @@ export default {
     .setName('request')
     .setDescription('Gérer les suggestions de morceaux')
     .setDMPermission(false)
-    .addSubcommand(askSubcommand.data)
-    .addSubcommand(editSubcommand.data)
-    .addSubcommand(deleteSubcommand.data)
-    .addSubcommand(listSubcommand.data),
+    .addSubcommand(askSubcommand.builder)
+    .addSubcommand(editSubcommand.builder)
+    .addSubcommand(deleteSubcommand.builder)
+    .addSubcommand(listSubcommand.builder),
 
   async execute (interaction) {
     const subcommand = interaction.options.getSubcommand();
@@ -38,9 +38,8 @@ export default {
     default:
       return await interaction.reply({
         content: '❌ Sous-commande inconnue.',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
   }
 };
-

@@ -9,9 +9,9 @@ export default {
     .setName('radio')
     .setDescription('Commandes pour contrôler la radio')
     .setDMPermission(false)
-    .addSubcommand(playSubcommand.builder || playSubcommand.data)
-    .addSubcommand(stopSubcommand.builder || stopSubcommand.data)
-    .addSubcommand(nowplayingSubcommand.builder || nowplayingSubcommand.data),
+    .addSubcommand(playSubcommand.builder)
+    .addSubcommand(stopSubcommand.builder)
+    .addSubcommand(nowplayingSubcommand.builder),
 
   async execute (interaction) {
     const subcommand = interaction.options.getSubcommand();
@@ -42,4 +42,3 @@ export default {
     }
   }
 };
-
