@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, MessageFlags } from 'discord.js';
+import { MessageFlags } from 'discord.js';
 import { database as db } from '../../../utils/database/database.js';
 import { validateURL } from '../../../utils/bot/validateURL.js';
 import { genres } from '../../../utils/bot/genres.js';
@@ -6,32 +6,33 @@ import config from '../../config.js';
 import logger from '../../logger.js';
 
 export default {
-  data: new SlashCommandBuilder()
-    .setName('ask')
-    .setDescription('Proposer un morceau pour la rotation')
-    .addStringOption((option) =>
-      option
-        .setName('titre')
-        .setDescription('Le titre du morceau')
-        .setRequired(true))
-    .addStringOption((option) =>
-      option.setName('artiste').setDescription('L\'artiste').setRequired(true))
-    .addStringOption((option) =>
-      option
-        .setName('lien')
-        .setDescription('URL Youtube ou Spotify')
-        .setRequired(false))
-    .addStringOption((option) =>
-      option
-        .setName('genre')
-        .setDescription('Le genre musical')
-        .setRequired(false)
-        .addChoices(
-          ...genres.map((g) => ({
-            name: g,
-            value: g.toLowerCase().replace(/\s/g, '_')
-          }))
-        )),
+  data: (subcommand) =>
+    subcommand
+      .setName('ask')
+      .setDescription('Proposer un morceau pour la rotation')
+      .addStringOption((option) =>
+        option
+          .setName('titre')
+          .setDescription('Le titre du morceau')
+          .setRequired(true))
+      .addStringOption((option) =>
+        option.setName('artiste').setDescription('L\'artiste').setRequired(true))
+      .addStringOption((option) =>
+        option
+          .setName('lien')
+          .setDescription('URL Youtube ou Spotify')
+          .setRequired(false))
+      .addStringOption((option) =>
+        option
+          .setName('genre')
+          .setDescription('Le genre musical')
+          .setRequired(false)
+          .addChoices(
+            ...genres.map((g) => ({
+              name: g,
+              value: g.toLowerCase().replace(/\s/g, '_')
+            }))
+          )),
   async execute (interaction) {
     try {
       // Gather data

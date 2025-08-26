@@ -1,17 +1,21 @@
-import { SlashCommandBuilder } from 'discord.js';
-import { getVoiceConnection } from '@discordjs/voice';
-import logger from '../../logger.js';
+import { getVoiceConnection } from "@discordjs/voice";
+import logger from "../../logger.js";
 
-const data = new SlashCommandBuilder()
-  .setName('stop')
-  .setDescription('Arrête le stream et déconnecte le bot du salon vocal');
+const builder = (subcommand) =>
+  subcommand
+    .setName("stop")
+    .setDescription("Arrête le stream et déconnecte le bot du salon vocal");
+const data = {
+  name: "stop",
+  description: "Arrête le stream et déconnecte le bot du salon vocal",
+};
 
-async function execute (interaction) {
+async function execute(interaction) {
   const connection = getVoiceConnection(interaction.guildId);
 
   if (!connection) {
     return await interaction.reply(
-      '❌ Le bot n\'est pas connecté à un salon vocal.'
+      "❌ Le bot n'est pas connecté à un salon vocal."
     );
   }
 
@@ -19,13 +23,13 @@ async function execute (interaction) {
     connection.destroy();
     logger.info(`Bot déconnecté du vocal sur ${interaction.guild.name}`);
     return await interaction.reply(
-      '🛑 Stream arrêté, bot déconnecté du vocal.'
+      "🛑 Stream arrêté, bot déconnecté du vocal."
     );
   } catch (error) {
     logger.error(`Erreur dans stop: ${error.message}`);
-    return await interaction.reply('❌ Erreur lors de l\'arrêt du stream.');
+    return await interaction.reply("❌ Erreur lors de l'arrêt du stream.");
   }
 }
 
-export default { data, execute };
+export default { builder, data, execute };
 
