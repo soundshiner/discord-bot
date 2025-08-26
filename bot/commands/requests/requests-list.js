@@ -1,27 +1,27 @@
-import { MessageFlags } from "discord.js";
-import { database as db } from "../../../utils/database/database.js";
-import logger from "../../logger.js";
+import { MessageFlags } from 'discord.js';
+import { database as db } from '../../../utils/database/database.js';
+import logger from '../../logger.js';
 
 export default {
   builder: (subcommand) =>
     subcommand
-      .setName("list")
-      .setDescription("Voir toutes les suggestions de morceaux"),
+      .setName('list')
+      .setDescription('Voir toutes les suggestions de morceaux'),
   data: {
-    name: "list",
-    description: "Voir toutes les suggestions de morceaux",
+    name: 'list',
+    description: 'Voir toutes les suggestions de morceaux'
   },
-  async execute(interaction) {
+  async execute (interaction) {
     try {
       // Retrieve from SQLite
       const suggestions = await db.query(
-        "SELECT * FROM suggestions ORDER BY createdAt DESC LIMIT 20"
+        'SELECT * FROM suggestions ORDER BY createdAt DESC LIMIT 20'
       );
 
       if (suggestions.length === 0) {
         return await interaction.reply({
-          content: "🎵 Aucune suggestion.",
-          flags: MessageFlags.Ephemeral,
+          content: '🎵 Aucune suggestion.',
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -31,22 +31,22 @@ export default {
           (s) =>
             `**${s.id}.** ${s.titre} - ${s.artiste} [${s.genre}] (Proposé par ${
               s.username
-            })${s.lien ? `\nLien : ${s.lien}` : ""}`
+            })${s.lien ? `\nLien : ${s.lien}` : ''}`
         )
-        .join("\n\n");
+        .join('\n\n');
 
       // Reply with the list (ephemeral)
       return await interaction.reply({
         content: msg.slice(0, 2000),
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
     } catch (error) {
-      logger.error("Erreur lors de la récupération des suggestions:", error);
+      logger.error('Erreur lors de la récupération des suggestions:', error);
       return await interaction.reply({
-        content: "❌ Erreur lors de la récupération des suggestions.",
-        flags: MessageFlags.Ephemeral,
+        content: '❌ Erreur lors de la récupération des suggestions.',
+        flags: MessageFlags.Ephemeral
       });
     }
-  },
+  }
 };
 

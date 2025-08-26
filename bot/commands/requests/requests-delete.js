@@ -1,54 +1,53 @@
-import { MessageFlags } from "discord.js";
-import { database as db } from "../../../utils/database/database.js";
-import logger from "../../logger.js";
+import { MessageFlags } from 'discord.js';
+import { database as db } from '../../../utils/database/database.js';
+import logger from '../../logger.js';
 
 export default {
   builder: (subcommand) =>
     subcommand
-      .setName("delete")
-      .setDescription("Supprimer une suggestion.")
+      .setName('delete')
+      .setDescription('Supprimer une suggestion.')
       .addIntegerOption((option) =>
         option
-          .setName("id")
-          .setDescription("ID de la suggestion")
-          .setRequired(true)
-      ),
-  data: { name: "delete", description: "Supprimer une suggestion." },
-  async execute(interaction) {
-    const suggestionId = interaction.options.getInteger("id");
+          .setName('id')
+          .setDescription('ID de la suggestion')
+          .setRequired(true)),
+  data: { name: 'delete', description: 'Supprimer une suggestion.' },
+  async execute (interaction) {
+    const suggestionId = interaction.options.getInteger('id');
 
     if (!suggestionId) {
       return interaction.reply({
-        content: "❌ ID de suggestion invalide.",
-        flags: MessageFlags.Ephemeral,
+        content: '❌ ID de suggestion invalide.',
+        flags: MessageFlags.Ephemeral
       });
     }
 
     try {
       const [suggestion] = await db.query(
-        "SELECT * FROM suggestions WHERE id = ?",
+        'SELECT * FROM suggestions WHERE id = ?',
         [suggestionId]
       );
 
       if (!suggestion) {
         return interaction.reply({
-          content: "❌ Suggestion introuvable.",
-          flags: MessageFlags.Ephemeral,
+          content: '❌ Suggestion introuvable.',
+          flags: MessageFlags.Ephemeral
         });
       }
 
-      await db.query("DELETE FROM suggestions WHERE id = ?", [suggestionId]);
+      await db.query('DELETE FROM suggestions WHERE id = ?', [suggestionId]);
 
       return await interaction.reply(
         `Suggestion **${suggestion.titre}** supprimée avec succès.`
       );
     } catch (error) {
-      logger.error("Erreur suppression suggestion:", error);
+      logger.error('Erreur suppression suggestion:', error);
       return await interaction.reply({
-        content: "❌ Erreur lors de la suppression de la suggestion.",
-        flags: MessageFlags.Ephemeral,
+        content: '❌ Erreur lors de la suppression de la suggestion.',
+        flags: MessageFlags.Ephemeral
       });
     }
-  },
+  }
 };
 

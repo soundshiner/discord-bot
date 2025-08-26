@@ -1,14 +1,14 @@
-import { ChannelType } from "discord.js";
-import logger from "../../logger.js";
+import { ChannelType } from 'discord.js';
+import logger from '../../logger.js';
 
 export default {
   builder: (subcommand) =>
     subcommand
-      .setName("play")
-      .setDescription("Lance le stream dans un Stage Channel"),
-  data: { name: "play", description: "Lance le stream dans un Stage Channel" },
+      .setName('play')
+      .setDescription('Lance le stream dans un Stage Channel'),
+  data: { name: 'play', description: 'Lance le stream dans un Stage Channel' },
 
-  async execute(interaction) {
+  async execute (interaction) {
     try {
       const { voice } = interaction.member;
       const channel = voice && voice.channel;
@@ -16,33 +16,33 @@ export default {
       if (!channel) {
         return {
           success: false,
-          message: "❌ Tu dois être dans un salon vocal ou Stage Channel.",
-          ephemeral: true,
+          message: '❌ Tu dois être dans un salon vocal ou Stage Channel.',
+          ephemeral: true
         };
       }
 
       if (channel.type !== ChannelType.GuildStageVoice) {
         return {
           success: false,
-          message: "❌ Cette commande ne fonctionne que dans un Stage Channel.",
-          ephemeral: true,
+          message: '❌ Cette commande ne fonctionne que dans un Stage Channel.',
+          ephemeral: true
         };
       }
 
       // Retourner un message spécial pour indiquer qu'il faut utiliser deferReply
       return {
         success: true,
-        message: "PLAY_COMMAND",
-        deferReply: true,
+        message: 'PLAY_COMMAND',
+        deferReply: true
       };
     } catch (error) {
-      logger.error("❌ Erreur exécution /play :", error);
+      logger.error('❌ Erreur exécution /play :', error);
       return {
         success: false,
-        message: "❌ Une erreur est survenue pendant la tentative de lecture.",
-        ephemeral: true,
+        message: '❌ Une erreur est survenue pendant la tentative de lecture.',
+        ephemeral: true
       };
     }
-  },
+  }
 };
 
