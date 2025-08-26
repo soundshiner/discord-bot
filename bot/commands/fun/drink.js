@@ -2,12 +2,12 @@ import { SlashCommandBuilder } from 'discord.js';
 
 const drinks = [
   'Mojito 🍃',
-  'Sex on the Beach 🍑',
+  'Sex on the Beach 🍊',
   'Piña Colada 🍍',
   'Whisky on the rocks 🥃',
   'Vodka Red Bull ⚡',
   'Thé glacé au citron 🍋',
-  'Eau pétillante élégante 💧',
+  'Eau pétillante💧',
   'Bière artisanale 🍺',
   'Café noir serré ☕',
   'Smoothie mangue-passion 🥭'

@@ -18,9 +18,7 @@ const CLIENT_ID = process.env.CLIENT_ID;
 const TOKEN = process.env.DISCORD_TOKEN;
 
 if (!TOKEN || !CLIENT_ID) {
-  console.error(
-    chalk.red("❌ DISCORD_TOKEN ou CLIENT_ID manquant dans le fichier .env")
-  );
+  console.error(chalk.red("❌ DISCORD_TOKEN ou CLIENT_ID manquant dans le fichier .env"));
   process.exit(1);
 }
 
@@ -33,7 +31,6 @@ function getAllCommandFiles(dir) {
 
   for (const file of files) {
     const fullPath = path.join(dir, file.name);
-
     if (file.isDirectory()) {
       commandFiles = commandFiles.concat(getAllCommandFiles(fullPath));
     } else if (file.isFile() && file.name.endsWith(".js")) {
@@ -48,61 +45,40 @@ const commandFiles = getAllCommandFiles("bot/commands");
 const commands = [];
 
 for (const filePath of commandFiles) {
-  console.log(
-    chalk.blue(
-      `🔍 Commandes trouvées: ${commands.map((c) => c.name).join(", ")}`
-    )
-  );
-
   const command = (await import(pathToFileURL(filePath).href)).default;
 
-  if (!command?.data) {
-    console.warn(
-      chalk.yellow(`⚠️  La commande "${filePath}" n'a pas de propriété 'data'`)
-    );
+  // Ignorer les sous-commandes (builder sans data)
+  if (command?.builder && !command?.data) {
+    console.log(chalk.gray(`↪︎ Ignoré (sous-commande) : ${filePath}`));
     continue;
   }
 
-  // Ignore subcommand modules exporting a builder callback instead of a SlashCommandBuilder
-  if (typeof command.data === "function") {
-    console.log(chalk.gray(`↪︎ Ignoré (sous-commande): ${filePath}`));
+  if (!command?.data) {
+    console.warn(chalk.yellow(`⚠️  La commande "${filePath}" n'a pas de propriété 'data'`));
     continue;
   }
 
   if (typeof command.data.toJSON === "function") {
     commands.push(command.data.toJSON());
+    console.log(chalk.green(`+ Ajouté : ${command.data.name}`));
   } else {
-    console.warn(
-      chalk.yellow(
-        `⚠️  'data' de "${filePath}" n'est pas un SlashCommandBuilder valide`
-      )
-    );
+    console.warn(chalk.yellow(`⚠️  'data' de "${filePath}" n'est pas un SlashCommandBuilder valide`));
   }
 }
 
 (async () => {
   try {
     if (shouldClear) {
-      console.log(
-        chalk.magentaBright("🧹 Suppression des commandes Slash existantes...")
-      );
+      console.log(chalk.magentaBright("🧹 Suppression des commandes Slash existantes..."));
 
       if (isDev) {
-        await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), {
-          body: [],
-        });
-        console.log(
-          chalk.green(`✅ Toutes les commandes GUILD (${GUILD_ID}) supprimées.`)
-        );
+        await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), { body: [] });
+        console.log(chalk.green(`✅ Toutes les commandes GUILD (${GUILD_ID}) supprimées.`));
       } else if (isGlobal) {
         await rest.put(Routes.applicationCommands(CLIENT_ID), { body: [] });
-        console.log(
-          chalk.green("✅ Toutes les commandes GLOBALES supprimées.")
-        );
+        console.log(chalk.green("✅ Toutes les commandes GLOBALES supprimées."));
       } else {
-        console.error(
-          chalk.red("❌ Vous devez préciser --dev ou --global avec --clear")
-        );
+        console.error(chalk.red("❌ Vous devez préciser --dev ou --global avec --clear"));
         process.exit(1);
       }
 
@@ -111,20 +87,12 @@ for (const filePath of commandFiles) {
 
     if (isDev) {
       console.log(chalk.cyan("🚀 Déploiement des commandes à la GUILD..."));
-      await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), {
-        body: commands,
-      });
-      console.log(
-        chalk.green(
-          `✅ ${commands.length} commandes déployées à la GUILD (${GUILD_ID})`
-        )
-      );
+      await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), { body: commands });
+      console.log(chalk.green(`✅ ${commands.length} commandes déployées à la GUILD (${GUILD_ID})`));
     } else if (isGlobal) {
       console.log(chalk.cyan("🌐 Déploiement des commandes GLOBALES..."));
       await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
-      console.log(
-        chalk.green(`✅ ${commands.length} commandes globales déployées`)
-      );
+      console.log(chalk.green(`✅ ${commands.length} commandes globales déployées`));
     } else {
       console.error(chalk.red("❌ Spécifiez --dev ou --global pour déployer."));
       process.exit(1);
@@ -136,16 +104,10 @@ for (const filePath of commandFiles) {
     }
 
     if (args.includes("--restart-service")) {
-      console.log(
-        chalk.gray("ℹ️  Restart du service demandé (non implémenté)")
-      );
+      console.log(chalk.gray("ℹ️  Restart du service demandé (non implémenté)"));
     }
   } catch (error) {
-    console.error(
-      chalk.red("❌ Erreur lors du déploiement des commandes :"),
-      error
-    );
+    console.error(chalk.red("❌ Erreur lors du déploiement des commandes :"), error);
     process.exit(1);
   }
 })();
-

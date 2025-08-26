@@ -10,11 +10,10 @@ export default {
     .setName('request')
     .setDescription('Gérer les suggestions de morceaux')
     .setDMPermission(false)
-    // Utilisez les builders au lieu d'accéder directement à data
-    .addSubcommand(askSubcommand.builder || ((sub) => sub.setName(askSubcommand.data.name).setDescription(askSubcommand.data.description)))
-    .addSubcommand(editSubcommand.builder || ((sub) => sub.setName(editSubcommand.data.name).setDescription(editSubcommand.data.description)))
-    .addSubcommand(deleteSubcommand.builder || ((sub) => sub.setName(deleteSubcommand.data.name).setDescription(deleteSubcommand.data.description)))
-    .addSubcommand(listSubcommand.builder || ((sub) => sub.setName(listSubcommand.data.name).setDescription(listSubcommand.data.description))),
+    .addSubcommand(askSubcommand.builder)
+    .addSubcommand(editSubcommand.builder)
+    .addSubcommand(deleteSubcommand.builder)
+    .addSubcommand(listSubcommand.builder),
 
   async execute (interaction) {
     const subcommand = interaction.options.getSubcommand();

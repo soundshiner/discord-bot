@@ -6,13 +6,9 @@ import config from '../../config.js';
 import logger from '../../logger.js';
 
 export default {
-  // Changez cette fonction en objet statique
-  data: {
-    name: 'ask',
-    description: 'Proposer un morceau pour la rotation'
-  },
+  // Changez cette fonction en objet statique comme les autres
   
-  // Ajoutez une fonction builder pour la construction dynamique
+  // Gardez la fonction builder pour la construction des options
   builder: (subcommand) =>
     subcommand
       .setName('ask')

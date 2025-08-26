@@ -7,10 +7,7 @@ export default {
     subcommand
       .setName('list')
       .setDescription('Voir toutes les suggestions de morceaux'),
-  data: {
-    name: 'list',
-    description: 'Voir toutes les suggestions de morceaux'
-  },
+
   async execute (interaction) {
     try {
       // Retrieve from SQLite

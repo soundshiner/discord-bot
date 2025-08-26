@@ -12,7 +12,7 @@ export default {
           .setName('id')
           .setDescription('ID de la suggestion')
           .setRequired(true)),
-  data: { name: 'delete', description: 'Supprimer une suggestion.' },
+  
   async execute (interaction) {
     const suggestionId = interaction.options.getInteger('id');
 
