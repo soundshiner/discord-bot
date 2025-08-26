@@ -6,7 +6,7 @@ export default {
     subcommand
       .setName('play')
       .setDescription('Lance le stream dans un Stage Channel'),
-  
+
 
   async execute (interaction) {
     try {

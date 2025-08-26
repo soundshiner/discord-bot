@@ -7,7 +7,7 @@ import logger from '../../logger.js';
 
 export default {
   // Changez cette fonction en objet statique comme les autres
-  
+
   // Gardez la fonction builder pour la construction des options
   builder: (subcommand) =>
     subcommand
@@ -36,7 +36,7 @@ export default {
               value: g.toLowerCase().replace(/\s/g, '_')
             }))
           )),
-          
+
   async execute (interaction) {
     try {
       // Gather data

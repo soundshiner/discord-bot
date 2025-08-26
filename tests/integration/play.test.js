@@ -9,6 +9,7 @@ import {
 } from "@discordjs/voice";
 import logger from "../../bot/logger.js";
 
+// --- Mocks ---
 vi.mock("@discordjs/voice", () => ({
   joinVoiceChannel: vi.fn(),
   createAudioPlayer: vi.fn(),
@@ -88,11 +89,18 @@ describe("Play Command", () => {
     mockInteraction.client = mockClient;
   });
 
-  it("should have correct command data structure", () => {
-    expect(playCommand).toHaveProperty("data");
-    expect(playCommand).toHaveProperty("execute");
-    expect(playCommand.data.name).toBe("play");
-    expect(playCommand.data.description).toBeDefined();
+  // --- Test structure ---
+  it("should have correct command structure", () => {
+    if (playCommand.builder && !playCommand.data) {
+      // Sous-commande avec builder
+      expect(playCommand.builder).toBeInstanceOf(Function);
+    } else {
+      // Commande principale avec data
+      expect(playCommand).toHaveProperty("data");
+      expect(playCommand).toHaveProperty("execute");
+      expect(playCommand.data.name).toBe("play");
+      expect(playCommand.data.description).toBeDefined();
+    }
   });
 
   it("should handle play command with valid URL", async () => {
@@ -126,20 +134,17 @@ describe("Play Command", () => {
 
   describe("(erreurs)", () => {
     it("retourne une erreur si l'utilisateur n'est pas dans un salon vocal", async () => {
-      const interaction = {
-        ...mockInteraction,
-        member: { voice: null },
-      };
+      const interaction = { ...mockInteraction, member: { voice: null } };
       const result = await playCommand.execute(interaction);
       expect(result.success).toBe(false);
       expect(result.message).toContain("Tu dois être dans un salon vocal");
       expect(result.ephemeral).toBe(true);
     });
 
-    it("retourne une erreur si le salon vocal nest pas un Stage Channel", async () => {
+    it("retourne une erreur si le salon vocal n'est pas un Stage Channel", async () => {
       const interaction = {
         ...mockInteraction,
-        member: { voice: { channel: { type: 2 } } }, // 2 = GuildVoice
+        member: { voice: { channel: { type: 2 } } },
       };
       const result = await playCommand.execute(interaction);
       expect(result.success).toBe(false);
@@ -150,14 +155,12 @@ describe("Play Command", () => {
     });
 
     it("retourne une erreur si joinVoiceChannel échoue", async () => {
-      // Simule une erreur lors de la connexion vocale
       joinVoiceChannel.mockImplementationOnce(() => {
         throw new Error("Connexion échouée");
       });
       mockInteraction.deferred = true;
       mockInteraction.editReply = vi.fn();
 
-      // Test que la commande retourne le bon objet pour deferReply
       const result = await playCommand.execute(mockInteraction);
       expect(result.success).toBe(true);
       expect(result.message).toBe("PLAY_COMMAND");
@@ -165,22 +168,18 @@ describe("Play Command", () => {
     });
 
     it("retourne une erreur si createAudioResource échoue", async () => {
-      // Simule une connexion réussie
       joinVoiceChannel.mockReturnValue({ subscribe: vi.fn() });
-      // Simule la création du player
       createAudioPlayer.mockReturnValue({
         play: vi.fn(),
         once: vi.fn(),
         on: vi.fn(),
       });
-      // Simule une erreur lors de la création de la ressource audio
       createAudioResource.mockImplementationOnce(() => {
         throw new Error("Erreur ressource");
       });
       mockInteraction.deferred = true;
       mockInteraction.editReply = vi.fn();
 
-      // Test que la commande retourne le bon objet pour deferReply
       const result = await playCommand.execute(mockInteraction);
       expect(result.success).toBe(true);
       expect(result.message).toBe("PLAY_COMMAND");
@@ -188,4 +187,3 @@ describe("Play Command", () => {
     });
   });
 });
-

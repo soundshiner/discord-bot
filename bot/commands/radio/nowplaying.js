@@ -10,13 +10,13 @@ export default {
     subcommand
       .setName('nowplaying')
       .setDescription('Affiche la chanson en cours de lecture'),
-      
-  async execute(interaction) {
+
+  async execute (interaction) {
     try {
       const response = await axios.get(JSON_URL);
       const { data } = response;
-      const currentSong =
-        data?.icestats?.source?.title || 'Aucune chanson en cours.';
+      const currentSong
+        = data?.icestats?.source?.title || 'Aucune chanson en cours.';
 
       return await interaction.reply(`🎶 Now playing: **${currentSong}**`);
     } catch (error) {

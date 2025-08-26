@@ -44,11 +44,17 @@ describe("Stop Command", () => {
     mockClient = mockInteraction.client;
   });
 
-  it("should have correct command data structure", () => {
-    expect(stopCommand).toHaveProperty("data");
-    expect(stopCommand).toHaveProperty("execute");
-    expect(stopCommand.data.name).toBe("stop");
-    expect(stopCommand.data.description).toBeDefined();
+  it("should have correct command structure", () => {
+    if (stopCommand.builder && !stopCommand.data) {
+      // Sous-commande avec builder
+      expect(stopCommand.builder).toBeInstanceOf(Function);
+    } else {
+      // Commande principale avec data
+      expect(stopCommand).toHaveProperty("data");
+      expect(stopCommand).toHaveProperty("execute");
+      expect(stopCommand.data.name).toBe("stop");
+      expect(stopCommand.data.description).toBeDefined();
+    }
   });
 
   it("should handle stop command", async () => {

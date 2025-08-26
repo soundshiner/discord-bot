@@ -15,7 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * @param {string} basePath - Chemin de base pour les logs
  * @returns {Array} Liste des fichiers .js trouvés avec leurs chemins complets
  */
-function getCommandFiles(dirPath, basePath = '') {
+function getCommandFiles (dirPath, basePath = '') {
   const files = [];
 
   if (!fs.existsSync(dirPath)) {
@@ -50,7 +50,7 @@ function getCommandFiles(dirPath, basePath = '') {
  * @param {string} fileName - Nom du fichier pour les logs
  * @returns {Object} Résultat de validation
  */
-function validateCommandModule(commandModule, fileName) {
+function validateCommandModule (commandModule, fileName) {
   if (!commandModule.default) {
     return { valid: false, error: `Pas d'export default dans ${fileName}` };
   }
@@ -80,7 +80,7 @@ function validateCommandModule(commandModule, fileName) {
  * @param {Function} importFn - Fonction d'import (pour les tests)
  * @returns {Object} Statistiques de chargement
  */
-export async function loadCommands(client, importFn = (src) => import(src)) {
+export async function loadCommands (client, importFn = (src) => import(src)) {
   try {
     const commandsPath = path.join(__dirname, '../commands');
 

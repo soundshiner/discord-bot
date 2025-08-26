@@ -12,7 +12,7 @@ export default {
           .setName('id')
           .setDescription('ID de la suggestion')
           .setRequired(true)),
-  
+
   async execute (interaction) {
     const suggestionId = interaction.options.getInteger('id');
 

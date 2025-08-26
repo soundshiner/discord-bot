@@ -6,7 +6,7 @@ const builder = (subcommand) =>
     .setName('stop')
     .setDescription('Arrête le stream et déconnecte le bot du salon vocal');
 
-async function execute(interaction) {
+async function execute (interaction) {
   const connection = getVoiceConnection(interaction.guildId);
 
   if (!connection) {
