@@ -263,3 +263,6 @@ tokens/
 credentials/
 auth/
 security/
+
+docker/
+scripts/
