@@ -17,8 +17,7 @@ Voici les scripts clés pour le développement, le test, le déploiement et la m
 | `npm run docker:compose` | Lance les services Docker en background                  | `npm run docker:compose`     |
 | `npm run git-actions` | Lance le script local simulant la CI GitHub Actions      | `npm run git-actions`        |
 | `npm run db:deploy`  | Déploie la base de données / crée tables                   | `npm run db:deploy`          |
-| `npm run prepare`    | Installe Husky pour les hooks Git                           | (automatique à l’installation) |
-| `npm run postinstall`| Installe Husky après l’installation des dépendances        | (automatique à l’installation) |
+
 | `npm run context:md` | Génère la doc contexte projet en Markdown                  | `npm run context:md`         |
 | `npm run deploy:git` | Lance le script interactif pour commit + création PR       | `npm run deploy:git`         |
 

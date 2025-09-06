@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import {
-  SlashCommandBuilder,
+  SlashCommandSubcommandBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
@@ -15,10 +15,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default {
-  data: new SlashCommandBuilder()
-    .setName('schedule')
-    .setDescription('Affiche l\'horaire des programmes')
-    .setDMPermission(false),
+  builder: (subcommand) =>
+    subcommand
+      .setName('schedule')
+      .setDescription('Affiche l\'horaire des programmes'),
   async execute (interaction) {
     try {
       const schedulePath = path.join(__dirname, '../../data/', 'schedule.txt');

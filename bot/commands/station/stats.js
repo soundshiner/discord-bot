@@ -1,5 +1,5 @@
 import {
-  SlashCommandBuilder,
+  SlashCommandSubcommandBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
@@ -11,10 +11,10 @@ import logger from '../../logger.js';
 
 const { ADMIN_ROLE_ID, JSON_URL } = config;
 
-const data = new SlashCommandBuilder()
-  .setName('stats')
-  .setDescription('Affiche les statistiques du stream')
-  .setDefaultMemberPermissions(0); // Pas de perms par défaut
+const builder = (subcommand) =>
+  subcommand
+    .setName('stats')
+    .setDescription('Affiche les statistiques du stream');
 
 async function execute (interaction) {
   if (!interaction.member.roles.cache.has(ADMIN_ROLE_ID)) {
@@ -47,5 +47,5 @@ async function execute (interaction) {
   }
 }
 
-export default { data, execute };
+export default { builder, execute };
 

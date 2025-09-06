@@ -54,15 +54,34 @@ async function handlePlayCommand (interaction) {
     const config = (await import('../../config.js')).default;
     const { STREAM_URL } = config;
     logger.info('🔗 URL du stream récupérée:', STREAM_URL ? 'OK' : 'MANQUANTE');
+    
+    // Vérifier que l'URL du stream est configurée
+    if (!STREAM_URL) {
+      logger.error('❌ STREAM_URL non configurée dans les variables d\'environnement');
+      await interaction.editReply('❌ URL du stream non configurée. Contactez un administrateur.');
+      return;
+    }
 
     logger.info('🔌 Connexion au canal vocal...');
-    const connection = joinVoiceChannel({
-      channelId: channel.id,
-      guildId: channel.guild.id,
-      adapterCreator: channel.guild.voiceAdapterCreator,
-      selfDeaf: false
-    });
-    logger.success('Connexion établie');
+    let connection;
+    try {
+      connection = joinVoiceChannel({
+        channelId: channel.id,
+        guildId: channel.guild.id,
+        adapterCreator: channel.guild.voiceAdapterCreator,
+        selfDeaf: false
+      });
+      logger.success('Connexion établie');
+    } catch (connectionError) {
+      logger.error('❌ Erreur de connexion vocale:', {
+        message: connectionError.message,
+        code: connectionError.code,
+        channelId: channel.id,
+        guildId: channel.guild.id
+      });
+      await interaction.editReply(`❌ Erreur de connexion au canal vocal: ${connectionError.message}`);
+      return;
+    }
 
     logger.info('🎵 Création du player audio...');
     const player = createAudioPlayer({
@@ -73,10 +92,20 @@ async function handlePlayCommand (interaction) {
     logger.success(' Player créé');
 
     logger.info('🎼 Création de la ressource audio...');
-    const resource = createAudioResource(STREAM_URL, {
-      inlineVolume: true
-    });
-    logger.success(' Ressource audio créée');
+    let resource;
+    try {
+      resource = createAudioResource(STREAM_URL, {
+        inlineVolume: true
+      });
+      logger.success(' Ressource audio créée');
+    } catch (resourceError) {
+      logger.error('❌ Erreur de création de ressource audio:', {
+        message: resourceError.message,
+        streamUrl: STREAM_URL
+      });
+      await interaction.editReply(`❌ Erreur de création de ressource audio: ${resourceError.message}`);
+      return;
+    }
 
     logger.info('▶️ Lancement de la lecture...');
     player.play(resource);
@@ -129,10 +158,15 @@ async function handlePlayCommand (interaction) {
     });
 
     player.on('error', async (error) => {
-      logger.error('❌ Erreur du player:', error);
+      logger.error('❌ Erreur du player:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack,
+        streamUrl: STREAM_URL
+      });
       clearTimeout(timeout);
       return await interaction.editReply(
-        '❌ Erreur pendant la lecture du stream.'
+        `❌ Erreur pendant la lecture du stream: ${error.message}`
       );
     });
 
