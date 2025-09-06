@@ -9,6 +9,7 @@ import { loadEvents } from './handlers/loadEvents.js';
 import logger from './logger.js';
 import errorHandler from '../core/monitor.js';
 import updateStatus from '../bot/tasks/updateStatus.js';
+import stageMonitor from '../core/services/StageMonitor.js';
 
 let client = null;
 let updateStatusInterval = null;
@@ -27,6 +28,9 @@ export async function startBot () {
 
     // Démarrer les tâches
     startUpdateStatus();
+
+    // 🎭 Démarrer la surveillance des stages
+    stageMonitor.startMonitoring();
 
     return client;
   } catch (error) {
@@ -84,6 +88,9 @@ export async function stopBot () {
     if (updateStatusInterval) {
       clearInterval(updateStatusInterval);
     }
+
+    // 🎭 Arrêter la surveillance des stages
+    stageMonitor.stopMonitoring();
 
     if (client) {
       await client.destroy();

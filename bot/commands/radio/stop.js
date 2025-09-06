@@ -1,5 +1,6 @@
 import { getVoiceConnection } from '@discordjs/voice';
 import logger from '../../logger.js';
+import stageMonitor from '../../../core/services/StageMonitor.js';
 
 const builder = (subcommand) =>
   subcommand
@@ -14,6 +15,9 @@ async function execute (interaction) {
   }
 
   try {
+    // 🎭 Désenregistrer le stage de la surveillance avant déconnexion
+    stageMonitor.unregisterStage(interaction.guild.id);
+
     connection.destroy();
     logger.info(`Bot déconnecté du vocal sur ${interaction.guild.name}`);
     return await interaction.reply('🛑 Stream arrêté, bot déconnecté du vocal.');
