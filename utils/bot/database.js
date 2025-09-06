@@ -44,7 +44,7 @@ class DatabasePool {
   constructor(options = {}) {
     this.#dbPath =
       options.dbPath ||
-      path.join(__dirname, "../../databases/suggestions.sqlite");
+      path.join(__dirname, "../../data/suggestions.sqlite");
   }
 
   async connect() {
