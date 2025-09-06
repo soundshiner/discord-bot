@@ -3,6 +3,8 @@
 // ========================================
 
 import logger from '../../logger.js';
+import stageMonitor from '../../../core/services/StageMonitor.js';
+import stageSpeakerManager from '../../../core/services/StageSpeakerManager.js';
 
 /**
  * Gérer les commandes spéciales qui nécessitent deferReply
@@ -84,6 +86,10 @@ async function handlePlayCommand (interaction) {
     interaction.client.audio = { connection, player };
     logger.info('💾 Audio sauvegardé dans client.audio');
 
+    // 🎭 Enregistrer le stage pour surveillance automatique
+    stageMonitor.registerStage(channel.guild.id, channel.id);
+    logger.info('🎭 Stage enregistré pour surveillance automatique');
+
     // 🔁 Sécurité si le stream prend trop de temps
     const timeout = setTimeout(() => {
       logger.warn('⏰ Timeout de 5s atteint');
@@ -93,7 +99,32 @@ async function handlePlayCommand (interaction) {
     player.once(AudioPlayerStatus.Playing, async () => {
       logger.info('🎵 Événement Playing détecté');
       clearTimeout(timeout);
-      await interaction.editReply('▶️ Stream lancé dans le stage channel.');
+
+      // 🎤 Tentative d'auto-promotion en speaker
+      try {
+        const promotionResult = await stageSpeakerManager.promoteToSpeaker(connection, channel);
+
+        if (promotionResult.success) {
+          await interaction.editReply('▶️ Stream lancé dans le stage channel. 🎤 Bot promu en speaker automatiquement.');
+          logger.success('🎤 Auto-promotion en speaker réussie');
+        } else {
+          const missingPerms = stageSpeakerManager.formatMissingPermissions(promotionResult.missingPermissions || []);
+          const errorMessage = missingPerms.length > 0
+            ? `Permissions manquantes: ${missingPerms.join(', ')}`
+            : '';
+          await interaction.editReply(
+            '▶️ Stream lancé dans le stage channel.\n⚠️ Auto-promotion en speaker échouée: '
+            + `${promotionResult.message}\n${errorMessage}`
+          );
+          logger.warn('🎤 Auto-promotion en speaker échouée:', promotionResult.message);
+        }
+      } catch (promotionError) {
+        await interaction.editReply(
+          '▶️ Stream lancé dans le stage channel.\n⚠️ Erreur lors de l\'auto-promotion en speaker.'
+        );
+        logger.error('🎤 Erreur lors de l\'auto-promotion:', promotionError);
+      }
+
       logger.success(' Message de succès envoyé');
     });
 
