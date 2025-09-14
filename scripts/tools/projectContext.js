@@ -31,7 +31,7 @@ const config = {
     logger: 'logger.js + secureLogger.js',
     validation: 'zod',
     tests: ['vitest', 'stress-test maison'],
-    devops: ['docker', 'CI/CD', 'husky', 'eslint']
+    devops: ['docker', 'CI/CD', 'eslint']
   }
 };
 
